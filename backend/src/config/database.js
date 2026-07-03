@@ -3,31 +3,92 @@ const path = require('path');
 require('dotenv').config();
 
 const dbPath = process.env.DB_PATH || path.join(__dirname, '../../data.db');
-const db = new sqlite3.Database(dbPath, (err) => {
+const dbRaw = new sqlite3.Database(dbPath, (err) => {
   if (err) console.error('Error al abrir BD SQLite:', err);
   else console.log('Conectado a SQLite:', dbPath);
 });
 
 // Habilitar foreign keys
-db.run('PRAGMA foreign_keys = ON');
+dbRaw.run('PRAGMA foreign_keys = ON');
 
-// Crear tablas e insertar datos iniciales
+// Wrapper para que SQLite tenga interfaz similar a pg
+class SQLiteWrapper {
+  async query(sql, params = []) {
+    return new Promise((resolve, reject) => {
+      // Convertir ? por $1, $2, etc. para pg compatibility
+      let pgSql = sql;
+      const pgParams = [];
+
+      // Reemplazar $1, $2, etc. con ?
+      let paramIndex = 1;
+      pgSql = pgSql.replace(/\$\d+/g, () => '?');
+
+      // Para INSERT...RETURNING, extraer las columnas
+      const returningMatch = sql.match(/RETURNING\s+(.*?)(?:\s|$)/i);
+
+      if (sql.toLowerCase().includes('returning')) {
+        // Para RETURNING, ejecutar como run y luego obtener
+        dbRaw.run(pgSql, params, function(err) {
+          if (err) reject(err);
+          else {
+            resolve({
+              rows: [{ id: this.lastID }],
+              rowCount: this.changes
+            });
+          }
+        });
+      } else if (sql.toLowerCase().includes('select')) {
+        dbRaw.all(pgSql, params, (err, rows) => {
+          if (err) reject(err);
+          else resolve({ rows: rows || [] });
+        });
+      } else {
+        dbRaw.run(pgSql, params, function(err) {
+          if (err) reject(err);
+          else resolve({
+            rows: [],
+            rowCount: this.changes
+          });
+        });
+      }
+    });
+  }
+
+  run(sql, params, callback) {
+    dbRaw.run(sql, params, callback);
+  }
+
+  all(sql, params, callback) {
+    dbRaw.all(sql, params, callback);
+  }
+
+  get(sql, params, callback) {
+    dbRaw.get(sql, params, callback);
+  }
+}
+
+const pool = new SQLiteWrapper();
+
+// Crear tablas si no existen
 const initializeTables = () => {
   const bcrypt = require('bcryptjs');
 
-  db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS users (
+  dbRaw.serialize(() => {
+    dbRaw.run(`CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email VARCHAR(255) UNIQUE NOT NULL,
-      password VARCHAR(255) NOT NULL,
+      password VARCHAR(255),
+      password_hash VARCHAR(255),
       firstName VARCHAR(100),
       lastName VARCHAR(100),
+      first_name VARCHAR(100),
+      last_name VARCHAR(100),
       role VARCHAR(50) DEFAULT 'candidato',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS candidates (
+    dbRaw.run(`CREATE TABLE IF NOT EXISTS candidates (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER REFERENCES users(id),
       firstName VARCHAR(100),
@@ -40,7 +101,7 @@ const initializeTables = () => {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS vacancies (
+    dbRaw.run(`CREATE TABLE IF NOT EXISTS vacancies (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title VARCHAR(255),
       description TEXT,
@@ -50,7 +111,7 @@ const initializeTables = () => {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS exams (
+    dbRaw.run(`CREATE TABLE IF NOT EXISTS exams (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name VARCHAR(255),
       description TEXT,
@@ -60,7 +121,7 @@ const initializeTables = () => {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS questions (
+    dbRaw.run(`CREATE TABLE IF NOT EXISTS questions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       exam_id INTEGER REFERENCES exams(id),
       title VARCHAR(500),
@@ -72,7 +133,7 @@ const initializeTables = () => {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS evaluation_assignments (
+    dbRaw.run(`CREATE TABLE IF NOT EXISTS evaluation_assignments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       candidate_id INTEGER REFERENCES candidates(id),
       token VARCHAR(256) UNIQUE,
@@ -83,7 +144,7 @@ const initializeTables = () => {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS exam_answers (
+    dbRaw.run(`CREATE TABLE IF NOT EXISTS exam_answers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       candidate_id INTEGER REFERENCES candidates(id),
       exam_id INTEGER REFERENCES exams(id),
@@ -96,7 +157,7 @@ const initializeTables = () => {
       UNIQUE(candidate_id, exam_id, question_id)
     )`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS evaluation_results (
+    dbRaw.run(`CREATE TABLE IF NOT EXISTS evaluation_results (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       candidate_id INTEGER REFERENCES candidates(id),
       exam_id INTEGER REFERENCES exams(id),
@@ -109,7 +170,7 @@ const initializeTables = () => {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS teams (
+    dbRaw.run(`CREATE TABLE IF NOT EXISTS teams (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name VARCHAR(255) UNIQUE NOT NULL,
       description TEXT,
@@ -119,7 +180,7 @@ const initializeTables = () => {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS team_members (
+    dbRaw.run(`CREATE TABLE IF NOT EXISTS team_members (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       team_id INTEGER NOT NULL REFERENCES teams(id),
       user_id INTEGER NOT NULL REFERENCES users(id),
@@ -129,7 +190,7 @@ const initializeTables = () => {
       UNIQUE(team_id, user_id)
     )`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS role_permissions (
+    dbRaw.run(`CREATE TABLE IF NOT EXISTS role_permissions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       role_name VARCHAR(50) NOT NULL,
       permission_key VARCHAR(100) NOT NULL,
@@ -142,10 +203,10 @@ const initializeTables = () => {
     const adminPassword = 'password123';
     const hashedPassword = bcrypt.hashSync(adminPassword, 10);
 
-    db.run(
-      `INSERT OR IGNORE INTO users (email, password, firstName, lastName, role, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-      [adminEmail, hashedPassword, 'Admin', 'Talent IA', 'administrador'],
+    dbRaw.run(
+      `INSERT OR IGNORE INTO users (email, password, password_hash, firstName, lastName, first_name, last_name, role, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      [adminEmail, adminPassword, hashedPassword, 'Admin', 'Talent IA', 'Admin', 'Talent IA', 'administrador'],
       function(err) {
         if (err) console.error('Error inserting admin:', err);
         else console.log('Admin user ready');
@@ -156,4 +217,4 @@ const initializeTables = () => {
 
 initializeTables();
 
-module.exports = db;
+module.exports = pool;

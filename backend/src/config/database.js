@@ -2,10 +2,14 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 require('dotenv').config();
 
+console.log('Inicializando base de datos...');
+console.log('DB_PATH:', process.env.DB_PATH);
+console.log('NODE_ENV:', process.env.NODE_ENV);
+
 const dbPath = process.env.DB_PATH || path.join(__dirname, '../../data.db');
 const dbRaw = new sqlite3.Database(dbPath, (err) => {
   if (err) console.error('Error al abrir BD SQLite:', err);
-  else console.log('Conectado a SQLite:', dbPath);
+  else console.log('✅ Conectado a SQLite:', dbPath);
 });
 
 // Habilitar foreign keys

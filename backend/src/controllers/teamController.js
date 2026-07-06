@@ -1,4 +1,4 @@
-const pool = require('../config/database-sqlite');
+const pool = require('../config/database');
 
 // Obtener todos los equipos
 const getAllTeams = async (req, res) => {

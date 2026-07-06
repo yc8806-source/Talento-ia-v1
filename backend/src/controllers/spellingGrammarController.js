@@ -1,4 +1,4 @@
-const pool = require('../config/database-sqlite');
+const pool = require('../config/database');
 const SpellingGrammarService = require('../services/spellingGrammarService');
 const AuditService = require('../services/auditService');
 

@@ -5,7 +5,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const pool = require('./src/config/database-sqlite');
+const pool = require('./src/config/database');
 const {
   helmetConfig,
   sanitizeMiddleware,
@@ -38,8 +38,8 @@ app.use(sanitizeMiddleware);
 // AUDITORÍA - Logging de acciones
 app.use(auditLogger);
 
-// RATE LIMITING - Aplicar a API general (desactivado para testing)
-// app.use('/api/', apiLimiter);
+// RATE LIMITING - Aplicar a API general
+app.use('/api/', apiLimiter);
 
 // SEGURIDAD - Validar tokens
 app.use(tokenValidator);
@@ -134,8 +134,8 @@ const io = initSocket(server);
 global.io = io;
 
 server.listen(PORT, () => {
-  console.log(`🚀 SQLite Backend v2 corriendo en http://localhost:${PORT}`);
-  console.log(`✅ Rate limiting DESACTIVADO`);
+  console.log(`🚀 Talent IA Backend en http://localhost:${PORT}`);
+  console.log(`✅ Rate limiting ACTIVADO`);
   console.log(`📡 WebSocket habilitado`);
-  console.log(`🔐 Usando database-sqlite.js - NO PostgreSQL`);
+  console.log(`🔐 Usando Railway PostgreSQL`);
 });

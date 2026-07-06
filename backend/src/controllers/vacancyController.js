@@ -1,4 +1,4 @@
-const pool = require('../config/database-sqlite');
+const pool = require('../config/database');
 
 // CREAR NUEVA VACANTE
 exports.createVacancy = async (req, res) => {

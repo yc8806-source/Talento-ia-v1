@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../config/database-sqlite');
+const pool = require('../config/database');
 
 /**
  * Guardar respuesta a pregunta de soft skills

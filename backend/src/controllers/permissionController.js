@@ -1,4 +1,4 @@
-const pool = require('../config/database-sqlite');
+const pool = require('../config/database');
 const { PERMISSIONS, ROLES } = require('../middleware/permissionsMiddleware');
 
 // Obtener todos los permisos disponibles

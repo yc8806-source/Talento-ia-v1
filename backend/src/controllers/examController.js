@@ -1,4 +1,4 @@
-const pool = require('../config/database-sqlite');
+const pool = require('../config/database');
 
 // CREAR NUEVO EXAMEN
 exports.createExam = async (req, res) => {

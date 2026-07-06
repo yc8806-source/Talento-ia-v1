@@ -241,7 +241,7 @@ const requireAllPermissions = (permissions) => {
 
 // Middleware: Verificar pertenencia al equipo
 const requireTeamMembership = async (req, res, next) => {
-  const pool = require('../config/database-sqlite');
+  const pool = require('../config/database');
   const userId = req.user?.id;
   const teamId = req.body.teamId || req.params.teamId;
 

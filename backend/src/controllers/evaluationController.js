@@ -1,4 +1,4 @@
-const pool = require('../config/database-sqlite');
+const pool = require('../config/database');
 const crypto = require('crypto');
 const { generateResultsPDF } = require('../services/pdfService');
 const { sendEvaluationCompleteEmail } = require('../services/emailService');

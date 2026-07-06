@@ -1,4 +1,4 @@
-const pool = require('../config/database-sqlite');
+const pool = require('../config/database');
 const AuditService = require('../services/auditService');
 
 // REGISTRAR NUEVO CANDIDATO (postulante)

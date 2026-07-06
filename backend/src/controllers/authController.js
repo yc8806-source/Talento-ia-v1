@@ -64,10 +64,11 @@ exports.register = async (req, res) => {
   }
 };
 
-// LOGIN
+// LOGIN - SQLITE VERSION
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log('🔐 Login attempt with SQLite - no rate limiting');
 
     // Validar que tenga email y contraseña
     if (!email || !password) {

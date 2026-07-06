@@ -5,7 +5,7 @@ const sanitizeHtml = require('sanitize-html');
 // RATE LIMITING - Limitar intentos de login
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 5, // máximo 5 intentos
+  max: 50, // máximo 50 intentos para testing
   message: 'Demasiados intentos de login. Por favor intenta más tarde.',
   standardHeaders: true,
   legacyHeaders: false,

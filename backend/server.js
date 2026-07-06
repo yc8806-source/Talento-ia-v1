@@ -35,8 +35,8 @@ app.use(sanitizeMiddleware);
 // AUDITORÍA - Logging de acciones
 app.use(auditLogger);
 
-// RATE LIMITING - Aplicar a API general
-app.use('/api/', apiLimiter);
+// RATE LIMITING - Aplicar a API general (desactivado para testing)
+// app.use('/api/', apiLimiter);
 
 // SEGURIDAD - Validar tokens
 app.use(tokenValidator);

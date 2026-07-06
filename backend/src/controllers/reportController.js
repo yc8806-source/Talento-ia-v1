@@ -1,4 +1,4 @@
-const pool = require('../config/database');
+const pool = require('../config/database-sqlite');
 
 // OBTENER DATOS DE EVALUACIONES POR OPERACIÓN
 exports.getCompetencyAnalytics = async (req, res) => {

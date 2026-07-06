@@ -1,4 +1,4 @@
-const pool = require('../config/database');
+const pool = require('../config/database-sqlite');
 const AlertService = require('./alertService');
 
 class AuditService {

@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const pool = require('../config/database');
+const pool = require('../config/database-sqlite');
 const { getPermissionsForRole } = require('./permissionsMiddleware');
 
 // Verificar y extraer token JWT

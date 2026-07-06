@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const pool = require('../config/database');
+const pool = require('../config/database-sqlite');
 const { getPermissionsForRole } = require('../middleware/permissionsMiddleware');
 
 // REGISTRAR NUEVO USUARIO (Admin o RR.HH)

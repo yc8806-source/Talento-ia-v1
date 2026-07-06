@@ -1,4 +1,4 @@
-const pool = require('../config/database');
+const pool = require('../config/database-sqlite');
 
 // Función para convertir JSON a CSV
 const convertToCSV = (data, headers) => {

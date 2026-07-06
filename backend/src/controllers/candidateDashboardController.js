@@ -1,4 +1,4 @@
-const pool = require('../config/database');
+const pool = require('../config/database-sqlite');
 
 // Obtener estado actual de evaluación del candidato
 const getCandidateEvaluationStatus = async (req, res) => {

@@ -125,7 +125,7 @@ router.get(
   isAdmin,
   async (req, res) => {
     try {
-      const pool = require('../config/database');
+      const pool = require('../config/database-sqlite');
 
       const result = await pool.query(`
         SELECT

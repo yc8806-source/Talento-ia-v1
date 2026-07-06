@@ -1,4 +1,4 @@
-const pool = require('../config/database');
+const pool = require('../config/database-sqlite');
 
 // CREAR NUEVA PREGUNTA
 exports.createQuestion = async (req, res) => {

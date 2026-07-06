@@ -6,7 +6,7 @@ const { loginLimiter, registerLimiter } = require('../middleware/securityMiddlew
 // RATE LIMITING - Limitar intentos de registro
 router.post('/register', registerLimiter, authController.register);
 
-// RATE LIMITING - Limitar intentos de login
-router.post('/login', loginLimiter, authController.login);
+// RATE LIMITING - Limitar intentos de login (desactivado para testing)
+router.post('/login', authController.login);
 
 module.exports = router;

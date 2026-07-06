@@ -134,6 +134,8 @@ const io = initSocket(server);
 global.io = io;
 
 server.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`🚀 SQLite Backend v2 corriendo en http://localhost:${PORT}`);
+  console.log(`✅ Rate limiting DESACTIVADO`);
   console.log(`📡 WebSocket habilitado`);
+  console.log(`🔐 Usando database-sqlite.js - NO PostgreSQL`);
 });

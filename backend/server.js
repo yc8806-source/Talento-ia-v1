@@ -1,6 +1,3 @@
-// Verify deployment is using latest code
-require('./verifyDeployment');
-
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');

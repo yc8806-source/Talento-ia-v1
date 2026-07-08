@@ -151,7 +151,7 @@ export default function Vacantes() {
               <p><strong>Estado:</strong> <span style={{ color: vacancy.status === 'open' ? 'green' : 'red' }}>{vacancy.status === 'open' ? 'Abierta' : 'Cerrada'}</span></p>
               <p>{vacancy.description}</p>
               <button
-                onClick={() => navigate(`/evaluaciones`)}
+                onClick={() => navigate(`/vacantes/${vacancy.id}/assign-evaluations`)}
                 style={{
                   padding: '8px 16px',
                   backgroundColor: '#007bff',

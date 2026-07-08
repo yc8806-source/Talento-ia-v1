@@ -51,6 +51,17 @@ export default function Vacantes() {
     }
   };
 
+  const handleToggleStatus = async (vacancyId, currentStatus) => {
+    try {
+      const newStatus = currentStatus === 'open' ? 'closed' : 'open';
+      await vacancyAPI.update(vacancyId, { status: newStatus });
+      fetchVacancies();
+      alert(`Vacante ${newStatus === 'open' ? 'reabierta' : 'cerrada'} exitosamente`);
+    } catch (error) {
+      alert('Error: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
   if (loading) {
     return <div style={{ textAlign: 'center', padding: '40px' }}>Cargando vacantes...</div>;
   }
@@ -161,19 +172,38 @@ export default function Vacantes() {
               <p><strong>Estado:</strong> <span style={{ color: vacancy.status === 'open' ? 'green' : 'red' }}>{vacancy.status === 'open' ? 'Abierta' : 'Cerrada'}</span></p>
               <p><strong>Vacantes:</strong> {vacancy.filledPositions || 0}/{vacancy.availablePositions || 1} ocupadas</p>
               <p>{vacancy.description}</p>
-              <button
-                onClick={() => navigate(`/vacantes/${vacancy.id}/assign-evaluations`)}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '5px',
-                  cursor: 'pointer'
-                }}
-              >
-                Asignar Evaluación
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={() => navigate(`/vacantes/${vacancy.id}/assign-evaluations`)}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontSize: '0.9em'
+                  }}
+                >
+                  Asignar Examen
+                </button>
+                <button
+                  onClick={() => handleToggleStatus(vacancy.id, vacancy.status)}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    backgroundColor: vacancy.status === 'open' ? '#dc3545' : '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontSize: '0.9em'
+                  }}
+                >
+                  {vacancy.status === 'open' ? 'Cerrar' : 'Reabrir'}
+                </button>
+              </div>
             </div>
           ))
         )}

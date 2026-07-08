@@ -233,6 +233,25 @@ exports.inviteToVacancy = async (req, res) => {
       [candidateId, vacancyId, 'invited', token]
     );
 
+    // Incrementar filled_positions en la vacante
+    await pool.query(
+      'UPDATE vacancies SET filled_positions = filled_positions + 1 WHERE id = $1',
+      [vacancyId]
+    );
+
+    // Verificar si la vacante está completa y cerrarla automáticamente
+    const vacancyCheck = await pool.query(
+      'SELECT available_positions, filled_positions FROM vacancies WHERE id = $1',
+      [vacancyId]
+    );
+    const vacancy = vacancyCheck.rows[0];
+    if (vacancy.filled_positions >= vacancy.available_positions) {
+      await pool.query(
+        'UPDATE vacancies SET status = $1 WHERE id = $2',
+        ['closed', vacancyId]
+      );
+    }
+
     res.status(201).json({
       message: 'Candidato invitado exitosamente',
       candidateVacancy: {

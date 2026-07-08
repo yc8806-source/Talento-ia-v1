@@ -126,11 +126,11 @@ exports.getVacancyById = async (req, res) => {
 exports.updateVacancy = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, status } = req.body;
+    const { title, description, status, available_positions } = req.body;
 
     const result = await pool.query(
-      'UPDATE vacancies SET title = COALESCE($1, title), description = COALESCE($2, description), status = COALESCE($3, status), updated_at = NOW() WHERE id = $4 RETURNING *',
-      [title, description, status, id]
+      'UPDATE vacancies SET title = COALESCE($1, title), description = COALESCE($2, description), status = COALESCE($3, status), available_positions = COALESCE($4, available_positions), updated_at = NOW() WHERE id = $5 RETURNING *',
+      [title, description, status, available_positions, id]
     );
 
     if (result.rows.length === 0) {
@@ -145,7 +145,9 @@ exports.updateVacancy = async (req, res) => {
         id: result.rows[0].id,
         title: result.rows[0].title,
         description: result.rows[0].description,
-        status: result.rows[0].status
+        status: result.rows[0].status,
+        availablePositions: result.rows[0].available_positions,
+        filledPositions: result.rows[0].filled_positions
       }
     });
   } catch (error) {

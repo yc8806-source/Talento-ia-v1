@@ -165,6 +165,11 @@ exports.assignExamsToVacancy = async (req, res) => {
     const { vacancyId } = req.params;
     const { examIds } = req.body;
 
+    console.log('[ASSIGN-EXAMS] vacancyId:', vacancyId);
+    console.log('[ASSIGN-EXAMS] examIds:', examIds);
+    console.log('[ASSIGN-EXAMS] req.params:', req.params);
+    console.log('[ASSIGN-EXAMS] req.body:', req.body);
+
     if (!examIds || examIds.length === 0) {
       return res.status(400).json({
         error: 'Se requiere al menos un examen'
@@ -183,15 +188,19 @@ exports.assignExamsToVacancy = async (req, res) => {
       });
     }
 
+    console.log('[ASSIGN-EXAMS] Vacante encontrada, ID:', vacancyId);
+
     // Eliminar exámenes actuales
-    await pool.query('DELETE FROM vacancy_exams WHERE vacancy_id = $1', [vacancyId]);
+    const deleteResult = await pool.query('DELETE FROM vacancy_exams WHERE vacancy_id = $1', [vacancyId]);
+    console.log('[ASSIGN-EXAMS] Eliminados exámenes previos:', deleteResult.rowCount);
 
     // Asignar nuevos exámenes
     for (let i = 0; i < examIds.length; i++) {
-      await pool.query(
+      const insertResult = await pool.query(
         'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_order) VALUES ($1, $2, $3)',
         [vacancyId, examIds[i], i + 1]
       );
+      console.log(`[ASSIGN-EXAMS] Insertado examen ${examIds[i]} en orden ${i + 1}:`, insertResult.rowCount);
     }
 
     res.json({

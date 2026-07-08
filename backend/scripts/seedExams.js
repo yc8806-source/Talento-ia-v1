@@ -1,141 +1,57 @@
-const pool = require('../src/config/database');
+const { Pool } = require('pg');
 
-// Definición de exámenes
-// Nota: Usar competencias que existan en tu BD
-const examsDefinition = [
-  {
-    name: 'Evaluación Integral de Competencias',
-    description: 'Evaluación completa de competencias clave',
-    maxTimeMinutes: 90,
-    minScore: 60,
-    competencies: [
-      'Comunicación',
-      'Comunicación escrita',
-      'Empatía',
-      'Resolución de problemas',
-      'Servicio al cliente',
-      'Tolerancia a la presión'
-    ],
-    questionsPerCompetency: 5
-  },
-  {
-    name: 'Evaluación de Comunicación y Servicio',
-    description: 'Enfocada en comunicación y servicio al cliente',
-    maxTimeMinutes: 60,
-    minScore: 65,
-    competencies: [
-      'Comunicación escrita',
-      'Servicio al cliente'
-    ],
-    questionsPerCompetency: 4
-  },
-  {
-    name: 'Evaluación de Excelencia Operacional',
-    description: 'Competencias para roles operacionales',
-    maxTimeMinutes: 60,
-    minScore: 70,
-    competencies: [
-      'Atención al detalle',
-      'Tolerancia a la presión',
-      'Orientación a resultados'
-    ],
-    questionsPerCompetency: 4
-  },
-  {
-    name: 'Evaluación de Resolución y Adaptación',
-    description: 'Orientada a solución de problemas y flexibilidad',
-    maxTimeMinutes: 45,
-    minScore: 60,
-    competencies: [
-      'Resolución de problemas',
-      'Empatía'
-    ],
-    questionsPerCompetency: 4
-  }
-];
+const pool = new Pool({
+  connectionString: 'postgresql://postgres:PmlaFarTlzhWISrNyBgqRbljxEYjmGai@hayabusa.proxy.rlwy.net:10287/railway',
+  ssl: { rejectUnauthorized: false }
+});
 
 async function seedExams() {
   try {
-    console.log('🌱 Iniciando seeding de exámenes...\n');
+    console.log('🔄 Agregando exámenes de prueba...\n');
 
-    // Obtener competencias
-    const competenciesResult = await pool.query(
-      'SELECT id, name FROM competencies ORDER BY name'
-    );
-
-    if (competenciesResult.rows.length === 0) {
-      console.log('❌ No hay competencias en la base de datos.');
-      process.exit(1);
-    }
-
-    // Mapeo de competencias
-    const competencyMap = {};
-    competenciesResult.rows.forEach(c => {
-      competencyMap[c.name] = c.id;
-    });
-
-    let examsCreated = 0;
-    let questionsAssigned = 0;
-
-    // Crear cada examen
-    for (const examDef of examsDefinition) {
-      try {
-        console.log(`📋 Creando examen: ${examDef.name}`);
-
-        // Crear examen
-        const examResult = await pool.query(
-          'INSERT INTO exams (name, description, max_time_minutes, min_score, created_by) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-          [examDef.name, examDef.description, examDef.maxTimeMinutes, examDef.minScore, 1]
-        );
-
-        const examId = examResult.rows[0].id;
-        examsCreated++;
-
-        // Obtener preguntas para cada competencia
-        let questionOrder = 1;
-
-        for (const competencyName of examDef.competencies) {
-          if (!competencyMap[competencyName]) {
-            console.log(`   ⚠️  Competencia '${competencyName}' no encontrada`);
-            continue;
-          }
-
-          const competencyId = competencyMap[competencyName];
-
-          // Obtener preguntas de esta competencia
-          const questionsResult = await pool.query(
-            'SELECT id FROM questions WHERE competency_id = $1 LIMIT $2',
-            [competencyId, examDef.questionsPerCompetency]
-          );
-
-          // Asignar preguntas al examen
-          for (const question of questionsResult.rows) {
-            await pool.query(
-              'INSERT INTO exam_questions (exam_id, question_id, question_order) VALUES ($1, $2, $3)',
-              [examId, question.id, questionOrder]
-            );
-            questionOrder++;
-            questionsAssigned++;
-          }
-
-          console.log(`   ✓ ${questionsResult.rows.length} preguntas asignadas de ${competencyName}`);
-        }
-
-        console.log(`   ✓ Examen creado (ID: ${examId})\n`);
-      } catch (error) {
-        console.error(`   ✗ Error creando examen: ${error.message}`);
+    const exams = [
+      {
+        name: 'Test de Competencias Técnicas',
+        description: 'Evaluación de habilidades técnicas en programación',
+        max_time_minutes: 60,
+        type: 'technical'
+      },
+      {
+        name: 'Test de Soft Skills',
+        description: 'Evaluación de habilidades blandas y comunicación',
+        max_time_minutes: 45,
+        type: 'soft_skills'
+      },
+      {
+        name: 'Test de Lógica y Razonamiento',
+        description: 'Evaluación de pensamiento lógico y resolución de problemas',
+        max_time_minutes: 50,
+        type: 'logical'
+      },
+      {
+        name: 'Test de Conocimientos Específicos',
+        description: 'Evaluación de conocimientos específicos del puesto',
+        max_time_minutes: 40,
+        type: 'specific'
       }
+    ];
+
+    for (const exam of exams) {
+      const result = await pool.query(
+        'INSERT INTO exams (name, description, max_time_minutes, type) VALUES ($1, $2, $3, $4) RETURNING *',
+        [exam.name, exam.description, exam.max_time_minutes, exam.type]
+      );
+      console.log(`✅ Examen creado: "${exam.name}" (ID: ${result.rows[0].id})`);
     }
 
-    console.log('📊 Resumen de Seeding:');
-    console.log(`   • Total exámenes creados: ${examsCreated}`);
-    console.log(`   • Total preguntas asignadas: ${questionsAssigned}\n`);
+    // Verificar total
+    const count = await pool.query('SELECT COUNT(*) as total FROM exams');
+    console.log(`\n📊 Total de exámenes en la BD: ${count.rows[0].total}`);
 
-    console.log('✨ Seeding de exámenes completado exitosamente!');
-    process.exit(0);
   } catch (error) {
-    console.error('❌ Error durante el seeding:', error);
-    process.exit(1);
+    console.error('❌ Error:', error.message);
+  } finally {
+    await pool.end();
   }
 }
 

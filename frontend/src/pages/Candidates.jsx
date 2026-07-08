@@ -35,6 +35,8 @@ function Candidates() {
   const [sortBy, setSortBy] = useState('name');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showBulkActionsModal, setShowBulkActionsModal] = useState(false);
+  const [showTokenModal, setShowTokenModal] = useState(false);
+  const [invitationToken, setInvitationToken] = useState('');
 
   const itemsPerPage = 10;
 
@@ -98,14 +100,15 @@ function Candidates() {
   const handleInvite = async (e) => {
     e.preventDefault();
     try {
-      await candidateAPI.invite({
+      const response = await candidateAPI.invite({
         candidateId: selectedCandidate.id,
         vacancyId: parseInt(selectedVacancy),
       });
+      setInvitationToken(response.data.candidateVacancy.token);
+      setShowTokenModal(true);
       setShowInviteForm(false);
       setSelectedCandidate(null);
       setSelectedVacancy('');
-      alert('Candidato invitado exitosamente');
       loadData();
     } catch (error) {
       alert('Error: ' + (error.response?.data?.error || 'No se pudo invitar'));
@@ -494,6 +497,40 @@ function Candidates() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showTokenModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <h2 className="text-xl font-bold text-green-600 mb-4">
+              ✓ Candidato Invitado
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Comparte este token con el postulante por WhatsApp o email:
+            </p>
+
+            <div className="bg-gray-100 p-4 rounded-lg mb-4 break-all font-mono text-sm">
+              {invitationToken}
+            </div>
+
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(invitationToken);
+                alert('Token copiado al portapapeles');
+              }}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium mb-2"
+            >
+              Copiar Token
+            </button>
+
+            <button
+              onClick={() => setShowTokenModal(false)}
+              className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg font-medium"
+            >
+              Cerrar
+            </button>
           </div>
         </div>
       )}

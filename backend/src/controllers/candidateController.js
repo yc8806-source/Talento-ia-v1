@@ -1,5 +1,6 @@
 const pool = require('../config/database');
 const AuditService = require('../services/auditService');
+const crypto = require('crypto');
 
 // REGISTRAR NUEVO CANDIDATO (postulante)
 exports.registerCandidate = async (req, res) => {
@@ -223,10 +224,13 @@ exports.inviteToVacancy = async (req, res) => {
       });
     }
 
+    // Generar token único para acceso sin login
+    const token = crypto.randomBytes(32).toString('hex');
+
     // Crear registro en candidate_vacancies
     const result = await pool.query(
-      'INSERT INTO candidate_vacancies (candidate_id, vacancy_id, status) VALUES ($1, $2, $3) RETURNING *',
-      [candidateId, vacancyId, 'invited']
+      'INSERT INTO candidate_vacancies (candidate_id, vacancy_id, status, token) VALUES ($1, $2, $3, $4) RETURNING *',
+      [candidateId, vacancyId, 'invited', token]
     );
 
     res.status(201).json({
@@ -236,6 +240,7 @@ exports.inviteToVacancy = async (req, res) => {
         candidateId: result.rows[0].candidate_id,
         vacancyId: result.rows[0].vacancy_id,
         status: result.rows[0].status,
+        token: result.rows[0].token,
         createdAt: result.rows[0].created_at
       }
     });

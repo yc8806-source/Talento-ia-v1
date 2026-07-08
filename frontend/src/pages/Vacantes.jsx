@@ -22,9 +22,10 @@ export default function Vacantes() {
   const fetchVacancies = async () => {
     try {
       const response = await axios.get('/api/vacancies');
-      setVacancies(response.data || []);
+      setVacancies(response.data.vacancies || []);
     } catch (error) {
       console.error('Error cargando vacantes:', error);
+      setVacancies([]);
     } finally {
       setLoading(false);
     }

@@ -570,3 +570,61 @@ exports.generatePDF = async (req, res) => {
     });
   }
 };
+
+// OBTENER INFORMACIÓN DE VACANTE Y EXÁMENES POR TOKEN (para acceso sin login)
+exports.getVacancyEvaluationByToken = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    // Buscar el token en candidate_vacancies
+    const cvResult = await pool.query(
+      `SELECT cv.id, cv.candidate_id, cv.vacancy_id, c.first_name, c.last_name, c.email, v.title, v.description
+       FROM candidate_vacancies cv
+       INNER JOIN candidates c ON cv.candidate_id = c.id
+       INNER JOIN vacancies v ON cv.vacancy_id = v.id
+       WHERE cv.token = $1`,
+      [token]
+    );
+
+    if (cvResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Token inválido o no encontrado'
+      });
+    }
+
+    const candidateVacancy = cvResult.rows[0];
+
+    // Obtener los exámenes asignados a la vacante
+    const examsResult = await pool.query(
+      `SELECT e.id, e.name, e.description, e.type, e.max_time_minutes
+       FROM exams e
+       INNER JOIN vacancy_exams ve ON e.id = ve.exam_id
+       WHERE ve.vacancy_id = $1
+       ORDER BY ve.exam_order`,
+      [candidateVacancy.vacancy_id]
+    );
+
+    res.json({
+      candidateVacancy: {
+        id: candidateVacancy.id,
+        candidateName: `${candidateVacancy.first_name} ${candidateVacancy.last_name}`,
+        candidateEmail: candidateVacancy.email,
+        vacancyTitle: candidateVacancy.title,
+        vacancyDescription: candidateVacancy.description
+      },
+      exams: examsResult.rows.map(exam => ({
+        id: exam.id,
+        name: exam.name,
+        description: exam.description,
+        type: exam.type,
+        maxTimeMinutes: exam.max_time_minutes
+      }))
+    });
+  } catch (error) {
+    console.error('Error obteniendo información de vacante:', error);
+    res.status(500).json({
+      error: 'Error al obtener información',
+      details: error.message
+    });
+  }
+};

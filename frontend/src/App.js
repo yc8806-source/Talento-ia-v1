@@ -12,6 +12,7 @@ import AdminExams from './pages/AdminExams';
 import Reports from './pages/Reports';
 import Vacantes from './pages/Vacantes';
 import AssignEvaluationsToVacancy from './pages/AssignEvaluationsToVacancy';
+import EvaluationByToken from './pages/EvaluationByToken';
 import ShareEvaluations from './pages/ShareEvaluations';
 import PermissionsManagement from './pages/PermissionsManagement';
 import CandidateDashboard from './pages/CandidateDashboard';
@@ -58,6 +59,7 @@ function App() {
       <Routes>
         <Route path="/login" element={!isLoggedIn ? <Login setIsLoggedIn={setIsLoggedIn} setUserRole={setUserRole} /> : <Navigate to="/dashboard" />} />
         <Route path="/register" element={!isLoggedIn ? <Register /> : <Navigate to="/dashboard" />} />
+        <Route path="/evaluacion" element={<EvaluationByToken />} />
         <Route path="/evaluacion/:token" element={<EvaluationTest />} />
         <Route path="/exams/:examId" element={<SoftSkillsTest />} />
         <Route path="/skills-assessment" element={<SkillsAssessmentsPage />} />

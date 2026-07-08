@@ -18,6 +18,9 @@ router.post('/:evaluationId/submit', evaluationController.submitEvaluation);
 // Obtener evaluación por token (acceso anónimo)
 router.get('/token/:token', evaluationController.getEvaluationByToken);
 
+// Obtener información de vacante y exámenes por token (para invitación sin login)
+router.get('/vacancy-by-token/:token', evaluationController.getVacancyEvaluationByToken);
+
 // Obtener resultados
 router.get('/:candidateVacancyId/results', evaluationController.getEvaluationResults);
 

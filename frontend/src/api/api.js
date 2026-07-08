@@ -59,7 +59,10 @@ export const vacancyAPI = {
   getAll: () => api.get('/vacancies'),
   getById: (id) => api.get(`/vacancies/${id}`),
   update: (id, data) => api.put(`/vacancies/${id}`, data),
-  assignExams: (vacancyId, data) => api.post(`/vacancies/${vacancyId}/exams`, data),
+  assignExams: (vacancyId, data, config = {}) => api.post(`/vacancies/${vacancyId}/exams`, data, {
+    headers: { 'Content-Type': 'application/json' },
+    ...config
+  }),
 };
 
 // Questions

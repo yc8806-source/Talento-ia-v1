@@ -141,8 +141,8 @@ exports.getCandidatesByVacancy = async (req, res) => {
         c.email,
         c.phone,
         c.cv_url,
+        cv.id as candidate_vacancy_id,
         cv.status,
-        cv.recommended_operation_id,
         cv.created_at
       FROM candidates c
       INNER JOIN candidate_vacancies cv ON c.id = cv.candidate_id
@@ -152,14 +152,14 @@ exports.getCandidatesByVacancy = async (req, res) => {
     );
 
     const candidates = result.rows.map(row => ({
-      id: row.id,
+      candidateId: row.id,
+      candidateVacancyId: row.candidate_vacancy_id,
       firstName: row.first_name,
       lastName: row.last_name,
       email: row.email,
       phone: row.phone,
       cvUrl: row.cv_url,
       status: row.status,
-      recommendedOperationId: row.recommended_operation_id,
       appliedAt: row.created_at
     }));
 

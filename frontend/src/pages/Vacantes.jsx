@@ -174,6 +174,21 @@ export default function Vacantes() {
               <p>{vacancy.description}</p>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button
+                  onClick={() => navigate(`/vacantes/${vacancy.id}/candidatos`)}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    backgroundColor: '#17a2b8',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontSize: '0.9em'
+                  }}
+                >
+                  👥 Candidatos
+                </button>
+                <button
                   onClick={() => navigate(`/vacantes/${vacancy.id}/assign-evaluations`)}
                   style={{
                     flex: 1,
@@ -186,7 +201,7 @@ export default function Vacantes() {
                     fontSize: '0.9em'
                   }}
                 >
-                  Asignar Examen
+                  Examen
                 </button>
                 <button
                   onClick={() => handleToggleStatus(vacancy.id, vacancy.status)}

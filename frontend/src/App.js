@@ -13,6 +13,7 @@ import Reports from './pages/Reports';
 import Vacantes from './pages/Vacantes';
 import AssignEvaluationsToVacancy from './pages/AssignEvaluationsToVacancy';
 import EvaluationByToken from './pages/EvaluationByToken';
+import CandidatesByVacancy from './pages/CandidatesByVacancy';
 import ShareEvaluations from './pages/ShareEvaluations';
 import PermissionsManagement from './pages/PermissionsManagement';
 import CandidateDashboard from './pages/CandidateDashboard';
@@ -71,6 +72,7 @@ function App() {
           <Route path="/candidatos" element={<Candidates userRole={userRole} />} />
           <Route path="/vacantes" element={<Vacantes userRole={userRole} />} />
           <Route path="/vacantes/:vacancyId/assign-evaluations" element={<AssignEvaluationsToVacancy />} />
+          <Route path="/vacantes/:vacancyId/candidatos" element={<CandidatesByVacancy />} />
           <Route path="/evaluaciones" element={<Evaluations userRole={userRole} />} />
           <Route path="/skills-assessments" element={<SkillsAssessmentsPage />} />
           <Route path="/skills-assessment/:assessmentId" element={<SkillsAssessmentTest />} />

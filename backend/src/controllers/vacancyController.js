@@ -168,6 +168,7 @@ exports.assignExamsToVacancy = async (req, res) => {
     console.log('[ASSIGN-EXAMS] Recibido - vacancyId:', vacancyId, 'examIds:', examIds);
     console.log('[ASSIGN-EXAMS] req.params:', req.params);
     console.log('[ASSIGN-EXAMS] req.body:', req.body);
+    console.log('[ASSIGN-EXAMS] typeof examIds:', typeof examIds, 'isArray:', Array.isArray(examIds));
 
     // Validar vacancyId
     if (!vacancyId) {
@@ -177,10 +178,20 @@ exports.assignExamsToVacancy = async (req, res) => {
       });
     }
 
-    // No convertir a int, dejar que PostgreSQL lo maneje
-    // vacancyId se usa tal cual, PostgreSQL convertirá el string a int automáticamente
+    // Validar y procesar examIds
+    if (!examIds) {
+      return res.status(400).json({
+        error: 'Se requiere examIds en el body',
+        received: { examIds, body: req.body }
+      });
+    }
 
-    if (!examIds || examIds.length === 0) {
+    if (!Array.isArray(examIds)) {
+      console.log('[ASSIGN-EXAMS] examIds no es array, convirtiendo...');
+      examIds = [examIds];
+    }
+
+    if (examIds.length === 0) {
       return res.status(400).json({
         error: 'Se requiere al menos un examen'
       });

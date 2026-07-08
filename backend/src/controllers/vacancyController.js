@@ -162,11 +162,18 @@ exports.updateVacancy = async (req, res) => {
 // ASIGNAR EXÁMENES A VACANTE
 exports.assignExamsToVacancy = async (req, res) => {
   try {
-    const { vacancyId } = req.params;
-    const { examIds } = req.body;
+    let { vacancyId } = req.params;
+    let { examIds } = req.body;
 
-    console.log('[ASSIGN-EXAMS] vacancyId:', vacancyId);
-    console.log('[ASSIGN-EXAMS] examIds:', examIds);
+    // Convertir a números explícitamente
+    vacancyId = parseInt(vacancyId, 10);
+    if (!Array.isArray(examIds)) {
+      examIds = [examIds];
+    }
+    examIds = examIds.map(id => parseInt(id, 10));
+
+    console.log('[ASSIGN-EXAMS] vacancyId (int):', vacancyId, typeof vacancyId);
+    console.log('[ASSIGN-EXAMS] examIds (int[]):', examIds, examIds.map(e => typeof e));
     console.log('[ASSIGN-EXAMS] req.params:', req.params);
     console.log('[ASSIGN-EXAMS] req.body:', req.body);
 

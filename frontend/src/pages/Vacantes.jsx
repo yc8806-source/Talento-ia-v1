@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { vacancyAPI } from '../api/api';
 
 export default function Vacantes() {
   const [vacancies, setVacancies] = useState([]);
@@ -21,7 +21,7 @@ export default function Vacantes() {
 
   const fetchVacancies = async () => {
     try {
-      const response = await axios.get('/api/vacancies');
+      const response = await vacancyAPI.getAll();
       setVacancies(response.data.vacancies || []);
     } catch (error) {
       console.error('Error cargando vacantes:', error);
@@ -41,7 +41,7 @@ export default function Vacantes() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('/api/vacancies', formData);
+      await vacancyAPI.create(formData);
       setFormData({ title: '', description: '', department: '', status: 'open' });
       setShowForm(false);
       fetchVacancies();

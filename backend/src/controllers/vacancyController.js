@@ -195,18 +195,40 @@ exports.assignExamsToVacancy = async (req, res) => {
     console.log('[ASSIGN-EXAMS] Eliminados exámenes previos:', deleteResult.rowCount);
 
     // Asignar nuevos exámenes
+    let insertedCount = 0;
     for (let i = 0; i < examIds.length; i++) {
-      const insertResult = await pool.query(
-        'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_order) VALUES ($1, $2, $3)',
-        [vacancyId, examIds[i], i + 1]
-      );
-      console.log(`[ASSIGN-EXAMS] Insertado examen ${examIds[i]} en orden ${i + 1}:`, insertResult.rowCount);
+      try {
+        const examId = examIds[i];
+        const examOrder = i + 1;
+        console.log(`[ASSIGN-EXAMS] Intentando insertar: vacancyId=${vacancyId}, examId=${examId}, order=${examOrder}`);
+
+        const insertResult = await pool.query(
+          'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_order) VALUES ($1, $2, $3)',
+          [vacancyId, examId, examOrder]
+        );
+        console.log(`[ASSIGN-EXAMS] ✅ Insertado examen ${examId} en orden ${examOrder}:`, insertResult.rowCount);
+        insertedCount += insertResult.rowCount;
+      } catch (insertError) {
+        console.error(`[ASSIGN-EXAMS] ❌ Error insertando examen ${examIds[i]}:`, insertError.message);
+        throw insertError;
+      }
     }
+
+    console.log(`[ASSIGN-EXAMS] Total insertados: ${insertedCount}/${examIds.length}`);
+
+    // Verificar que se guardaron
+    const verifyResult = await pool.query(
+      'SELECT COUNT(*) as count FROM vacancy_exams WHERE vacancy_id = $1',
+      [vacancyId]
+    );
+    console.log(`[ASSIGN-EXAMS] Verificación final: ${verifyResult.rows[0].count} exámenes en vacante ${vacancyId}`);
 
     res.json({
       message: 'Exámenes asignados exitosamente',
       vacancyId,
-      examsAssigned: examIds.length
+      examsAssigned: examIds.length,
+      insertedCount,
+      verification: verifyResult.rows[0].count
     });
   } catch (error) {
     console.error('Error asignando exámenes:', error);

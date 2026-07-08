@@ -25,6 +25,15 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
+// Middleware - Log raw request ANTES de parsing
+app.use((req, res, next) => {
+  if (req.path.includes('/exams')) {
+    console.log('[RAW-REQUEST]', req.method, req.path);
+    console.log('[RAW-CONTENT-TYPE]', req.headers['content-type']);
+  }
+  next();
+});
+
 // Middleware - JSON PRIMERO, luego urlencoded
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: false }));

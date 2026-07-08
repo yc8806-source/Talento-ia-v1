@@ -233,24 +233,7 @@ exports.inviteToVacancy = async (req, res) => {
       [candidateId, vacancyId, 'invited', token]
     );
 
-    // Incrementar filled_positions en la vacante
-    await pool.query(
-      'UPDATE vacancies SET filled_positions = filled_positions + 1 WHERE id = $1',
-      [vacancyId]
-    );
-
-    // Verificar si la vacante está completa y cerrarla automáticamente
-    const vacancyCheck = await pool.query(
-      'SELECT available_positions, filled_positions FROM vacancies WHERE id = $1',
-      [vacancyId]
-    );
-    const vacancy = vacancyCheck.rows[0];
-    if (vacancy.filled_positions >= vacancy.available_positions) {
-      await pool.query(
-        'UPDATE vacancies SET status = $1 WHERE id = $2',
-        ['closed', vacancyId]
-      );
-    }
+    // Nota: filled_positions se incrementa cuando el analista marca al candidato como "apto", no al invitar
 
     res.status(201).json({
       message: 'Candidato invitado exitosamente',
@@ -267,6 +250,89 @@ exports.inviteToVacancy = async (req, res) => {
     console.error('Error invitando candidato:', error);
     res.status(500).json({
       error: 'Error al invitar candidato',
+      details: error.message
+    });
+  }
+};
+
+// MARCAR CANDIDATO COMO APTO/RECHAZADO
+exports.markCandidateStatus = async (req, res) => {
+  try {
+    const { candidateVacancyId, status } = req.body;
+
+    if (!candidateVacancyId || !status) {
+      return res.status(400).json({
+        error: 'candidateVacancyId y status son requeridos'
+      });
+    }
+
+    if (!['apto', 'rechazado', 'invited'].includes(status)) {
+      return res.status(400).json({
+        error: 'Status inválido. Debe ser: apto, rechazado o invited'
+      });
+    }
+
+    // Obtener información actual
+    const cvResult = await pool.query(
+      'SELECT candidate_id, vacancy_id, status FROM candidate_vacancies WHERE id = $1',
+      [candidateVacancyId]
+    );
+
+    if (cvResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Registro no encontrado'
+      });
+    }
+
+    const currentCV = cvResult.rows[0];
+    const wasApto = currentCV.status === 'apto';
+    const isApto = status === 'apto';
+
+    // Actualizar estado
+    await pool.query(
+      'UPDATE candidate_vacancies SET status = $1, updated_at = NOW() WHERE id = $2',
+      [status, candidateVacancyId]
+    );
+
+    // Ajustar filled_positions si cambió a/desde "apto"
+    if (isApto && !wasApto) {
+      // Se marcó como apto
+      await pool.query(
+        'UPDATE vacancies SET filled_positions = filled_positions + 1 WHERE id = $1',
+        [currentCV.vacancy_id]
+      );
+    } else if (!isApto && wasApto) {
+      // Se desmarcó de apto
+      await pool.query(
+        'UPDATE vacancies SET filled_positions = GREATEST(filled_positions - 1, 0) WHERE id = $1',
+        [currentCV.vacancy_id]
+      );
+    }
+
+    // Verificar si la vacante está completa y cerrarla automáticamente
+    const vacancyCheck = await pool.query(
+      'SELECT available_positions, filled_positions FROM vacancies WHERE id = $1',
+      [currentCV.vacancy_id]
+    );
+    const vacancy = vacancyCheck.rows[0];
+    if (vacancy.filled_positions >= vacancy.available_positions) {
+      await pool.query(
+        'UPDATE vacancies SET status = $1 WHERE id = $2',
+        ['closed', currentCV.vacancy_id]
+      );
+    }
+
+    res.json({
+      message: `Candidato marcado como ${status}`,
+      candidateVacancy: {
+        id: candidateVacancyId,
+        status: status
+      }
+    });
+  } catch (error) {
+    console.error('Error actualizando estado de candidato:', error);
+    res.status(500).json({
+      error: 'Error al actualizar candidato',
       details: error.message
     });
   }

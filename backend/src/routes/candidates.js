@@ -12,6 +12,9 @@ router.post('/import-csv', upload.single('file'), handleUploadError, candidateCo
 // Invitar candidato a vacante
 router.post('/invite', candidateController.inviteToVacancy);
 
+// Marcar candidato como apto/rechazado
+router.post('/mark-status', candidateController.markCandidateStatus);
+
 // Asignar vacante a candidato
 router.post('/assign-vacancy', candidateController.assignVacancy);
 

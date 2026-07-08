@@ -10,6 +10,7 @@ import EvaluationTest from './pages/EvaluationTest';
 import Admin from './pages/Admin';
 import AdminExams from './pages/AdminExams';
 import Reports from './pages/Reports';
+import Vacantes from './pages/Vacantes';
 import ShareEvaluations from './pages/ShareEvaluations';
 import PermissionsManagement from './pages/PermissionsManagement';
 import CandidateDashboard from './pages/CandidateDashboard';
@@ -65,6 +66,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard userRole={userRole} />} />
           <Route path="/mi-perfil" element={<CandidateDashboard />} />
           <Route path="/candidatos" element={<Candidates userRole={userRole} />} />
+          <Route path="/vacantes" element={<Vacantes userRole={userRole} />} />
           <Route path="/evaluaciones" element={<Evaluations userRole={userRole} />} />
           <Route path="/skills-assessments" element={<SkillsAssessmentsPage />} />
           <Route path="/skills-assessment/:assessmentId" element={<SkillsAssessmentTest />} />

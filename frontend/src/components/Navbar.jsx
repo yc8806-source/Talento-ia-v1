@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FiMenu, FiX, FiLogOut, FiHome, FiUsers, FiTrendingUp, FiSettings, FiBarChart2, FiShare2, FiLock, FiUser } from 'react-icons/fi';
+import { FiMenu, FiX, FiLogOut, FiHome, FiUsers, FiBriefcase, FiTrendingUp, FiSettings, FiBarChart2, FiShare2, FiLock, FiUser } from 'react-icons/fi';
 
 function Navbar({ onLogout }) {
   const navigate = useNavigate();
@@ -47,6 +47,7 @@ function Navbar({ onLogout }) {
               <NavLink to="/dashboard" icon={FiHome} label="Dashboard" />
               <NavLink to="/mi-perfil" icon={FiUser} label="Mi Perfil" />
               <NavLink to="/candidatos" icon={FiUsers} label="Candidatos" />
+              <NavLink to="/vacantes" icon={FiBriefcase} label="Vacantes" />
               <NavLink to="/evaluaciones" icon={FiTrendingUp} label="Evaluaciones" />
               <NavLink to="/reportes" icon={FiBarChart2} label="Reportes" />
               {role === 'admin' && (
@@ -92,6 +93,7 @@ function Navbar({ onLogout }) {
               <NavLink to="/dashboard" icon={FiHome} label="Dashboard" />
               <NavLink to="/mi-perfil" icon={FiUser} label="Mi Perfil" />
               <NavLink to="/candidatos" icon={FiUsers} label="Candidatos" />
+              <NavLink to="/vacantes" icon={FiBriefcase} label="Vacantes" />
               <NavLink to="/evaluaciones" icon={FiTrendingUp} label="Evaluaciones" />
               <NavLink to="/reportes" icon={FiBarChart2} label="Reportes" />
               {role === 'admin' && (

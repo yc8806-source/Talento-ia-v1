@@ -57,39 +57,18 @@ exports.getExams = async (req, res) => {
       'SELECT * FROM exams ORDER BY created_at DESC'
     );
 
-    // Para cada examen, obtener sus preguntas
-    const examsWithQuestions = await Promise.all(
-      result.rows.map(async (exam) => {
-        const questionsResult = await pool.query(
-          `SELECT q.id, q.title, q.type, q.competency_id
-           FROM questions q
-           INNER JOIN exam_questions eq ON q.id = eq.question_id
-           WHERE eq.exam_id = $1
-           ORDER BY eq.question_order`,
-          [exam.id]
-        );
-
-        return {
-          id: exam.id,
-          name: exam.name,
-          description: exam.description,
-          maxTimeMinutes: exam.max_time_minutes,
-          minScore: exam.min_score,
-          questions: questionsResult.rows.map(q => ({
-            id: q.id,
-            title: q.title,
-            type: q.type,
-            competencyId: q.competency_id
-          })),
-          totalQuestions: questionsResult.rows.length,
-          createdAt: exam.created_at
-        };
-      })
-    );
+    const exams = result.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      type: row.type,
+      maxTimeMinutes: row.max_time_minutes,
+      createdAt: row.created_at
+    }));
 
     res.json({
-      total: examsWithQuestions.length,
-      exams: examsWithQuestions
+      total: exams.length,
+      exams: exams
     });
   } catch (error) {
     console.error('Error obteniendo exámenes:', error);

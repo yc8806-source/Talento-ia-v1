@@ -46,37 +46,18 @@ exports.getVacancies = async (req, res) => {
       'SELECT * FROM vacancies ORDER BY created_at DESC'
     );
 
-    // Para cada vacante, obtener sus exámenes
-    const vacanciesWithExams = await Promise.all(
-      result.rows.map(async (vacancy) => {
-        const examsResult = await pool.query(
-          `SELECT e.id, e.name, e.description, e.max_time_minutes
-           FROM exams e
-           INNER JOIN vacancy_exams ve ON e.id = ve.exam_id
-           WHERE ve.vacancy_id = $1
-           ORDER BY ve.exam_order`,
-          [vacancy.id]
-        );
-
-        return {
-          id: vacancy.id,
-          title: vacancy.title,
-          description: vacancy.description,
-          status: vacancy.status,
-          exams: examsResult.rows.map(e => ({
-            id: e.id,
-            name: e.name,
-            description: e.description,
-            maxTimeMinutes: e.max_time_minutes
-          })),
-          createdAt: vacancy.created_at
-        };
-      })
-    );
+    const vacancies = result.rows.map(row => ({
+      id: row.id,
+      title: row.title,
+      description: row.description,
+      department: row.department,
+      status: row.status,
+      createdAt: row.created_at
+    }));
 
     res.json({
-      total: vacanciesWithExams.length,
-      vacancies: vacanciesWithExams
+      total: vacancies.length,
+      vacancies: vacancies
     });
   } catch (error) {
     console.error('Error obteniendo vacantes:', error);

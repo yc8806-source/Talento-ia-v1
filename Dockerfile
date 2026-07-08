@@ -9,6 +9,8 @@ RUN npm install --production
 
 COPY backend/ .
 
+COPY backend/.env.production .env
+
 EXPOSE 3000
 
 CMD ["npm", "start"]

@@ -165,17 +165,20 @@ exports.assignExamsToVacancy = async (req, res) => {
     let { vacancyId } = req.params;
     let { examIds } = req.body;
 
-    // Convertir a números explícitamente
-    vacancyId = parseInt(vacancyId, 10);
-    if (!Array.isArray(examIds)) {
-      examIds = [examIds];
-    }
-    examIds = examIds.map(id => parseInt(id, 10));
-
-    console.log('[ASSIGN-EXAMS] vacancyId (int):', vacancyId, typeof vacancyId);
-    console.log('[ASSIGN-EXAMS] examIds (int[]):', examIds, examIds.map(e => typeof e));
+    console.log('[ASSIGN-EXAMS] Recibido - vacancyId:', vacancyId, 'examIds:', examIds);
     console.log('[ASSIGN-EXAMS] req.params:', req.params);
     console.log('[ASSIGN-EXAMS] req.body:', req.body);
+
+    // Validar vacancyId
+    if (!vacancyId) {
+      return res.status(400).json({
+        error: 'Se requiere vacancyId como parámetro',
+        received: { vacancyId, params: req.params }
+      });
+    }
+
+    // No convertir a int, dejar que PostgreSQL lo maneje
+    // vacancyId se usa tal cual, PostgreSQL convertirá el string a int automáticamente
 
     if (!examIds || examIds.length === 0) {
       return res.status(400).json({

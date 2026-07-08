@@ -64,10 +64,8 @@ const spellingGrammarRoutes = require('./src/routes/spellingGrammar');
 const skillsAssessmentRoutes = require('./src/routes/skillsAssessment');
 const evaluationAssignmentRoutes = require('./src/routes/evaluationAssignments');
 const softSkillsRoutes = require('./src/routes/softSkills');
-const diagnosticRoutes = require('./src/routes/diagnostic');
 
 // Usar rutas
-app.use('/api/diagnostic', diagnosticRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/candidates', candidateRoutes);
 app.use('/api/candidate-dashboard', candidateDashboardRoutes);

@@ -19,7 +19,7 @@ export default function AssignEvaluationsToVacancy() {
 
         // Obtener exámenes disponibles
         const examsRes = await examAPI.getAll();
-        setExams(examsRes.data || []);
+        setExams(examsRes.data.exams || []);
       } catch (error) {
         console.error('Error cargando datos:', error);
         alert('Error al cargar los datos');

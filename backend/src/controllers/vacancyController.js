@@ -3,31 +3,21 @@ const pool = require('../config/database');
 // CREAR NUEVA VACANTE
 exports.createVacancy = async (req, res) => {
   try {
-    const { title, description, createdBy, examIds } = req.body;
+    const { title, description, department, status } = req.body;
 
-    if (!title || !createdBy) {
+    if (!title) {
       return res.status(400).json({
-        error: 'Faltan datos requeridos: title, createdBy'
+        error: 'Falta dato requerido: title'
       });
     }
 
     // Crear vacante
     const vacancyResult = await pool.query(
-      'INSERT INTO vacancies (title, description, created_by) VALUES ($1, $2, $3) RETURNING *',
-      [title, description, createdBy]
+      'INSERT INTO vacancies (title, description, department, status) VALUES ($1, $2, $3, $4) RETURNING *',
+      [title, description || '', department || '', status || 'open']
     );
 
     const vacancy = vacancyResult.rows[0];
-
-    // Si hay exámenes, asignarlos a la vacante
-    if (examIds && examIds.length > 0) {
-      for (let i = 0; i < examIds.length; i++) {
-        await pool.query(
-          'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_order) VALUES ($1, $2, $3)',
-          [vacancy.id, examIds[i], i + 1]
-        );
-      }
-    }
 
     res.status(201).json({
       message: 'Vacante creada exitosamente',
@@ -35,8 +25,8 @@ exports.createVacancy = async (req, res) => {
         id: vacancy.id,
         title: vacancy.title,
         description: vacancy.description,
+        department: vacancy.department,
         status: vacancy.status,
-        examsAssigned: examIds ? examIds.length : 0,
         createdAt: vacancy.created_at
       }
     });

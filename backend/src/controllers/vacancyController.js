@@ -3,7 +3,7 @@ const pool = require('../config/database');
 // CREAR NUEVA VACANTE
 exports.createVacancy = async (req, res) => {
   try {
-    const { title, description, department, status } = req.body;
+    const { title, description, department, status, available_positions } = req.body;
 
     if (!title) {
       return res.status(400).json({
@@ -13,8 +13,8 @@ exports.createVacancy = async (req, res) => {
 
     // Crear vacante
     const vacancyResult = await pool.query(
-      'INSERT INTO vacancies (title, description, department, status) VALUES ($1, $2, $3, $4) RETURNING *',
-      [title, description || '', department || '', status || 'open']
+      'INSERT INTO vacancies (title, description, department, status, available_positions) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [title, description || '', department || '', status || 'open', available_positions || 1]
     );
 
     const vacancy = vacancyResult.rows[0];
@@ -27,6 +27,8 @@ exports.createVacancy = async (req, res) => {
         description: vacancy.description,
         department: vacancy.department,
         status: vacancy.status,
+        availablePositions: vacancy.available_positions,
+        filledPositions: vacancy.filled_positions,
         createdAt: vacancy.created_at
       }
     });
@@ -52,6 +54,8 @@ exports.getVacancies = async (req, res) => {
       description: row.description,
       department: row.department,
       status: row.status,
+      availablePositions: row.available_positions,
+      filledPositions: row.filled_positions,
       createdAt: row.created_at
     }));
 

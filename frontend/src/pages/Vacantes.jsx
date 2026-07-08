@@ -10,7 +10,8 @@ export default function Vacantes() {
     title: '',
     description: '',
     department: '',
-    status: 'open'
+    status: 'open',
+    available_positions: 1
   });
   const navigate = useNavigate();
 
@@ -42,7 +43,7 @@ export default function Vacantes() {
     e.preventDefault();
     try {
       await vacancyAPI.create(formData);
-      setFormData({ title: '', description: '', department: '', status: 'open' });
+      setFormData({ title: '', description: '', department: '', status: 'open', available_positions: 1 });
       setShowForm(false);
       fetchVacancies();
     } catch (error) {
@@ -116,6 +117,15 @@ export default function Vacantes() {
             <option value="open">Abierta</option>
             <option value="closed">Cerrada</option>
           </select>
+          <input
+            type="number"
+            name="available_positions"
+            placeholder="Cantidad de vacantes"
+            value={formData.available_positions}
+            onChange={handleChange}
+            min="1"
+            style={{ display: 'block', width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ddd' }}
+          />
           <button
             type="submit"
             style={{
@@ -149,6 +159,7 @@ export default function Vacantes() {
               <h3>{vacancy.title}</h3>
               <p><strong>Departamento:</strong> {vacancy.department}</p>
               <p><strong>Estado:</strong> <span style={{ color: vacancy.status === 'open' ? 'green' : 'red' }}>{vacancy.status === 'open' ? 'Abierta' : 'Cerrada'}</span></p>
+              <p><strong>Vacantes:</strong> {vacancy.filledPositions || 0}/{vacancy.availablePositions || 1} ocupadas</p>
               <p>{vacancy.description}</p>
               <button
                 onClick={() => navigate(`/vacantes/${vacancy.id}/assign-evaluations`)}

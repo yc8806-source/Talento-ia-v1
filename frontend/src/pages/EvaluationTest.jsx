@@ -34,7 +34,11 @@ function EvaluationTest() {
         throw new Error('Exam ID inválido');
       }
 
-      const response = await examAPI.getExamById(examIdNum);
+      const API_URL = typeof window !== 'undefined' && window.location.hostname === 'talento-ia-v1-frontend.onrender.com'
+        ? 'https://talento-ia-v1-production.up.railway.app/api'
+        : 'http://localhost:3000/api';
+
+      const response = await axios.get(`${API_URL}/exams/${examIdNum}`);
 
       if (response.data) {
         const examData = {

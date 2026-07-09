@@ -34,9 +34,7 @@ function EvaluationTest() {
         throw new Error('Exam ID inválido');
       }
 
-      const API_URL = typeof window !== 'undefined' && window.location.hostname === 'talento-ia-v1-frontend.onrender.com'
-        ? 'https://talento-ia-v1-production.up.railway.app/api'
-        : 'http://localhost:3000/api';
+      const API_URL = 'https://talento-ia-v1-production.up.railway.app/api';
 
       // Primero verificar si el examen ya fue completado
       const statusResponse = await axios.get(`${API_URL}/evaluations/vacancy-by-token/${token}`);
@@ -126,9 +124,7 @@ function EvaluationTest() {
       });
 
       // Enviar respuestas al backend
-      const API_URL = typeof window !== 'undefined' && window.location.hostname === 'talento-ia-v1-frontend.onrender.com'
-        ? 'https://talento-ia-v1-production.up.railway.app/api'
-        : 'http://localhost:3000/api';
+      const API_URL = 'https://talento-ia-v1-production.up.railway.app/api';
 
       await axios.post(`${API_URL}/evaluations/${token}/exam-answers`, {
         examId: parseInt(examId, 10),

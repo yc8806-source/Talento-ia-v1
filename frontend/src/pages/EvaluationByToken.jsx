@@ -23,9 +23,7 @@ export default function EvaluationByToken() {
 
   const fetchVacancyData = async () => {
     try {
-      const API_URL = typeof window !== 'undefined' && window.location.hostname === 'talento-ia-v1-frontend.onrender.com'
-        ? 'https://talento-ia-v1-production.up.railway.app/api'
-        : 'http://localhost:3000/api';
+      const API_URL = 'https://talento-ia-v1-production.up.railway.app/api';
 
       // Obtener vacante e exámenes
       const vacancyRes = await axios.get(`${API_URL}/evaluations/vacancy-by-token/${token}`);

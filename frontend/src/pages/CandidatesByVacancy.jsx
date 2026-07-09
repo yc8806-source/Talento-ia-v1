@@ -42,6 +42,7 @@ export default function CandidatesByVacancy() {
       const res = await axios.get(`${API_URL}/candidates`);
       const invitedIds = candidates.map(c => c.candidateId);
       const candidatesList = res.data.candidates || res.data;
+      // Filtrar candidatos que NO estén invitados a esta vacante (comparar por id)
       const available = candidatesList.filter(c => !invitedIds.includes(c.id));
       setAvailableCandidates(available);
       setShowInviteModal(true);
@@ -58,8 +59,8 @@ export default function CandidatesByVacancy() {
 
     try {
       const response = await axios.post(`${API_URL}/candidates/invite`, {
-        candidateId: selectedCandidateId,
-        vacancyId: vacancyId
+        candidateId: parseInt(selectedCandidateId, 10),
+        vacancyId: parseInt(vacancyId, 10)
       });
 
       setInvitingToken(response.data.token);

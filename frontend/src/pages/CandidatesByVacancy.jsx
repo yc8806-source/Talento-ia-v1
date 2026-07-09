@@ -65,8 +65,14 @@ export default function CandidatesByVacancy() {
         vacancyId: parseInt(vacancyId, 10)
       });
 
+      console.log('📢 Respuesta completa:', response.data);
+      console.log('📢 candidateVacancy:', response.data.candidateVacancy);
+      console.log('📢 token:', response.data.candidateVacancy?.token);
+
       setInvitingToken(response.data.candidateVacancy.token);
+      console.log('📢 setInvitingToken ejecutado con:', response.data.candidateVacancy.token);
     } catch (error) {
+      console.error('❌ Error completo:', error);
       alert('Error al invitar: ' + (error.response?.data?.error || error.message));
     }
   };

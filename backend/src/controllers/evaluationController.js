@@ -636,7 +636,7 @@ exports.getExamStatusByToken = async (req, res) => {
 
     // Buscar candidate_vacancy
     const cvResult = await pool.query(
-      'SELECT cv.id, cv.candidate_id, cv.vacancy_id FROM candidate_vacancies WHERE token = $1',
+      'SELECT cv.id, cv.candidate_id, cv.vacancy_id FROM candidate_vacancies cv WHERE cv.token = $1',
       [token]
     );
 

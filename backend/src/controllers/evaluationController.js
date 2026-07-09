@@ -280,14 +280,14 @@ async function calculateAndSaveRecommendations(candidateVacancyId) {
   }
 }
 
-// OBTENER RESULTADOS DE EVALUACIÓN
+// OBTENER RESULTADOS DE EVALUACIÓN (por candidateVacancyId)
 exports.getEvaluationResults = async (req, res) => {
   try {
     const { candidateVacancyId } = req.params;
 
     // Obtener información básica
     const infoQuery = await pool.query(
-      `SELECT cv.id, c.first_name, c.last_name, c.email, v.title
+      `SELECT cv.id, cv.candidate_id, c.first_name, c.last_name, c.email, v.title
        FROM candidate_vacancies cv
        INNER JOIN candidates c ON cv.candidate_id = c.id
        INNER JOIN vacancies v ON cv.vacancy_id = v.id
@@ -302,26 +302,44 @@ exports.getEvaluationResults = async (req, res) => {
     }
 
     const info = infoQuery.rows[0];
+    const candidateId = info.candidate_id;
 
-    // Obtener resultados por competencia
+    // Obtener exámenes completados y sus puntajes por competencia
     const resultsQuery = await pool.query(
-      `SELECT c.name, c.id, er.total_score, er.max_possible_score, er.percentage
-       FROM evaluation_results er
-       INNER JOIN competencies c ON er.competency_id = c.id
-       WHERE er.candidate_vacancy_id = $1
-       ORDER BY er.percentage DESC`,
-      [candidateVacancyId]
+      `SELECT
+        comp.id,
+        comp.name,
+        COUNT(DISTINCT ea.id) as total_answers,
+        SUM(qo.score) as total_score,
+        COUNT(DISTINCT q.id) * 5 as max_possible_score
+       FROM exam_answers ea
+       INNER JOIN questions q ON ea.question_id = q.id
+       INNER JOIN question_options qo ON ea.answer_value = qo.id
+       INNER JOIN competencies comp ON q.competency_id = comp.id
+       WHERE ea.candidate_id = $1
+       GROUP BY comp.id, comp.name
+       ORDER BY total_score DESC`,
+      [candidateId]
     );
 
-    // Obtener recomendaciones
-    const recommendationsQuery = await pool.query(
-      `SELECT o.name, o.id, cr.affinity_score, cr.ranking
-       FROM candidate_recommendations cr
-       INNER JOIN operations o ON cr.operation_id = o.id
-       WHERE cr.candidate_vacancy_id = $1
-       ORDER BY cr.ranking`,
-      [candidateVacancyId]
-    );
+    // Calcular puntajes por competencia
+    const competencies = resultsQuery.rows.map(r => {
+      const percentage = r.max_possible_score > 0
+        ? (r.total_score / r.max_possible_score) * 100
+        : 0;
+      return {
+        name: r.name,
+        id: r.id,
+        score: r.total_score || 0,
+        maxScore: r.max_possible_score || 0,
+        percentage: Math.round(percentage * 100) / 100
+      };
+    });
+
+    // Obtener total general
+    const totalScore = competencies.reduce((sum, c) => sum + (c.score || 0), 0);
+    const totalMax = competencies.reduce((sum, c) => sum + (c.maxScore || 0), 0);
+    const overallPercentage = totalMax > 0 ? (totalScore / totalMax) * 100 : 0;
 
     res.json({
       candidate: {
@@ -330,20 +348,13 @@ exports.getEvaluationResults = async (req, res) => {
         email: info.email
       },
       vacancy: info.title,
-      competencies: resultsQuery.rows.map(r => ({
-        name: r.name,
-        id: r.id,
-        score: r.total_score,
-        maxScore: r.max_possible_score,
-        percentage: Math.round(r.percentage * 100) / 100
-      })),
-      recommendations: recommendationsQuery.rows.map(r => ({
-        rank: r.ranking,
-        operation: r.name,
-        operationId: r.id,
-        affinityScore: r.affinity_score
-      })),
-      mainRecommendation: recommendationsQuery.rows.length > 0 ? recommendationsQuery.rows[0] : null
+      overall: {
+        score: totalScore,
+        maxScore: totalMax,
+        percentage: Math.round(overallPercentage * 100) / 100
+      },
+      competencies: competencies,
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
     console.error('Error obteniendo resultados:', error);

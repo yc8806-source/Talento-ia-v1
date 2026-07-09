@@ -147,6 +147,7 @@ export default function EvaluationByToken() {
                   </p>
                 </div>
                 <button
+                  onClick={() => navigate(`/evaluacion/${token}?examId=${exam.id}`)}
                   style={{
                     padding: '10px 20px',
                     backgroundColor: '#28a745',

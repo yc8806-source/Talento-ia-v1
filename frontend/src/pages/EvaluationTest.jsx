@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { evaluationAPI, examAPI } from '../api/api';
 
 function EvaluationTest() {
   const { token } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const examId = searchParams.get('examId');
+
   const [exam, setExam] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -15,52 +18,41 @@ function EvaluationTest() {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
 
   useEffect(() => {
-    // Simular carga del examen
-    // En producción, recuperarías el examen basado en el token
-    const mockExam = {
-      id: 1,
-      name: 'Prueba Psicométrica Inicial',
-      maxTimeMinutes: 15,
-      questions: [
-        {
-          id: 1,
-          title: 'Cuando un cliente está molesto, ¿qué harías primero?',
-          type: 'multiple_choice',
-          options: [
-            { id: 1, text: 'Defender la política de la empresa', score: 0 },
-            { id: 2, text: 'Escuchar al cliente antes de responder', score: 10 },
-            { id: 3, text: 'Finalizar la llamada', score: 0 },
-            { id: 4, text: 'Transferir inmediatamente', score: 5 },
-          ],
-        },
-        {
-          id: 2,
-          title: 'Qué tan importante es para ti alcanzar objetivos de ventas',
-          type: 'likert',
-          options: [
-            { id: 5, text: 'Nada importante', score: 2 },
-            { id: 6, text: 'Poco importante', score: 4 },
-            { id: 7, text: 'Neutral', score: 6 },
-            { id: 8, text: 'Muy importante', score: 8 },
-            { id: 9, text: 'Extremadamente importante', score: 10 },
-          ],
-        },
-        {
-          id: 3,
-          title: 'La empatía es clave para brindar buen servicio al cliente',
-          type: 'true_false',
-          options: [
-            { id: 10, text: 'Verdadero', score: 10 },
-            { id: 11, text: 'Falso', score: 0 },
-          ],
-        },
-      ],
-    };
+    if (!token || !examId) {
+      setLoading(false);
+      return;
+    }
 
-    setExam(mockExam);
-    setTimeLeft(mockExam.maxTimeMinutes * 60);
-    setLoading(false);
-  }, [token]);
+    fetchExamData();
+  }, [token, examId]);
+
+  const fetchExamData = async () => {
+    try {
+      const API_URL = typeof window !== 'undefined' && window.location.hostname === 'talento-ia-v1-frontend.onrender.com'
+        ? 'https://talento-ia-v1-production.up.railway.app/api'
+        : 'http://localhost:3000/api';
+
+      const response = await examAPI.getExamById(examId);
+
+      if (response.data) {
+        const examData = {
+          id: response.data.id,
+          name: response.data.name,
+          maxTimeMinutes: response.data.maxTimeMinutes || 60,
+          questions: response.data.questions || []
+        };
+
+        setExam(examData);
+        setTimeLeft(examData.maxTimeMinutes * 60);
+      }
+    } catch (error) {
+      console.error('Error cargando examen:', error);
+      alert('Error al cargar el examen');
+      navigate(`/evaluacion?token=${token}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Timer
   useEffect(() => {

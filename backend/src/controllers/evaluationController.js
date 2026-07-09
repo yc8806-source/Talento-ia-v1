@@ -304,38 +304,68 @@ exports.getEvaluationResults = async (req, res) => {
     const info = infoQuery.rows[0];
     const candidateId = info.candidate_id;
 
-    // Obtener respuestas por competencia con scores correctos
-    const resultsQuery = await pool.query(
+    // Obtener TODAS las respuestas SIN JOINs complejos que causen duplicados
+    const allAnswers = await pool.query(
       `SELECT
-        comp.id,
-        comp.name,
-        COUNT(DISTINCT ea.question_id) as total_questions_answered,
-        SUM(CAST(COALESCE(qo.score, '0') AS FLOAT)) as total_score
+        ea.id,
+        ea.question_id,
+        ea.answer_value,
+        q.competency_id,
+        comp.name as competency_name
        FROM exam_answers ea
        INNER JOIN questions q ON ea.question_id = q.id
-       LEFT JOIN question_options qo ON qo.id = ea.answer_value AND qo.question_id = q.id
        INNER JOIN competencies comp ON q.competency_id = comp.id
        WHERE ea.candidate_id = $1
-       GROUP BY comp.id, comp.name
-       ORDER BY total_score DESC`,
+       ORDER BY comp.id, q.id`,
       [candidateId]
     );
 
-    // Calcular puntajes por competencia
-    const competencies = resultsQuery.rows.map(r => {
-      // Máximo posible = preguntas respondidas * 5 (puntuación máxima por pregunta)
-      const maxScore = (r.total_questions_answered || 0) * 5;
+    // Obtener scores de opciones (query separada sin JOIN multiplicador)
+    const optionScores = {};
+    const optionIdsToGet = [...new Set(allAnswers.rows.map(a => a.answer_value).filter(v => v))];
+
+    if (optionIdsToGet.length > 0) {
+      const scoresResult = await pool.query(
+        `SELECT id, CAST(score AS FLOAT) as score FROM question_options WHERE id = ANY($1::int[])`,
+        [optionIdsToGet]
+      );
+      scoresResult.rows.forEach(row => {
+        optionScores[row.id] = row.score;
+      });
+    }
+
+    // Agrupar y sumar EN CÓDIGO para evitar JOIN duplicado
+    const competencyMap = {};
+    allAnswers.rows.forEach(answer => {
+      if (!competencyMap[answer.competency_id]) {
+        competencyMap[answer.competency_id] = {
+          name: answer.competency_name,
+          id: answer.competency_id,
+          questions: new Set(),
+          totalScore: 0
+        };
+      }
+
+      competencyMap[answer.competency_id].questions.add(answer.question_id);
+      const score = optionScores[answer.answer_value] || 0;
+      competencyMap[answer.competency_id].totalScore += score;
+    });
+
+    // Convertir a formato esperado
+    const competencies = Object.values(competencyMap).map(comp => {
+      const totalQuestions = comp.questions.size;
+      const maxScore = totalQuestions * 5;
       const percentage = maxScore > 0
-        ? (r.total_score / maxScore) * 100
+        ? (comp.totalScore / maxScore) * 100
         : 0;
       return {
-        name: r.name,
-        id: r.id,
-        score: Math.round(r.total_score || 0),
+        name: comp.name,
+        id: comp.id,
+        score: Math.round(comp.totalScore),
         maxScore: maxScore,
         percentage: Math.round(percentage)
       };
-    });
+    }).sort((a, b) => b.score - a.score);
 
     // Obtener total general
     const totalScore = competencies.reduce((sum, c) => sum + (c.score || 0), 0);

@@ -277,8 +277,28 @@ function Evaluations() {
 
             {/* Contenido */}
             <div className="p-6 space-y-8">
-              {/* Card de Recomendación Principal */}
-              {results.recommendations.length > 0 && (
+              {/* Puntaje General */}
+              {results.overall && (
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-300 rounded-lg p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="text-5xl">📊</div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-blue-700 uppercase tracking-wide">
+                        Puntaje General
+                      </p>
+                      <h3 className="text-3xl font-bold text-blue-900">
+                        {results.overall.percentage}%
+                      </h3>
+                      <p className="text-blue-600 mt-1">
+                        <span className="font-semibold">{results.overall.score}</span> de <span className="font-semibold">{results.overall.maxScore}</span> puntos
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Card de Recomendación Principal (si existe) */}
+              {results.recommendations && results.recommendations.length > 0 && (
                 <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg p-6">
                   <div className="flex items-center gap-4">
                     <div className="text-5xl">🏆</div>

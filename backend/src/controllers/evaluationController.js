@@ -322,17 +322,40 @@ exports.getEvaluationResults = async (req, res) => {
       [candidateId]
     );
 
+    // Obtener el número TOTAL de preguntas por competencia en el examen
+    const totalQuestionsQuery = await pool.query(`
+      SELECT
+        comp.id,
+        comp.name,
+        COUNT(DISTINCT q.id) as total_questions
+      FROM exam_questions eq
+      INNER JOIN questions q ON eq.question_id = q.id
+      INNER JOIN exams e ON eq.exam_id = e.id
+      INNER JOIN competencies comp ON q.competency_id = comp.id
+      WHERE e.id IN (
+        SELECT DISTINCT exam_id FROM exam_answers WHERE candidate_id = $1
+      )
+      GROUP BY comp.id, comp.name
+    `, [candidateId]);
+
+    // Crear un mapa de máximos por competencia
+    const maxByCompetency = {};
+    totalQuestionsQuery.rows.forEach(row => {
+      maxByCompetency[row.id] = row.total_questions * 5; // 5 es el score máximo por pregunta
+    });
+
     // Calcular puntajes por competencia
     const competencies = resultsQuery.rows.map(r => {
-      const percentage = r.max_possible_score > 0
-        ? (r.total_score / r.max_possible_score) * 100
+      const maxScore = maxByCompetency[r.id] || 0;
+      const percentage = maxScore > 0
+        ? (r.total_score / maxScore) * 100
         : 0;
       return {
         name: r.name,
         id: r.id,
-        score: r.total_score || 0,
-        maxScore: r.max_possible_score || 0,
-        percentage: Math.round(percentage * 100) / 100
+        score: Math.round(r.total_score || 0),
+        maxScore: maxScore,
+        percentage: Math.round(percentage)
       };
     });
 
@@ -340,6 +363,13 @@ exports.getEvaluationResults = async (req, res) => {
     const totalScore = competencies.reduce((sum, c) => sum + (c.score || 0), 0);
     const totalMax = competencies.reduce((sum, c) => sum + (c.maxScore || 0), 0);
     const overallPercentage = totalMax > 0 ? (totalScore / totalMax) * 100 : 0;
+
+    console.log(`Results calculation for candidate ${candidateId}:`, {
+      totalScore,
+      totalMax,
+      overallPercentage: Math.round(overallPercentage),
+      competencies: competencies.map(c => ({ name: c.name, score: c.score, max: c.maxScore, pct: c.percentage }))
+    });
 
     res.json({
       candidate: {

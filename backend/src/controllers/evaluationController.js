@@ -335,6 +335,7 @@ exports.getEvaluationResults = async (req, res) => {
     }
 
     // Agrupar y sumar EN CÓDIGO para evitar JOIN duplicado
+    // Normalizar scores: Multiple Choice (0-100) se divide por 20 para llegar a escala 0-5
     const competencyMap = {};
     allAnswers.rows.forEach(answer => {
       if (!competencyMap[answer.competency_id]) {
@@ -347,14 +348,20 @@ exports.getEvaluationResults = async (req, res) => {
       }
 
       competencyMap[answer.competency_id].questions.add(answer.question_id);
-      const score = optionScores[answer.answer_value] || 0;
+      let score = optionScores[answer.answer_value] || 0;
+      // Normalizar: si score es 0-100 (múltiple choice), dividir por 20 para obtener 0-5
+      if (score > 5) {
+        score = score / 20;
+      }
       competencyMap[answer.competency_id].totalScore += score;
     });
 
     // Convertir a formato esperado
+    // NOTA: Preguntas pueden tener diferentes escalas (Likert 1-5, Multiple Choice 0-100)
+    // Por eso usamos 100 como máximo por pregunta (cubre ambas escalas)
     const competencies = Object.values(competencyMap).map(comp => {
       const totalQuestions = comp.questions.size;
-      const maxScore = totalQuestions * 5;
+      const maxScore = totalQuestions * 100; // Máximo 100 por pregunta
       const percentage = maxScore > 0
         ? (comp.totalScore / maxScore) * 100
         : 0;

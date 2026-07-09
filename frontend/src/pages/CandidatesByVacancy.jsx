@@ -54,23 +54,38 @@ export default function CandidatesByVacancy() {
   };
 
   const handleInviteCandidate = async () => {
+    console.log('🔵 handleInviteCandidate iniciado');
+    console.log('🔵 selectedCandidateId:', selectedCandidateId);
+
     if (!selectedCandidateId) {
       alert('Selecciona un candidato');
       return;
     }
 
     try {
+      console.log('🔵 Haciendo POST a /candidates/invite');
       const response = await axios.post(`${API_URL}/candidates/invite`, {
         candidateId: parseInt(selectedCandidateId, 10),
         vacancyId: parseInt(vacancyId, 10)
       });
 
-      console.log('📢 Respuesta completa:', response.data);
-      console.log('📢 candidateVacancy:', response.data.candidateVacancy);
-      console.log('📢 token:', response.data.candidateVacancy?.token);
+      console.log('🟢 Respuesta recibida, status:', response.status);
+      console.log('🟢 Respuesta completa:', response.data);
+      console.log('🟢 candidateVacancy:', response.data.candidateVacancy);
+      console.log('🟢 token:', response.data.candidateVacancy?.token);
 
-      setInvitingToken(response.data.candidateVacancy.token);
-      console.log('📢 setInvitingToken ejecutado con:', response.data.candidateVacancy.token);
+      const token = response.data.candidateVacancy?.token;
+      console.log('🟢 Token extraído:', token, 'tipo:', typeof token);
+
+      console.log('🟢 Llamando setInvitingToken con:', token);
+      setInvitingToken(token);
+      console.log('🟢 setInvitingToken ejecutado');
+
+      // Asegurar que el modal no se cierre
+      console.log('🟢 invitingToken antes:', invitingToken);
+      setTimeout(() => {
+        console.log('🟢 invitingToken después (1s):', invitingToken);
+      }, 1000);
     } catch (error) {
       console.error('❌ Error completo:', error);
       console.error('❌ Error status:', error.response?.status);

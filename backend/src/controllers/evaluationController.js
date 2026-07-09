@@ -380,14 +380,11 @@ exports.getEvaluationResults = async (req, res) => {
 
     // Obtener información básica
     const infoQuery = await pool.query(
-      `SELECT cv.id, cv.candidate_id, c.first_name, c.last_name, c.email, v.title, e.exam_id
+      `SELECT cv.id, cv.candidate_id, c.first_name, c.last_name, c.email, v.title
        FROM candidate_vacancies cv
        INNER JOIN candidates c ON cv.candidate_id = c.id
        INNER JOIN vacancies v ON cv.vacancy_id = v.id
-       LEFT JOIN exam_answers ea ON c.id = ea.candidate_id
-       LEFT JOIN exams e ON ea.exam_id = e.id
-       WHERE cv.id = $1
-       LIMIT 1`,
+       WHERE cv.id = $1`,
       [candidateVacancyId]
     );
 
@@ -400,15 +397,15 @@ exports.getEvaluationResults = async (req, res) => {
     const info = infoQuery.rows[0];
     const candidateId = info.candidate_id;
 
-    // Verificar si es TPL-80
+    // Verificar si es TPL-80 - obtener nombre del examen de las respuestas
     const examCheck = await pool.query(
-      `SELECT name FROM exams WHERE id IN (
-        SELECT DISTINCT exam_id FROM exam_answers WHERE candidate_id = $1
-      )`,
+      `SELECT DISTINCT e.name FROM exams e
+       INNER JOIN exam_answers ea ON e.id = ea.exam_id
+       WHERE ea.candidate_id = $1`,
       [candidateId]
     );
 
-    const isTPL80 = examCheck.rows.some(row => row.name && row.name.includes('TPL-80'));
+    const isTPL80 = examCheck.rows.length > 0 && examCheck.rows.some(row => row.name && row.name.includes('TPL-80'));
 
     if (isTPL80) {
       // Cálculo especializado para TPL-80

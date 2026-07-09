@@ -324,7 +324,7 @@ export default function CandidatesByVacancy() {
         </table>
       </div>
 
-      {/* Modal de Invitación */}
+      {/* Modal de Invitación - DEBUG */}
       {showInviteModal && (
         <div style={{
           position: 'fixed',

@@ -29,11 +29,12 @@ function EvaluationTest() {
 
   const fetchExamData = async () => {
     try {
-      const API_URL = typeof window !== 'undefined' && window.location.hostname === 'talento-ia-v1-frontend.onrender.com'
-        ? 'https://talento-ia-v1-production.up.railway.app/api'
-        : 'http://localhost:3000/api';
+      const examIdNum = parseInt(examId, 10);
+      if (!examIdNum) {
+        throw new Error('Exam ID inválido');
+      }
 
-      const response = await examAPI.getExamById(examId);
+      const response = await examAPI.getExamById(examIdNum);
 
       if (response.data) {
         const examData = {

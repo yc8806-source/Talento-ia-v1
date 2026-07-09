@@ -280,6 +280,99 @@ async function calculateAndSaveRecommendations(candidateVacancyId) {
   }
 }
 
+// CALCULAR RESULTADOS TPL-80 (Con preguntas inversas y scoring por competencia)
+async function calculateTPLResults(candidateId) {
+  try {
+    // Obtener todas las respuestas con info de preguntas
+    const allAnswers = await pool.query(
+      `SELECT
+        ea.question_id,
+        ea.answer_value,
+        q.competency_id,
+        comp.name as competency_name,
+        q.is_inverse
+       FROM exam_answers ea
+       INNER JOIN questions q ON ea.question_id = q.id
+       INNER JOIN competencies comp ON q.competency_id = comp.id
+       WHERE ea.candidate_id = $1
+       ORDER BY comp.id, q.id`,
+      [candidateId]
+    );
+
+    if (allAnswers.rows.length === 0) {
+      return null;
+    }
+
+    // Obtener scores de opciones
+    const optionIdsToGet = [...new Set(allAnswers.rows.map(a => a.answer_value).filter(v => v))];
+    const optionScores = {};
+
+    if (optionIdsToGet.length > 0) {
+      const scoresResult = await pool.query(
+        `SELECT id, CAST(score AS FLOAT) as score FROM question_options WHERE id = ANY($1::int[])`,
+        [optionIdsToGet]
+      );
+      scoresResult.rows.forEach(row => {
+        optionScores[row.id] = row.score;
+      });
+    }
+
+    // Agrupar por competencia e invertir scores si es necesario
+    const competencyMap = {};
+    allAnswers.rows.forEach(answer => {
+      if (!competencyMap[answer.competency_id]) {
+        competencyMap[answer.competency_id] = {
+          name: answer.competency_name,
+          id: answer.competency_id,
+          questions: [],
+          totalScore: 0
+        };
+      }
+
+      let score = optionScores[answer.answer_value] || 0;
+
+      // Invertir score si es pregunta inversa (escala Likert: 1↔5, 2↔4, 3 stays 3)
+      if (answer.is_inverse && score >= 1 && score <= 5) {
+        score = 6 - score;
+      }
+
+      competencyMap[answer.competency_id].questions.push(answer.question_id);
+      competencyMap[answer.competency_id].totalScore += score;
+    });
+
+    // Calcular niveles por competencia (8-40 escala)
+    const getLevelTPL = (score) => {
+      if (score >= 34) return { level: 'Muy Alto', range: '34-40' };
+      if (score >= 28) return { level: 'Alto', range: '28-33' };
+      if (score >= 22) return { level: 'Medio', range: '22-27' };
+      if (score >= 16) return { level: 'Bajo', range: '16-21' };
+      return { level: 'Muy Bajo', range: '8-15' };
+    };
+
+    const competencies = Object.values(competencyMap).map(comp => {
+      const uniqueQuestions = [...new Set(comp.questions)];
+      const totalQuestions = uniqueQuestions.length;
+      const maxScore = totalQuestions * 5; // Máximo 5 por pregunta (escala Likert)
+      const levelInfo = getLevelTPL(comp.totalScore);
+
+      return {
+        name: comp.name,
+        id: comp.id,
+        score: Math.round(comp.totalScore * 100) / 100,
+        maxScore: maxScore,
+        percentage: Math.round((comp.totalScore / maxScore) * 100 * 100) / 100,
+        level: levelInfo.level,
+        range: levelInfo.range
+      };
+    }).sort((a, b) => b.score - a.score);
+
+    return competencies;
+  } catch (error) {
+    console.error('Error calculating TPL results:', error);
+    throw error;
+  }
+}
+
 // OBTENER RESULTADOS DE EVALUACIÓN (por candidateVacancyId)
 exports.getEvaluationResults = async (req, res) => {
   try {
@@ -287,11 +380,14 @@ exports.getEvaluationResults = async (req, res) => {
 
     // Obtener información básica
     const infoQuery = await pool.query(
-      `SELECT cv.id, cv.candidate_id, c.first_name, c.last_name, c.email, v.title
+      `SELECT cv.id, cv.candidate_id, c.first_name, c.last_name, c.email, v.title, e.exam_id
        FROM candidate_vacancies cv
        INNER JOIN candidates c ON cv.candidate_id = c.id
        INNER JOIN vacancies v ON cv.vacancy_id = v.id
-       WHERE cv.id = $1`,
+       LEFT JOIN exam_answers ea ON c.id = ea.candidate_id
+       LEFT JOIN exams e ON ea.exam_id = e.id
+       WHERE cv.id = $1
+       LIMIT 1`,
       [candidateVacancyId]
     );
 
@@ -304,96 +400,127 @@ exports.getEvaluationResults = async (req, res) => {
     const info = infoQuery.rows[0];
     const candidateId = info.candidate_id;
 
-    // Obtener TODAS las respuestas SIN JOINs complejos que causen duplicados
-    const allAnswers = await pool.query(
-      `SELECT
-        ea.id,
-        ea.question_id,
-        ea.answer_value,
-        q.competency_id,
-        comp.name as competency_name
-       FROM exam_answers ea
-       INNER JOIN questions q ON ea.question_id = q.id
-       INNER JOIN competencies comp ON q.competency_id = comp.id
-       WHERE ea.candidate_id = $1
-       ORDER BY comp.id, q.id`,
+    // Verificar si es TPL-80
+    const examCheck = await pool.query(
+      `SELECT name FROM exams WHERE id IN (
+        SELECT DISTINCT exam_id FROM exam_answers WHERE candidate_id = $1
+      )`,
       [candidateId]
     );
 
-    // Obtener scores de opciones (query separada sin JOIN multiplicador)
-    const optionScores = {};
-    const optionIdsToGet = [...new Set(allAnswers.rows.map(a => a.answer_value).filter(v => v))];
+    const isTPL80 = examCheck.rows.some(row => row.name && row.name.includes('TPL-80'));
 
-    if (optionIdsToGet.length > 0) {
-      const scoresResult = await pool.query(
-        `SELECT id, CAST(score AS FLOAT) as score FROM question_options WHERE id = ANY($1::int[])`,
-        [optionIdsToGet]
-      );
-      scoresResult.rows.forEach(row => {
-        optionScores[row.id] = row.score;
-      });
-    }
+    if (isTPL80) {
+      // Cálculo especializado para TPL-80
+      const competencies = await calculateTPLResults(candidateId);
 
-    // Agrupar y sumar EN CÓDIGO - Escala consistente 0-100 por pregunta
-    const competencyMap = {};
-    allAnswers.rows.forEach(answer => {
-      if (!competencyMap[answer.competency_id]) {
-        competencyMap[answer.competency_id] = {
-          name: answer.competency_name,
-          id: answer.competency_id,
-          questions: new Set(),
-          totalScore: 0
-        };
+      if (!competencies) {
+        return res.status(404).json({
+          error: 'No hay respuestas registradas'
+        });
       }
 
-      competencyMap[answer.competency_id].questions.add(answer.question_id);
-      const score = optionScores[answer.answer_value] || 0;
-      competencyMap[answer.competency_id].totalScore += score;
-    });
+      const totalScore = competencies.reduce((sum, c) => sum + c.score, 0);
+      const overallPercentage = (totalScore / (competencies.length * 40)) * 100;
 
-    // Calcular porcentajes - Fórmula: (suma_scores / (preguntas × 100)) × 100
-    const competencies = Object.values(competencyMap).map(comp => {
-      const totalQuestions = comp.questions.size;
-      const maxScore = totalQuestions * 100; // Máximo 100 por pregunta
-      const percentage = maxScore > 0
-        ? (comp.totalScore / maxScore) * 100
-        : 0;
-      return {
-        name: comp.name,
-        id: comp.id,
-        score: Math.round(comp.totalScore),
-        maxScore: maxScore,
-        percentage: Math.round(percentage * 100) / 100
-      };
-    }).sort((a, b) => b.score - a.score);
+      res.json({
+        candidate: {
+          firstName: info.first_name,
+          lastName: info.last_name,
+          email: info.email
+        },
+        vacancy: info.title,
+        testType: 'TPL-80',
+        overall: {
+          score: Math.round(totalScore * 100) / 100,
+          maxScore: competencies.length * 40,
+          percentage: Math.round(overallPercentage * 100) / 100
+        },
+        competencies: competencies,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      // Cálculo estándar para otros exámenes (0-100)
+      const allAnswers = await pool.query(
+        `SELECT
+          ea.id,
+          ea.question_id,
+          ea.answer_value,
+          q.competency_id,
+          comp.name as competency_name
+         FROM exam_answers ea
+         INNER JOIN questions q ON ea.question_id = q.id
+         INNER JOIN competencies comp ON q.competency_id = comp.id
+         WHERE ea.candidate_id = $1
+         ORDER BY comp.id, q.id`,
+        [candidateId]
+      );
 
-    // Obtener total general
-    const totalScore = competencies.reduce((sum, c) => sum + (c.score || 0), 0);
-    const totalMax = competencies.reduce((sum, c) => sum + (c.maxScore || 0), 0);
-    const overallPercentage = totalMax > 0 ? (totalScore / totalMax) * 100 : 0;
+      const optionScores = {};
+      const optionIdsToGet = [...new Set(allAnswers.rows.map(a => a.answer_value).filter(v => v))];
 
-    console.log(`Results calculation for candidate ${candidateId}:`, {
-      totalScore,
-      totalMax,
-      overallPercentage: Math.round(overallPercentage),
-      competencies: competencies.map(c => ({ name: c.name, score: c.score, max: c.maxScore, pct: c.percentage }))
-    });
+      if (optionIdsToGet.length > 0) {
+        const scoresResult = await pool.query(
+          `SELECT id, CAST(score AS FLOAT) as score FROM question_options WHERE id = ANY($1::int[])`,
+          [optionIdsToGet]
+        );
+        scoresResult.rows.forEach(row => {
+          optionScores[row.id] = row.score;
+        });
+      }
 
-    res.json({
-      candidate: {
-        firstName: info.first_name,
-        lastName: info.last_name,
-        email: info.email
-      },
-      vacancy: info.title,
-      overall: {
-        score: totalScore,
-        maxScore: totalMax,
-        percentage: Math.round(overallPercentage * 100) / 100
-      },
-      competencies: competencies,
-      timestamp: new Date().toISOString()
-    });
+      const competencyMap = {};
+      allAnswers.rows.forEach(answer => {
+        if (!competencyMap[answer.competency_id]) {
+          competencyMap[answer.competency_id] = {
+            name: answer.competency_name,
+            id: answer.competency_id,
+            questions: new Set(),
+            totalScore: 0
+          };
+        }
+
+        competencyMap[answer.competency_id].questions.add(answer.question_id);
+        const score = optionScores[answer.answer_value] || 0;
+        competencyMap[answer.competency_id].totalScore += score;
+      });
+
+      const competencies = Object.values(competencyMap).map(comp => {
+        const totalQuestions = comp.questions.size;
+        const maxScore = totalQuestions * 100;
+        const percentage = maxScore > 0
+          ? (comp.totalScore / maxScore) * 100
+          : 0;
+        return {
+          name: comp.name,
+          id: comp.id,
+          score: Math.round(comp.totalScore),
+          maxScore: maxScore,
+          percentage: Math.round(percentage * 100) / 100
+        };
+      }).sort((a, b) => b.score - a.score);
+
+      const totalScore = competencies.reduce((sum, c) => sum + (c.score || 0), 0);
+      const totalMax = competencies.reduce((sum, c) => sum + (c.maxScore || 0), 0);
+      const overallPercentage = totalMax > 0 ? (totalScore / totalMax) * 100 : 0;
+
+      res.json({
+        candidate: {
+          firstName: info.first_name,
+          lastName: info.last_name,
+          email: info.email
+        },
+        vacancy: info.title,
+        testType: 'Professional',
+        overall: {
+          score: totalScore,
+          maxScore: totalMax,
+          percentage: Math.round(overallPercentage * 100) / 100
+        },
+        competencies: competencies,
+        timestamp: new Date().toISOString()
+      });
+    }
   } catch (error) {
     console.error('Error obteniendo resultados:', error);
     res.status(500).json({

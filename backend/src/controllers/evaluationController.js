@@ -304,17 +304,16 @@ exports.getEvaluationResults = async (req, res) => {
     const info = infoQuery.rows[0];
     const candidateId = info.candidate_id;
 
-    // Obtener exámenes completados y sus puntajes por competencia
+    // Obtener respuestas por competencia con scores correctos
     const resultsQuery = await pool.query(
       `SELECT
         comp.id,
         comp.name,
-        COUNT(DISTINCT ea.id) as total_answers,
-        SUM(qo.score) as total_score,
-        COUNT(DISTINCT q.id) * 5 as max_possible_score
+        COUNT(DISTINCT ea.question_id) as total_questions_answered,
+        SUM(COALESCE(qo.score, 0)) as total_score
        FROM exam_answers ea
        INNER JOIN questions q ON ea.question_id = q.id
-       INNER JOIN question_options qo ON ea.answer_value = qo.id
+       LEFT JOIN question_options qo ON qo.id = ea.answer_value AND qo.question_id = q.id
        INNER JOIN competencies comp ON q.competency_id = comp.id
        WHERE ea.candidate_id = $1
        GROUP BY comp.id, comp.name
@@ -322,31 +321,10 @@ exports.getEvaluationResults = async (req, res) => {
       [candidateId]
     );
 
-    // Obtener el número TOTAL de preguntas por competencia en el examen
-    const totalQuestionsQuery = await pool.query(`
-      SELECT
-        comp.id,
-        comp.name,
-        COUNT(DISTINCT q.id) as total_questions
-      FROM exam_questions eq
-      INNER JOIN questions q ON eq.question_id = q.id
-      INNER JOIN exams e ON eq.exam_id = e.id
-      INNER JOIN competencies comp ON q.competency_id = comp.id
-      WHERE e.id IN (
-        SELECT DISTINCT exam_id FROM exam_answers WHERE candidate_id = $1
-      )
-      GROUP BY comp.id, comp.name
-    `, [candidateId]);
-
-    // Crear un mapa de máximos por competencia
-    const maxByCompetency = {};
-    totalQuestionsQuery.rows.forEach(row => {
-      maxByCompetency[row.id] = row.total_questions * 5; // 5 es el score máximo por pregunta
-    });
-
     // Calcular puntajes por competencia
     const competencies = resultsQuery.rows.map(r => {
-      const maxScore = maxByCompetency[r.id] || 0;
+      // Máximo posible = preguntas respondidas * 5 (puntuación máxima por pregunta)
+      const maxScore = (r.total_questions_answered || 0) * 5;
       const percentage = maxScore > 0
         ? (r.total_score / maxScore) * 100
         : 0;

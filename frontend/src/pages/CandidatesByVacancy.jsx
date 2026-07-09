@@ -73,6 +73,9 @@ export default function CandidatesByVacancy() {
       console.log('📢 setInvitingToken ejecutado con:', response.data.candidateVacancy.token);
     } catch (error) {
       console.error('❌ Error completo:', error);
+      console.error('❌ Error status:', error.response?.status);
+      console.error('❌ Error data:', error.response?.data);
+      console.error('❌ Error message:', error.message);
       alert('Error al invitar: ' + (error.response?.data?.error || error.message));
     }
   };

@@ -320,26 +320,33 @@ async function calculateTPLResults(candidateId, examId) {
     }
 
     // Mapeo de competencias (8 preguntas por competencia)
-    const competencyNames = [
-      'Responsabilidad', 'Orientación al Logro', 'Trabajo Bajo Presión',
-      'Adaptabilidad', 'Trabajo en Equipo', 'Orientación al Cliente',
-      'Integridad', 'Inteligencia Emocional', 'Iniciativa', 'Resiliencia'
-    ];
+    const competencyNameMap = {
+      7: 'Responsabilidad',
+      8: 'Orientación al Logro',
+      9: 'Trabajo Bajo Presión',
+      10: 'Adaptabilidad',
+      11: 'Trabajo en Equipo',
+      12: 'Orientación al Cliente',
+      13: 'Integridad',
+      14: 'Inteligencia Emocional',
+      15: 'Iniciativa',
+      16: 'Resiliencia'
+    };
 
     // Agrupar por competencia e invertir scores si es necesario
     const competencyMap = {};
     allAnswers.rows.forEach(answer => {
       // Si competency_id es NULL, calcular basándose en question_order
       let compId = answer.competency_id;
-      let compName = answer.competency_name;
 
       if (!compId && answer.question_order) {
         const compIndex = Math.floor((answer.question_order - 1) / 8);
         compId = 7 + compIndex; // IDs van de 7 a 16
-        compName = competencyNames[compIndex];
       }
 
       if (!compId) return; // Skip si no se puede determinar competencia
+
+      const compName = competencyNameMap[compId] || answer.competency_name || `Competencia ${compId}`;
 
       if (!competencyMap[compId]) {
         competencyMap[compId] = {

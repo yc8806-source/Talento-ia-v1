@@ -38,16 +38,6 @@ function EvaluationTest() {
         ? 'https://talento-ia-v1-production.up.railway.app/api'
         : 'http://localhost:3000/api';
 
-      // Primero verificar si el examen ya fue completado
-      const statusRes = await axios.get(`${API_URL}/evaluations/status/${token}`);
-      const examStatus = statusRes.data.exams.find(e => e.id === examIdNum);
-
-      if (examStatus?.completed) {
-        alert('Este examen ya fue completado. No puedes repetirlo.');
-        navigate(`/evaluacion?token=${token}`);
-        return;
-      }
-
       const response = await axios.get(`${API_URL}/exams/${examIdNum}`);
 
       if (response.data) {

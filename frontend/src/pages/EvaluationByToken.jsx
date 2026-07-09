@@ -30,29 +30,8 @@ export default function EvaluationByToken() {
       // Obtener vacante e exámenes
       const vacancyRes = await axios.get(`${API_URL}/evaluations/vacancy-by-token/${token}`);
 
-      // Obtener estado de los exámenes (cuáles ya fueron completados)
-      let examsWithStatus = vacancyRes.data.exams || [];
-
-      try {
-        const statusRes = await axios.get(`${API_URL}/evaluations/status/${token}`);
-        // Combinar datos: agregar estado "completed" a cada examen
-        examsWithStatus = vacancyRes.data.exams.map(exam => {
-          const status = statusRes.data.exams.find(e => e.id === exam.id);
-          return {
-            ...exam,
-            completed: status?.completed || false
-          };
-        });
-      } catch (statusErr) {
-        console.warn('No se pudo obtener estado de exámenes, usando datos sin estado:', statusErr);
-        // Si el endpoint de status falla, usar datos sin estado (backward compatible)
-        examsWithStatus = vacancyRes.data.exams || [];
-      }
-
-      setData({
-        ...vacancyRes.data,
-        exams: examsWithStatus
-      });
+      // Usar datos tal como vienen, sin validación de estado por ahora
+      setData(vacancyRes.data);
     } catch (err) {
       console.error('Error:', err);
       setError(err.response?.data?.error || 'Error al cargar la evaluación');

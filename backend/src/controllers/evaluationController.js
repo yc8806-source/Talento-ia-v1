@@ -310,7 +310,7 @@ exports.getEvaluationResults = async (req, res) => {
         comp.id,
         comp.name,
         COUNT(DISTINCT ea.question_id) as total_questions_answered,
-        SUM(COALESCE(qo.score, 0)) as total_score
+        SUM(CAST(COALESCE(qo.score, '0') AS FLOAT)) as total_score
        FROM exam_answers ea
        INNER JOIN questions q ON ea.question_id = q.id
        LEFT JOIN question_options qo ON qo.id = ea.answer_value AND qo.question_id = q.id

@@ -281,9 +281,9 @@ async function calculateAndSaveRecommendations(candidateVacancyId) {
 }
 
 // CALCULAR RESULTADOS TPL-80 (Con preguntas inversas y scoring por competencia)
-async function calculateTPLResults(candidateId) {
+async function calculateTPLResults(candidateId, examId) {
   try {
-    // Obtener todas las respuestas con info de preguntas
+    // Obtener todas las respuestas del TPL-80 específico
     const allAnswers = await pool.query(
       `SELECT
         ea.question_id,
@@ -294,9 +294,9 @@ async function calculateTPLResults(candidateId) {
        FROM exam_answers ea
        INNER JOIN questions q ON ea.question_id = q.id
        INNER JOIN competencies comp ON q.competency_id = comp.id
-       WHERE ea.candidate_id = $1
+       WHERE ea.candidate_id = $1 AND ea.exam_id = $2
        ORDER BY comp.id, q.id`,
-      [candidateId]
+      [candidateId, examId]
     );
 
     if (allAnswers.rows.length === 0) {
@@ -397,19 +397,20 @@ exports.getEvaluationResults = async (req, res) => {
     const info = infoQuery.rows[0];
     const candidateId = info.candidate_id;
 
-    // Verificar si es TPL-80 - obtener nombre del examen de las respuestas
+    // Verificar si es TPL-80 - obtener nombre y id del examen
     const examCheck = await pool.query(
-      `SELECT DISTINCT e.name FROM exams e
+      `SELECT DISTINCT e.id, e.name FROM exams e
        INNER JOIN exam_answers ea ON e.id = ea.exam_id
        WHERE ea.candidate_id = $1`,
       [candidateId]
     );
 
-    const isTPL80 = examCheck.rows.length > 0 && examCheck.rows.some(row => row.name && row.name.includes('TPL-80'));
+    const tpl80Exam = examCheck.rows.find(row => row.name && row.name.includes('TPL-80'));
+    const isTPL80 = tpl80Exam !== undefined;
 
     if (isTPL80) {
       // Cálculo especializado para TPL-80
-      const competencies = await calculateTPLResults(candidateId);
+      const competencies = await calculateTPLResults(candidateId, tpl80Exam.id);
 
       if (!competencies) {
         return res.status(404).json({

@@ -165,38 +165,26 @@ exports.assignExamsToVacancy = async (req, res) => {
     let { vacancyId } = req.params;
     let { examIds } = req.body;
 
-    console.log('[ASSIGN-EXAMS] Recibido - vacancyId:', vacancyId, 'examIds:', examIds);
-    console.log('[ASSIGN-EXAMS] req.params:', req.params);
-    console.log('[ASSIGN-EXAMS] req.body:', req.body);
-    console.log('[ASSIGN-EXAMS] typeof examIds:', typeof examIds, 'isArray:', Array.isArray(examIds));
-
     // Validar vacancyId
     if (!vacancyId) {
       return res.status(400).json({
-        error: 'Se requiere vacancyId como parámetro',
-        received: { vacancyId, params: req.params }
+        error: 'Se requiere vacancyId como parámetro'
       });
     }
 
     // Validar y procesar examIds
     if (!examIds) {
       return res.status(400).json({
-        error: 'Se requiere examIds en el body',
-        received: { examIds, body: req.body }
+        error: 'Se requiere examIds en el body'
       });
     }
 
     // Si examIds es objeto con claves numéricas (resultado de form-urlencoded), convertir a array
     if (typeof examIds === 'object' && !Array.isArray(examIds)) {
-      console.log('[ASSIGN-EXAMS] examIds es objeto, intentando convertir a array...');
-      console.log('[ASSIGN-EXAMS] Claves:', Object.keys(examIds));
-
-      // Detectar si es objeto con índices numéricos (es decir, un array convertido)
       const keys = Object.keys(examIds);
       if (keys.every(k => /^\d+$/.test(k))) {
         // Es un objeto con claves numéricas - convertir a array
         examIds = keys.map(k => parseInt(examIds[k], 10));
-        console.log('[ASSIGN-EXAMS] Convertido a array:', examIds);
       } else {
         // Objeto regular - envolver en array
         examIds = [examIds];
@@ -221,40 +209,24 @@ exports.assignExamsToVacancy = async (req, res) => {
       });
     }
 
-    console.log('[ASSIGN-EXAMS] Vacante encontrada, ID:', vacancyId);
-
     // Eliminar exámenes actuales
-    const deleteResult = await pool.query('DELETE FROM vacancy_exams WHERE vacancy_id = $1', [vacancyId]);
-    console.log('[ASSIGN-EXAMS] Eliminados exámenes previos:', deleteResult.rowCount);
+    await pool.query('DELETE FROM vacancy_exams WHERE vacancy_id = $1', [vacancyId]);
 
     // Asignar nuevos exámenes
     let insertedCount = 0;
     for (let i = 0; i < examIds.length; i++) {
-      try {
-        const examId = examIds[i];
-        const examOrder = i + 1;
-        console.log(`[ASSIGN-EXAMS] Intentando insertar: vacancyId=${vacancyId}, examId=${examId}, order=${examOrder}`);
-
-        const insertResult = await pool.query(
-          'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_order) VALUES ($1, $2, $3)',
-          [vacancyId, examId, examOrder]
-        );
-        console.log(`[ASSIGN-EXAMS] ✅ Insertado examen ${examId} en orden ${examOrder}:`, insertResult.rowCount);
-        insertedCount += insertResult.rowCount;
-      } catch (insertError) {
-        console.error(`[ASSIGN-EXAMS] ❌ Error insertando examen ${examIds[i]}:`, insertError.message);
-        throw insertError;
-      }
+      const insertResult = await pool.query(
+        'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_order) VALUES ($1, $2, $3)',
+        [vacancyId, examIds[i], i + 1]
+      );
+      insertedCount += insertResult.rowCount;
     }
-
-    console.log(`[ASSIGN-EXAMS] Total insertados: ${insertedCount}/${examIds.length}`);
 
     // Verificar que se guardaron
     const verifyResult = await pool.query(
       'SELECT COUNT(*) as count FROM vacancy_exams WHERE vacancy_id = $1',
       [vacancyId]
     );
-    console.log(`[ASSIGN-EXAMS] Verificación final: ${verifyResult.rows[0].count} exámenes en vacante ${vacancyId}`);
 
     res.json({
       message: 'Exámenes asignados exitosamente',

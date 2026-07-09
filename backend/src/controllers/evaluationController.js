@@ -602,7 +602,7 @@ exports.getVacancyEvaluationByToken = async (req, res) => {
        INNER JOIN vacancy_exams ve ON e.id = ve.exam_id
        LEFT JOIN exam_answers ea ON e.id = ea.exam_id AND ea.candidate_id = $2
        WHERE ve.vacancy_id = $1
-       GROUP BY e.id, e.name, e.description, e.type, e.max_time_minutes
+       GROUP BY e.id, e.name, e.description, e.type, e.max_time_minutes, ve.exam_order
        ORDER BY ve.exam_order`,
       [candidateVacancy.vacancy_id, candidateVacancy.candidate_id]
     );

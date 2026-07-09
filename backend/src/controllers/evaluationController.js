@@ -290,12 +290,14 @@ async function calculateTPLResults(candidateId, examId) {
         ea.answer_value,
         q.competency_id,
         comp.name as competency_name,
-        q.is_inverse
+        q.is_inverse,
+        eq.question_order
        FROM exam_answers ea
        INNER JOIN questions q ON ea.question_id = q.id
-       INNER JOIN competencies comp ON q.competency_id = comp.id
+       INNER JOIN exam_questions eq ON q.id = eq.question_id AND eq.exam_id = $2
+       LEFT JOIN competencies comp ON q.competency_id = comp.id
        WHERE ea.candidate_id = $1 AND ea.exam_id = $2
-       ORDER BY comp.id, q.id`,
+       ORDER BY eq.question_order, q.id`,
       [candidateId, examId]
     );
 
@@ -317,13 +319,32 @@ async function calculateTPLResults(candidateId, examId) {
       });
     }
 
+    // Mapeo de competencias (8 preguntas por competencia)
+    const competencyNames = [
+      'Responsabilidad', 'Orientación al Logro', 'Trabajo Bajo Presión',
+      'Adaptabilidad', 'Trabajo en Equipo', 'Orientación al Cliente',
+      'Integridad', 'Inteligencia Emocional', 'Iniciativa', 'Resiliencia'
+    ];
+
     // Agrupar por competencia e invertir scores si es necesario
     const competencyMap = {};
     allAnswers.rows.forEach(answer => {
-      if (!competencyMap[answer.competency_id]) {
-        competencyMap[answer.competency_id] = {
-          name: answer.competency_name,
-          id: answer.competency_id,
+      // Si competency_id es NULL, calcular basándose en question_order
+      let compId = answer.competency_id;
+      let compName = answer.competency_name;
+
+      if (!compId && answer.question_order) {
+        const compIndex = Math.floor((answer.question_order - 1) / 8);
+        compId = 7 + compIndex; // IDs van de 7 a 16
+        compName = competencyNames[compIndex];
+      }
+
+      if (!compId) return; // Skip si no se puede determinar competencia
+
+      if (!competencyMap[compId]) {
+        competencyMap[compId] = {
+          name: compName,
+          id: compId,
           questions: [],
           totalScore: 0
         };
@@ -336,8 +357,8 @@ async function calculateTPLResults(candidateId, examId) {
         score = 6 - score;
       }
 
-      competencyMap[answer.competency_id].questions.push(answer.question_id);
-      competencyMap[answer.competency_id].totalScore += score;
+      competencyMap[compId].questions.push(answer.question_id);
+      competencyMap[compId].totalScore += score;
     });
 
     // Calcular niveles por competencia (8-40 escala)

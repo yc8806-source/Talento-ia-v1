@@ -21,6 +21,9 @@ router.get('/token/:token', evaluationController.getEvaluationByToken);
 // Obtener información de vacante y exámenes por token (para invitación sin login)
 router.get('/vacancy-by-token/:token', evaluationController.getVacancyEvaluationByToken);
 
+// Guardar respuestas de examen por token
+router.post('/:token/exam-answers', evaluationController.submitExamAnswersByToken);
+
 // Obtener resultados
 router.get('/:candidateVacancyId/results', evaluationController.getEvaluationResults);
 

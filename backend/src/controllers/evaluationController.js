@@ -628,3 +628,80 @@ exports.getVacancyEvaluationByToken = async (req, res) => {
     });
   }
 };
+
+// GUARDAR RESPUESTAS DE EXAMEN CON TOKEN
+exports.submitExamAnswersByToken = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { examId, answers } = req.body;
+
+    if (!token || !examId || !answers || Object.keys(answers).length === 0) {
+      return res.status(400).json({
+        error: 'Token, examId y answers son requeridos'
+      });
+    }
+
+    // Buscar candidate_vacancy con el token
+    const cvResult = await pool.query(
+      'SELECT * FROM candidate_vacancies WHERE token = $1',
+      [token]
+    );
+
+    if (cvResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Token inválido'
+      });
+    }
+
+    const candidateVacancy = cvResult.rows[0];
+    const candidateId = candidateVacancy.candidate_id;
+
+    // Guardar cada respuesta
+    let totalScore = 0;
+    for (const [questionIndexStr, answerData] of Object.entries(answers)) {
+      const questionIndex = parseInt(questionIndexStr, 10);
+      const questionId = answerData.questionId || answerData.id;
+      const optionId = answerData.optionId || answerData.selected;
+      const timeSpent = answerData.timeSpent || 0;
+
+      // Obtener puntaje de la opción
+      const scoreResult = await pool.query(
+        'SELECT score FROM question_options WHERE id = $1 AND question_id = $2',
+        [optionId, questionId]
+      );
+
+      let score = 0;
+      if (scoreResult.rows.length > 0) {
+        score = parseFloat(scoreResult.rows[0].score) || 0;
+        totalScore += score;
+      }
+
+      // Guardar respuesta
+      await pool.query(
+        'INSERT INTO exam_answers (candidate_id, exam_id, question_id, answer_value, time_spent_seconds) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (candidate_id, exam_id, question_id) DO UPDATE SET answer_value = $4, time_spent_seconds = $5',
+        [candidateId, examId, questionId, optionId, timeSpent]
+      );
+    }
+
+    // Actualizar estado de candidate_vacancy a 'completed'
+    await pool.query(
+      'UPDATE candidate_vacancies SET status = $1, updated_at = NOW() WHERE id = $2',
+      ['completed', candidateVacancy.id]
+    );
+
+    res.status(201).json({
+      message: 'Respuestas guardadas exitosamente',
+      candidateId,
+      examId,
+      answersCount: Object.keys(answers).length,
+      totalScore,
+      status: 'completed'
+    });
+  } catch (error) {
+    console.error('Error guardando respuestas:', error);
+    res.status(500).json({
+      error: 'Error al guardar respuestas',
+      details: error.message
+    });
+  }
+};

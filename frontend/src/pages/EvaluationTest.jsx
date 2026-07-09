@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import axios from 'axios';
 import { evaluationAPI, examAPI } from '../api/api';
 
 function EvaluationTest() {
@@ -92,11 +93,41 @@ function EvaluationTest() {
   };
 
   const handleSubmit = async () => {
-    setCompleted(true);
-    alert(
-      'Evaluación completada. Tu evaluación ha sido registrada y será revisada por nuestro equipo.'
-    );
-    // En producción, aquí enviarías las respuestas al backend
+    try {
+      setCompleted(true);
+
+      // Preparar respuestas para enviar
+      const answersToSend = {};
+      Object.entries(answers).forEach(([indexStr, optionId]) => {
+        const index = parseInt(indexStr, 10);
+        const question = exam.questions[index];
+        answersToSend[index] = {
+          id: question.id,
+          questionId: question.id,
+          optionId: optionId,
+          selected: optionId,
+          timeSpent: exam.maxTimeMinutes * 60 - (timeLeft || 0)
+        };
+      });
+
+      // Enviar respuestas al backend
+      const API_URL = typeof window !== 'undefined' && window.location.hostname === 'talento-ia-v1-frontend.onrender.com'
+        ? 'https://talento-ia-v1-production.up.railway.app/api'
+        : 'http://localhost:3000/api';
+
+      await axios.post(`${API_URL}/evaluations/${token}/exam-answers`, {
+        examId: parseInt(examId, 10),
+        answers: answersToSend
+      });
+
+      alert(
+        'Evaluación completada. Tu evaluación ha sido registrada y será revisada por nuestro equipo.'
+      );
+    } catch (error) {
+      console.error('Error enviando respuestas:', error);
+      alert('Error al guardar evaluación: ' + (error.response?.data?.error || error.message));
+      setCompleted(false);
+    }
   };
 
   const formatTime = (seconds) => {

@@ -737,11 +737,18 @@ exports.submitExamAnswersByToken = async (req, res) => {
 
     // Guardar cada respuesta
     let totalScore = 0;
+    let savedCount = 0;
+
     for (const [questionIndexStr, answerData] of Object.entries(answers)) {
       const questionIndex = parseInt(questionIndexStr, 10);
       const questionId = answerData.questionId || answerData.id;
       const optionId = answerData.optionId || answerData.selected;
       const timeSpent = answerData.timeSpent || 0;
+
+      if (!questionId || !optionId) {
+        console.warn(`Skipping answer: missing questionId (${questionId}) or optionId (${optionId})`);
+        continue;
+      }
 
       // Obtener puntaje de la opción
       const scoreResult = await pool.query(
@@ -755,11 +762,24 @@ exports.submitExamAnswersByToken = async (req, res) => {
         totalScore += score;
       }
 
-      // Guardar respuesta
-      await pool.query(
-        'INSERT INTO exam_answers (candidate_id, exam_id, question_id, answer_value, time_spent_seconds) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (candidate_id, exam_id, question_id) DO UPDATE SET answer_value = $4, time_spent_seconds = $5',
-        [candidateId, examId, questionId, optionId, timeSpent]
-      );
+      // Guardar respuesta - usar DELETE + INSERT para mayor confiabilidad
+      try {
+        await pool.query(
+          'DELETE FROM exam_answers WHERE candidate_id = $1 AND exam_id = $2 AND question_id = $3',
+          [candidateId, examId, questionId]
+        );
+
+        const insertResult = await pool.query(
+          'INSERT INTO exam_answers (candidate_id, exam_id, question_id, answer_value, time_spent_seconds) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+          [candidateId, examId, questionId, optionId, timeSpent]
+        );
+
+        if (insertResult.rows.length > 0) {
+          savedCount++;
+        }
+      } catch (insertError) {
+        console.error(`Error inserting answer for question ${questionId}:`, insertError.message);
+      }
     }
 
     // Actualizar estado de candidate_vacancy a 'completed'
@@ -773,6 +793,7 @@ exports.submitExamAnswersByToken = async (req, res) => {
       candidateId,
       examId,
       answersCount: Object.keys(answers).length,
+      savedCount: savedCount,
       totalScore,
       status: 'completed'
     });

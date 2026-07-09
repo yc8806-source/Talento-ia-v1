@@ -65,7 +65,7 @@ export default function CandidatesByVacancy() {
         vacancyId: parseInt(vacancyId, 10)
       });
 
-      setInvitingToken(response.data.token);
+      setInvitingToken(response.data.candidateVacancy.token);
     } catch (error) {
       alert('Error al invitar: ' + (error.response?.data?.error || error.message));
     }

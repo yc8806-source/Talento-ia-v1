@@ -348,7 +348,7 @@ function Evaluations() {
               </div>
 
               {/* Otras Recomendaciones */}
-              {results.recommendations.length > 1 && (
+              {results.recommendations && results.recommendations.length > 1 && (
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                     🎯 Otras Opciones

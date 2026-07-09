@@ -186,9 +186,21 @@ exports.assignExamsToVacancy = async (req, res) => {
       });
     }
 
-    if (!Array.isArray(examIds)) {
-      console.log('[ASSIGN-EXAMS] examIds no es array, convirtiendo...');
-      examIds = [examIds];
+    // Si examIds es objeto con claves numéricas (resultado de form-urlencoded), convertir a array
+    if (typeof examIds === 'object' && !Array.isArray(examIds)) {
+      console.log('[ASSIGN-EXAMS] examIds es objeto, intentando convertir a array...');
+      console.log('[ASSIGN-EXAMS] Claves:', Object.keys(examIds));
+
+      // Detectar si es objeto con índices numéricos (es decir, un array convertido)
+      const keys = Object.keys(examIds);
+      if (keys.every(k => /^\d+$/.test(k))) {
+        // Es un objeto con claves numéricas - convertir a array
+        examIds = keys.map(k => parseInt(examIds[k], 10));
+        console.log('[ASSIGN-EXAMS] Convertido a array:', examIds);
+      } else {
+        // Objeto regular - envolver en array
+        examIds = [examIds];
+      }
     }
 
     if (examIds.length === 0) {

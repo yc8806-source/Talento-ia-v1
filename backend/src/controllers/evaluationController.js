@@ -594,14 +594,17 @@ exports.getVacancyEvaluationByToken = async (req, res) => {
 
     const candidateVacancy = cvResult.rows[0];
 
-    // Obtener los exámenes asignados a la vacante
+    // Obtener los exámenes asignados a la vacante con estado de completitud
     const examsResult = await pool.query(
-      `SELECT e.id, e.name, e.description, e.type, e.max_time_minutes
+      `SELECT e.id, e.name, e.description, e.type, e.max_time_minutes,
+              (COUNT(ea.id) > 0) as completed
        FROM exams e
        INNER JOIN vacancy_exams ve ON e.id = ve.exam_id
+       LEFT JOIN exam_answers ea ON e.id = ea.exam_id AND ea.candidate_id = $2
        WHERE ve.vacancy_id = $1
+       GROUP BY e.id, e.name, e.description, e.type, e.max_time_minutes
        ORDER BY ve.exam_order`,
-      [candidateVacancy.vacancy_id]
+      [candidateVacancy.vacancy_id, candidateVacancy.candidate_id]
     );
 
     res.json({
@@ -617,7 +620,8 @@ exports.getVacancyEvaluationByToken = async (req, res) => {
         name: exam.name,
         description: exam.description,
         type: exam.type,
-        maxTimeMinutes: exam.max_time_minutes
+        maxTimeMinutes: exam.max_time_minutes,
+        completed: exam.completed
       }))
     });
   } catch (error) {

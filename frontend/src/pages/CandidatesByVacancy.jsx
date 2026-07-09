@@ -45,6 +45,8 @@ export default function CandidatesByVacancy() {
       // Filtrar candidatos que NO estén invitados a esta vacante (comparar por id)
       const available = candidatesList.filter(c => !invitedIds.includes(c.id));
       setAvailableCandidates(available);
+      setSelectedCandidateId(null);  // Resetear selección
+      setInvitingToken(null);  // Resetear token
       setShowInviteModal(true);
     } catch (error) {
       alert('Error al cargar candidatos: ' + error.message);

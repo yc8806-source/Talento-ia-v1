@@ -41,7 +41,8 @@ export default function CandidatesByVacancy() {
     try {
       const res = await axios.get(`${API_URL}/candidates`);
       const invitedIds = candidates.map(c => c.candidateId);
-      const available = res.data.filter(c => !invitedIds.includes(c.id));
+      const candidatesList = res.data.candidates || res.data;
+      const available = candidatesList.filter(c => !invitedIds.includes(c.id));
       setAvailableCandidates(available);
       setShowInviteModal(true);
     } catch (error) {

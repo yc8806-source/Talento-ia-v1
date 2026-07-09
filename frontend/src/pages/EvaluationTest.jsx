@@ -38,6 +38,16 @@ function EvaluationTest() {
         ? 'https://talento-ia-v1-production.up.railway.app/api'
         : 'http://localhost:3000/api';
 
+      // Primero verificar si el examen ya fue completado
+      const statusRes = await axios.get(`${API_URL}/evaluations/status/${token}`);
+      const examStatus = statusRes.data.exams.find(e => e.id === examIdNum);
+
+      if (examStatus?.completed) {
+        alert('Este examen ya fue completado. No puedes repetirlo.');
+        navigate(`/evaluacion?token=${token}`);
+        return;
+      }
+
       const response = await axios.get(`${API_URL}/exams/${examIdNum}`);
 
       if (response.data) {
@@ -168,16 +178,32 @@ function EvaluationTest() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow p-8 text-center max-w-md">
-          <div className="text-5xl mb-4">✓</div>
+          <div className="text-5xl mb-4">✅</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            ¡Evaluación Completada!
+            ¡Examen Completado!
           </h1>
           <p className="text-gray-600 mb-6">
-            Gracias por completar la evaluación. Tu respuesta ha sido registrada.
+            Gracias por completar el examen. Tu respuesta ha sido registrada.
           </p>
-          <p className="text-gray-600 text-sm">
+          <p className="text-gray-600 text-sm mb-8">
             Nuestro equipo de RR.HH te contactará en los próximos 5 días hábiles.
           </p>
+          <button
+            onClick={() => navigate(`/evaluacion?token=${token}`)}
+            style={{
+              width: '100%',
+              padding: '12px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '1em',
+              fontWeight: 'bold'
+            }}
+          >
+            Volver a Exámenes
+          </button>
         </div>
       </div>
     );

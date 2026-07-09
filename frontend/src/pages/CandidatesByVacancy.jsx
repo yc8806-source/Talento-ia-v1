@@ -54,43 +54,19 @@ export default function CandidatesByVacancy() {
   };
 
   const handleInviteCandidate = async () => {
-    console.log('🔵 handleInviteCandidate iniciado');
-    console.log('🔵 selectedCandidateId:', selectedCandidateId);
-
     if (!selectedCandidateId) {
       alert('Selecciona un candidato');
       return;
     }
 
     try {
-      console.log('🔵 Haciendo POST a /candidates/invite');
       const response = await axios.post(`${API_URL}/candidates/invite`, {
         candidateId: parseInt(selectedCandidateId, 10),
         vacancyId: parseInt(vacancyId, 10)
       });
 
-      console.log('🟢 Respuesta recibida, status:', response.status);
-      console.log('🟢 Respuesta completa:', response.data);
-      console.log('🟢 candidateVacancy:', response.data.candidateVacancy);
-      console.log('🟢 token:', response.data.candidateVacancy?.token);
-
-      const token = response.data.candidateVacancy?.token;
-      console.log('🟢 Token extraído:', token, 'tipo:', typeof token);
-
-      console.log('🟢 Llamando setInvitingToken con:', token);
-      setInvitingToken(token);
-      console.log('🟢 setInvitingToken ejecutado');
-
-      // Asegurar que el modal no se cierre
-      console.log('🟢 invitingToken antes:', invitingToken);
-      setTimeout(() => {
-        console.log('🟢 invitingToken después (1s):', invitingToken);
-      }, 1000);
+      setInvitingToken(response.data.candidateVacancy.token);
     } catch (error) {
-      console.error('❌ Error completo:', error);
-      console.error('❌ Error status:', error.response?.status);
-      console.error('❌ Error data:', error.response?.data);
-      console.error('❌ Error message:', error.message);
       alert('Error al invitar: ' + (error.response?.data?.error || error.message));
     }
   };
@@ -465,6 +441,26 @@ export default function CandidatesByVacancy() {
                   <code style={{ display: 'block', marginTop: '8px', wordBreak: 'break-all' }}>
                     {typeof window !== 'undefined' ? window.location.origin : 'https://talento-ia-v1-frontend.onrender.com'}/evaluacion?token={invitingToken}
                   </code>
+                  <button
+                    onClick={() => {
+                      const fullUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://talento-ia-v1-frontend.onrender.com'}/evaluacion?token=${invitingToken}`;
+                      navigator.clipboard.writeText(fullUrl);
+                      alert('Enlace copiado al portapapeles');
+                    }}
+                    style={{
+                      marginTop: '10px',
+                      padding: '8px 12px',
+                      backgroundColor: '#25d366',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '0.85em',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    📱 Copiar Enlace WhatsApp
+                  </button>
                 </div>
 
                 <button

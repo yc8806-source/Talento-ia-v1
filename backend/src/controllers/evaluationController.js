@@ -629,6 +629,70 @@ exports.getVacancyEvaluationByToken = async (req, res) => {
   }
 };
 
+// OBTENER ESTADO DE EXÁMENES POR TOKEN
+exports.getExamStatusByToken = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    // Buscar candidate_vacancy
+    const cvResult = await pool.query(
+      'SELECT cv.id, cv.candidate_id, cv.vacancy_id FROM candidate_vacancies WHERE token = $1',
+      [token]
+    );
+
+    if (cvResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Token inválido'
+      });
+    }
+
+    const candidateVacancy = cvResult.rows[0];
+    const candidateId = candidateVacancy.candidate_id;
+    const vacancyId = candidateVacancy.vacancy_id;
+
+    // Obtener todos los exámenes de la vacante
+    const examsResult = await pool.query(
+      `SELECT e.id, e.name, e.max_time_minutes
+       FROM exams e
+       INNER JOIN vacancy_exams ve ON e.id = ve.exam_id
+       WHERE ve.vacancy_id = $1
+       ORDER BY ve.exam_order`,
+      [vacancyId]
+    );
+
+    // Para cada examen, verificar si ya fue completado
+    const examsWithStatus = await Promise.all(
+      examsResult.rows.map(async (exam) => {
+        const completedResult = await pool.query(
+          'SELECT COUNT(*) as count FROM exam_answers WHERE candidate_id = $1 AND exam_id = $2',
+          [candidateId, exam.id]
+        );
+
+        const isCompleted = completedResult.rows[0].count > 0;
+
+        return {
+          id: exam.id,
+          name: exam.name,
+          maxTimeMinutes: exam.max_time_minutes,
+          completed: isCompleted
+        };
+      })
+    );
+
+    res.json({
+      candidateId,
+      vacancyId,
+      exams: examsWithStatus
+    });
+  } catch (error) {
+    console.error('Error obteniendo estado de exámenes:', error);
+    res.status(500).json({
+      error: 'Error al obtener estado',
+      details: error.message
+    });
+  }
+};
+
 // GUARDAR RESPUESTAS DE EXAMEN CON TOKEN
 exports.submitExamAnswersByToken = async (req, res) => {
   try {

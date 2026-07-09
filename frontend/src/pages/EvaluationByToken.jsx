@@ -23,13 +23,29 @@ export default function EvaluationByToken() {
 
   const fetchVacancyData = async () => {
     try {
-      // Determinar la URL base del API
       const API_URL = typeof window !== 'undefined' && window.location.hostname === 'talento-ia-v1-frontend.onrender.com'
         ? 'https://talento-ia-v1-production.up.railway.app/api'
         : 'http://localhost:3000/api';
 
-      const response = await axios.get(`${API_URL}/evaluations/vacancy-by-token/${token}`);
-      setData(response.data);
+      // Obtener vacante e exámenes
+      const vacancyRes = await axios.get(`${API_URL}/evaluations/vacancy-by-token/${token}`);
+
+      // Obtener estado de los exámenes (cuáles ya fueron completados)
+      const statusRes = await axios.get(`${API_URL}/evaluations/status/${token}`);
+
+      // Combinar datos: agregar estado "completed" a cada examen
+      const examsWithStatus = vacancyRes.data.exams.map(exam => {
+        const status = statusRes.data.exams.find(e => e.id === exam.id);
+        return {
+          ...exam,
+          completed: status?.completed || false
+        };
+      });
+
+      setData({
+        ...vacancyRes.data,
+        exams: examsWithStatus
+      });
     } catch (err) {
       console.error('Error:', err);
       setError(err.response?.data?.error || 'Error al cargar la evaluación');
@@ -134,9 +150,23 @@ export default function EvaluationByToken() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ flex: 1 }}>
-                  <h3 style={{ margin: '0 0 10px 0' }}>
-                    Examen {index + 1}: {exam.name}
-                  </h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <h3 style={{ margin: '0 0 10px 0', display: 'inline' }}>
+                      Examen {index + 1}: {exam.name}
+                    </h3>
+                    {exam.completed && (
+                      <span style={{
+                        backgroundColor: '#28a745',
+                        color: 'white',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '0.8em',
+                        fontWeight: 'bold'
+                      }}>
+                        ✅ Completado
+                      </span>
+                    )}
+                  </div>
                   {exam.description && (
                     <p style={{ margin: '5px 0', color: '#666', fontSize: '0.9em' }}>
                       {exam.description}
@@ -147,20 +177,26 @@ export default function EvaluationByToken() {
                   </p>
                 </div>
                 <button
-                  onClick={() => navigate(`/evaluacion/${token}?examId=${exam.id}`)}
+                  onClick={() => {
+                    if (!exam.completed) {
+                      navigate(`/evaluacion/${token}?examId=${exam.id}`);
+                    }
+                  }}
+                  disabled={exam.completed}
                   style={{
                     padding: '10px 20px',
-                    backgroundColor: '#28a745',
+                    backgroundColor: exam.completed ? '#6c757d' : '#28a745',
                     color: 'white',
                     border: 'none',
                     borderRadius: '5px',
-                    cursor: 'pointer',
+                    cursor: exam.completed ? 'not-allowed' : 'pointer',
                     fontSize: '1em',
                     whiteSpace: 'nowrap',
-                    marginLeft: '20px'
+                    marginLeft: '20px',
+                    opacity: exam.completed ? 0.6 : 1
                   }}
                 >
-                  Iniciar
+                  {exam.completed ? 'Completado' : 'Iniciar'}
                 </button>
               </div>
             </div>

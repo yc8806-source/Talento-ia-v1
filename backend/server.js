@@ -1,4 +1,24 @@
-// CRÍTICO: Forzar carga de .env - override vars del sistema en Render
+// SOLUCIÓN FINAL: Leer .env manualmente e inyectar vars ANTES de todo
+const fs = require('fs');
+const path = require('path');
+
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  envContent.split('\n').forEach(line => {
+    const trimmedLine = line.trim();
+    if (trimmedLine && !trimmedLine.startsWith('#')) {
+      const [key, ...rest] = trimmedLine.split('=');
+      if (key) {
+        const value = rest.join('=').trim().replace(/^["']|["']$/g, '');
+        // FUERZA establecer la variable, ignorando vars del sistema
+        process.env[key.trim()] = value;
+      }
+    }
+  });
+}
+
+// Fallback a dotenv si la lectura manual no funcionó
 require('dotenv').config({ override: true });
 
 const express = require('express');

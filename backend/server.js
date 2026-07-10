@@ -1,28 +1,7 @@
-const path = require('path');
-const fs = require('fs');
-
-// Cargar archivos .env en este orden de prioridad:
-// 1. .env.production (desarrollo local)
-// 2. .env (Render copia .env.production → .env en el contenedor)
-// 3. Buscar en raíz del proyecto
-const envFiles = [
-  path.join(__dirname, '.env.production'),
-  path.join(__dirname, '.env'),
-  path.join(__dirname, '../.env'),
-  path.join(__dirname, '../../.env')
-];
-
-for (const envFile of envFiles) {
-  if (fs.existsSync(envFile)) {
-    console.log(`✅ Cargando: ${envFile}`);
-    require('dotenv').config({ path: envFile });
-    break;
-  }
-}
-
-console.log('🔍 DATABASE_URL después de cargar .env:', process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'NO ESTÁ DEFINIDO');
+require('dotenv').config();
 
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const pool = require('./src/config/database');
 const {

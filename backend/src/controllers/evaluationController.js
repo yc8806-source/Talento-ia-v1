@@ -697,6 +697,8 @@ exports.createAndShareEvaluationLink = async (req, res) => {
 exports.generatePDF = async (req, res) => {
   try {
     const { candidateVacancyId } = req.params;
+    const PDFDocument = require('pdfkit');
+    const stream = require('stream');
 
     // Obtener información del candidato
     const infoQuery = await pool.query(
@@ -714,8 +716,8 @@ exports.generatePDF = async (req, res) => {
 
     const info = infoQuery.rows[0];
 
-    // Obtener los resultados de TPL-80 usando la función existente
-    const competencies = await calculateTPLResults(info.candidate_id, 27); // exam_id 27 es TPL-80
+    // Obtener los resultados de TPL-80
+    const competencies = await calculateTPLResults(info.candidate_id, 27);
 
     if (!competencies) {
       return res.status(404).json({ error: 'Resultados de TPL-80 no disponibles' });
@@ -733,32 +735,90 @@ exports.generatePDF = async (req, res) => {
     else if (overallPercentage >= 40) overallLevel = 'Bajo';
     else overallLevel = 'Muy Bajo';
 
-    const candidateData = {
-      id: info.candidate_id,
-      firstName: info.first_name,
-      lastName: info.last_name,
-      email: info.email,
-      phone: info.phone
-    };
+    // Crear PDF en memoria
+    const doc = new PDFDocument({ margin: 40 });
+    const filename = `TPL80_${info.first_name}_${info.last_name}_${Date.now()}.pdf`;
 
-    const evaluationData = {
-      vacancy: info.title,
-      overall: {
-        score: Math.round(totalScore * 100) / 100,
-        maxScore: maxScore,
-        percentage: Math.round(overallPercentage * 100) / 100,
-        level: overallLevel
-      },
-      competencies: competencies
-    };
+    // Headers para descarga
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
-    // Generar PDF
-    const pdfData = await generateResultsPDF(candidateData, evaluationData);
+    // Generar PDF directamente al response
+    doc.pipe(res);
 
-    res.json({
-      message: 'PDF generado exitosamente',
-      pdf: pdfData
+    // Header
+    doc.fontSize(28).font('Helvetica-Bold').fillColor('#1A237E').text('Talent IA', { align: 'center' });
+    doc.fontSize(14).font('Helvetica').fillColor('#424242').text('TEST DE PERSONALIDAD LABORAL (TPL-80)', { align: 'center' });
+    doc.moveTo(50, 80).lineTo(550, 80).stroke('#1A237E');
+
+    let yPos = 100;
+
+    // Información
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('Información del Candidato', 50, yPos);
+    yPos += 20;
+    doc.fontSize(10).font('Helvetica').fillColor('#424242');
+    doc.text(`Nombre: ${info.first_name} ${info.last_name}`, 50, yPos);
+    yPos += 18;
+    doc.text(`Email: ${info.email}`, 50, yPos);
+    yPos += 18;
+    if (info.phone) {
+      doc.text(`Teléfono: ${info.phone}`, 50, yPos);
+      yPos += 18;
+    }
+    doc.text(`Vacante: ${info.title}`, 50, yPos);
+    yPos += 25;
+
+    // Resultado general
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#1A237E').text('Resultado General', 50, yPos);
+    yPos += 20;
+
+    const overallColor = overallLevel === 'Muy Alto' ? '#1B5E20' :
+                        overallLevel === 'Alto' ? '#2E7D32' :
+                        overallLevel === 'Medio' ? '#F57F17' :
+                        overallLevel === 'Bajo' ? '#D84315' : '#B71C1C';
+
+    doc.rect(50, yPos - 5, 500, 45).fill(overallColor).fillColor('#FFF');
+    doc.fontSize(24).font('Helvetica-Bold').text(`${Math.round(overallPercentage * 100) / 100}%`, 70, yPos + 5, { width: 200 });
+    doc.fontSize(11).font('Helvetica').text(`${Math.round(totalScore * 100) / 100}/${maxScore} puntos`, 70, yPos + 35);
+    doc.fontSize(11).font('Helvetica').text(`Nivel: ${overallLevel}`, 300, yPos + 5);
+
+    yPos += 65;
+
+    // Competencias
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#1A237E').text('Perfil de Competencias (10 Dimensiones)', 50, yPos);
+    yPos += 20;
+
+    competencies.forEach((comp, idx) => {
+      const levelColor = comp.level === 'Muy Alto' ? '#1B5E20' :
+                        comp.level === 'Alto' ? '#2E7D32' :
+                        comp.level === 'Medio' ? '#F57F17' :
+                        comp.level === 'Bajo' ? '#D84315' : '#B71C1C';
+
+      doc.fontSize(9).font('Helvetica-Bold').fillColor('#000').text(`${idx + 1}. ${comp.name}`, 50, yPos);
+      doc.fontSize(8).fillColor('#424242').text(`${comp.score}/${comp.maxScore} (${comp.percentage}%)`, 250, yPos);
+
+      const barWidth = 200;
+      const filledWidth = (comp.percentage / 100) * barWidth;
+      doc.rect(310, yPos - 2, barWidth, 10).stroke('#BDBDBD');
+      doc.rect(310, yPos - 2, Math.min(filledWidth, barWidth), 10).fill(levelColor);
+
+      doc.fontSize(8).fillColor('#666').text(comp.level, 520, yPos);
+      yPos += 20;
+
+      if (yPos > 700) {
+        doc.addPage();
+        yPos = 50;
+      }
     });
+
+    // Footer
+    doc.fontSize(8).fillColor('#999');
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+    doc.text(`Generado ${dateStr} | Talent IA v1.0`, 50, 750, { align: 'center' });
+
+    doc.end();
+
   } catch (error) {
     console.error('Error generando PDF:', error);
     res.status(500).json({

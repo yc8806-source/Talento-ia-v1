@@ -33,4 +33,7 @@ router.get('/:candidateVacancyId/results', evaluationController.getEvaluationRes
 // Generar PDF de resultados
 router.get('/:candidateVacancyId/pdf', evaluationController.generatePDF);
 
+// Descargar PDF (acceso directo al archivo)
+router.get('/:candidateVacancyId/pdf/download', evaluationController.downloadPDF);
+
 module.exports = router;

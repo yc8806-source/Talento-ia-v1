@@ -700,7 +700,7 @@ exports.generatePDF = async (req, res) => {
 
     // Obtener información del candidato
     const infoQuery = await pool.query(
-      `SELECT c.id, c.first_name, c.last_name, c.email, c.phone, v.title
+      `SELECT cv.candidate_id, c.first_name, c.last_name, c.email, c.phone, v.title
        FROM candidate_vacancies cv
        INNER JOIN candidates c ON cv.candidate_id = c.id
        INNER JOIN vacancies v ON cv.vacancy_id = v.id
@@ -714,28 +714,15 @@ exports.generatePDF = async (req, res) => {
 
     const info = infoQuery.rows[0];
 
-    // Obtener competencias y recomendaciones
-    const resultsQuery = await pool.query(
-      `SELECT c.name, er.total_score, er.max_possible_score,
-              ROUND((er.total_score::float / er.max_possible_score * 100)::numeric, 2) as percentage
-       FROM evaluation_results er
-       INNER JOIN competencies c ON er.competency_id = c.id
-       WHERE er.candidate_vacancy_id = $1
-       ORDER BY er.percentage DESC`,
-      [candidateVacancyId]
-    );
+    // Obtener los resultados de TPL-80 usando la función existente
+    const tplResults = await calculateTPLResults(info.candidate_id, 27); // exam_id 27 es TPL-80
 
-    const recommendationsQuery = await pool.query(
-      `SELECT o.name, cr.affinity_score, cr.ranking
-       FROM candidate_recommendations cr
-       INNER JOIN operations o ON cr.operation_id = o.id
-       WHERE cr.candidate_vacancy_id = $1
-       ORDER BY cr.ranking`,
-      [candidateVacancyId]
-    );
+    if (!tplResults) {
+      return res.status(404).json({ error: 'Resultados de TPL-80 no disponibles' });
+    }
 
     const candidateData = {
-      id: info.id,
+      id: info.candidate_id,
       firstName: info.first_name,
       lastName: info.last_name,
       email: info.email,
@@ -744,17 +731,8 @@ exports.generatePDF = async (req, res) => {
 
     const evaluationData = {
       vacancy: info.title,
-      competencies: resultsQuery.rows.map(r => ({
-        name: r.name,
-        score: r.total_score,
-        maxScore: r.max_possible_score,
-        percentage: parseFloat(r.percentage)
-      })),
-      recommendations: recommendationsQuery.rows.map(r => ({
-        rank: r.ranking,
-        operation: r.name,
-        affinityScore: r.affinity_score
-      }))
+      overall: tplResults.overall,
+      competencies: tplResults.competencies
     };
 
     // Generar PDF
@@ -768,6 +746,74 @@ exports.generatePDF = async (req, res) => {
     console.error('Error generando PDF:', error);
     res.status(500).json({
       error: 'Error al generar PDF',
+      details: error.message
+    });
+  }
+};
+
+// DESCARGAR PDF (descarga directa del archivo)
+exports.downloadPDF = async (req, res) => {
+  try {
+    const { candidateVacancyId } = req.params;
+    const fs = require('fs');
+    const path = require('path');
+
+    // Obtener información del candidato
+    const infoQuery = await pool.query(
+      `SELECT cv.candidate_id, c.first_name, c.last_name, c.email, c.phone, v.title
+       FROM candidate_vacancies cv
+       INNER JOIN candidates c ON cv.candidate_id = c.id
+       INNER JOIN vacancies v ON cv.vacancy_id = v.id
+       WHERE cv.id = $1`,
+      [candidateVacancyId]
+    );
+
+    if (infoQuery.rows.length === 0) {
+      return res.status(404).json({ error: 'Evaluación no encontrada' });
+    }
+
+    const info = infoQuery.rows[0];
+
+    // Obtener los resultados de TPL-80
+    const tplResults = await calculateTPLResults(info.candidate_id, 27);
+
+    if (!tplResults) {
+      return res.status(404).json({ error: 'Resultados de TPL-80 no disponibles' });
+    }
+
+    const candidateData = {
+      id: info.candidate_id,
+      firstName: info.first_name,
+      lastName: info.last_name,
+      email: info.email,
+      phone: info.phone
+    };
+
+    const evaluationData = {
+      vacancy: info.title,
+      overall: tplResults.overall,
+      competencies: tplResults.competencies
+    };
+
+    // Generar PDF
+    const pdfData = await generateResultsPDF(candidateData, evaluationData);
+
+    // Leer el archivo y enviarlo como descarga
+    const filepath = pdfData.filepath;
+
+    if (!fs.existsSync(filepath)) {
+      return res.status(404).json({ error: 'Archivo PDF no encontrado' });
+    }
+
+    res.download(filepath, `TPL80_${candidateData.firstName}_${candidateData.lastName}_${Date.now()}.pdf`, (err) => {
+      if (err) {
+        console.error('Error descargando PDF:', err);
+      }
+    });
+  } catch (error) {
+    console.error('Error descargando PDF:', error);
+    res.status(500).json({
+      error: 'Error al descargar PDF',
       details: error.message
     });
   }

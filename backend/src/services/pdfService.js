@@ -12,67 +12,151 @@ const generateResultsPDF = (candidateData, evaluationData) => {
       }
 
       // Crear documento PDF
-      const doc = new PDFDocument();
-      const filename = `reporte_${candidateData.id}_${Date.now()}.pdf`;
+      const doc = new PDFDocument({ margin: 40 });
+      const filename = `TPL80_${candidateData.id}_${Date.now()}.pdf`;
       const filepath = path.join(pdfDir, filename);
 
       const stream = fs.createWriteStream(filepath);
       doc.pipe(stream);
 
-      // Header
-      doc.fontSize(24).font('Helvetica-Bold').text('Talent IA', 50, 50);
-      doc.fontSize(12).font('Helvetica').text('Reporte de Evaluación', 50, 80);
-      doc.moveTo(50, 100).lineTo(550, 100).stroke();
+      // ═══════════════════════════════════════════════════════════════════
+      // HEADER
+      // ═══════════════════════════════════════════════════════════════════
+      doc.fontSize(28).font('Helvetica-Bold').fillColor('#1A237E').text('Talent IA', { align: 'center' });
+      doc.fontSize(14).font('Helvetica').fillColor('#424242').text('TEST DE PERSONALIDAD LABORAL (TPL-80)', { align: 'center' });
+      doc.moveTo(50, 80).lineTo(550, 80).stroke('#1A237E');
 
-      // Información del candidato
-      doc.fontSize(14).font('Helvetica-Bold').text('Información del Candidato', 50, 120);
-      doc.fontSize(11).font('Helvetica');
-      doc.text(`Nombre: ${candidateData.firstName} ${candidateData.lastName}`, 50, 145);
-      doc.text(`Email: ${candidateData.email}`, 50, 165);
-      doc.text(`Teléfono: ${candidateData.phone || 'N/A'}`, 50, 185);
-      doc.text(`Vacante: ${evaluationData.vacancy}`, 50, 205);
+      let yPos = 100;
 
-      // Puntajes por competencia
-      doc.fontSize(14).font('Helvetica-Bold').text('Puntajes por Competencia', 50, 240);
-      doc.fontSize(11).font('Helvetica');
+      // ═══════════════════════════════════════════════════════════════════
+      // INFORMACIÓN DEL CANDIDATO
+      // ═══════════════════════════════════════════════════════════════════
+      doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('Información del Candidato', 50, yPos);
+      yPos += 20;
 
-      let yPos = 265;
-      evaluationData.competencies.forEach((comp) => {
-        doc.text(`${comp.name}:`, 50, yPos);
-        doc.text(`${comp.percentage}% (${comp.score}/${comp.maxScore})`, 250, yPos);
+      doc.fontSize(10).font('Helvetica').fillColor('#424242');
+      doc.text(`Nombre: ${candidateData.firstName} ${candidateData.lastName}`, 50, yPos);
+      yPos += 18;
+      doc.text(`Email: ${candidateData.email}`, 50, yPos);
+      yPos += 18;
+      if (candidateData.phone) {
+        doc.text(`Teléfono: ${candidateData.phone}`, 50, yPos);
+        yPos += 18;
+      }
+      doc.text(`Vacante: ${evaluationData.vacancy}`, 50, yPos);
+      yPos += 25;
+
+      // ═══════════════════════════════════════════════════════════════════
+      // RESULTADO GENERAL
+      // ═══════════════════════════════════════════════════════════════════
+      doc.fontSize(12).font('Helvetica-Bold').fillColor('#1A237E').text('Resultado General', 50, yPos);
+      yPos += 20;
+
+      // Caja con resultado general
+      const overallColor = evaluationData.overall.level === 'Muy Alto' ? '#1B5E20' :
+                          evaluationData.overall.level === 'Alto' ? '#2E7D32' :
+                          evaluationData.overall.level === 'Medio' ? '#F57F17' :
+                          evaluationData.overall.level === 'Bajo' ? '#D84315' : '#B71C1C';
+
+      doc.rect(50, yPos - 5, 500, 45).fill(overallColor).fillColor('#FFF');
+      doc.fontSize(24).font('Helvetica-Bold').text(`${evaluationData.overall.percentage}%`, 70, yPos + 5, { width: 200 });
+      doc.fontSize(11).font('Helvetica').text(`${evaluationData.overall.score}/${evaluationData.overall.maxScore} puntos`, 70, yPos + 35);
+      doc.fontSize(11).font('Helvetica').text(`Nivel: ${evaluationData.overall.level}`, 300, yPos + 5);
+
+      yPos += 65;
+
+      // ═══════════════════════════════════════════════════════════════════
+      // PUNTAJES POR COMPETENCIA
+      // ═══════════════════════════════════════════════════════════════════
+      doc.fontSize(12).font('Helvetica-Bold').fillColor('#1A237E').text('Perfil de Competencias (10 Dimensiones)', 50, yPos);
+      yPos += 20;
+
+      doc.fontSize(9).font('Helvetica-Bold').fillColor('#000');
+
+      evaluationData.competencies.forEach((comp, idx) => {
+        // Determinar color según nivel
+        let levelColor;
+        switch (comp.level) {
+          case 'Muy Alto':
+            levelColor = '#1B5E20';
+            break;
+          case 'Alto':
+            levelColor = '#2E7D32';
+            break;
+          case 'Medio':
+            levelColor = '#F57F17';
+            break;
+          case 'Bajo':
+            levelColor = '#D84315';
+            break;
+          case 'Muy Bajo':
+            levelColor = '#B71C1C';
+            break;
+          default:
+            levelColor = '#757575';
+        }
+
+        // Nombre competencia
+        doc.fillColor('#000').text(`${idx + 1}. ${comp.name}`, 50, yPos);
+
+        // Puntaje y barra
+        doc.fontSize(8).fillColor('#424242').text(`${comp.score}/40 (${comp.percentage}%)`, 250, yPos);
 
         // Barra de progreso
         const barWidth = 200;
         const filledWidth = (comp.percentage / 100) * barWidth;
-        doc.rect(50, yPos + 15, barWidth, 10).stroke();
-        doc.rect(50, yPos + 15, filledWidth, 10).fill('#0066CC');
+        doc.rect(310, yPos - 2, barWidth, 10).stroke('#BDBDBD');
+        doc.rect(310, yPos - 2, filledWidth, 10).fill(levelColor);
 
-        yPos += 50;
+        // Nivel
+        doc.fillColor('#666').fontSize(8).text(comp.level, 520, yPos);
+
+        yPos += 20;
+
+        // Agregar página si es necesario
+        if (yPos > 700) {
+          doc.addPage();
+          yPos = 50;
+        }
       });
 
-      // Recomendaciones
-      doc.fontSize(14).font('Helvetica-Bold').text('Recomendaciones por Operación', 50, yPos);
-      doc.fontSize(11).font('Helvetica');
+      yPos += 15;
 
-      yPos += 30;
-      evaluationData.recommendations.forEach((rec, idx) => {
-        const bgColor = idx === 0 ? '#E8F5E9' : '#F5F5F5';
-        const prefix = idx === 0 ? '🏆 RECOMENDADO: ' : `Opción ${rec.rank}: `;
+      // ═══════════════════════════════════════════════════════════════════
+      // ESCALA DE INTERPRETACIÓN
+      // ═══════════════════════════════════════════════════════════════════
+      if (yPos > 650) {
+        doc.addPage();
+        yPos = 50;
+      }
 
-        doc.rect(50, yPos - 5, 500, 25).fill(bgColor);
-        doc.fillColor('#000');
-        doc.text(
-          `${prefix}${rec.operation} - Afinidad: ${rec.affinityScore}`,
-          60,
-          yPos
-        );
+      doc.fontSize(11).font('Helvetica-Bold').fillColor('#1A237E').text('Escala de Interpretación', 50, yPos);
+      yPos += 20;
 
-        yPos += 40;
+      const levels = [
+        { range: '34-40 puntos', level: 'Muy Alto', desc: 'Fortaleza muy marcada' },
+        { range: '28-33 puntos', level: 'Alto', desc: 'Competencia bien desarrollada' },
+        { range: '22-27 puntos', level: 'Medio', desc: 'Competencia desarrollada' },
+        { range: '16-21 puntos', level: 'Bajo', desc: 'Área de mejora identificada' },
+        { range: '8-15 puntos', level: 'Muy Bajo', desc: 'Requiere desarrollo importante' }
+      ];
+
+      doc.fontSize(9).font('Helvetica');
+      levels.forEach(l => {
+        doc.fillColor('#666').text(`${l.range}: ${l.level} - ${l.desc}`, 50, yPos);
+        yPos += 16;
       });
 
-      // Footer
-      doc.fontSize(9).font('Helvetica').text(
-        `Generado el ${new Date().toLocaleDateString('es-ES')} | Talent IA v1.0`,
+      yPos += 10;
+
+      // ═══════════════════════════════════════════════════════════════════
+      // FECHA Y PIE DE PÁGINA
+      // ═══════════════════════════════════════════════════════════════════
+      doc.fontSize(8).font('Helvetica').fillColor('#999');
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+      doc.text(
+        `Generado el ${dateStr} | Talent IA - Sistema de Evaluación de Personalidad Laboral v1.0`,
         50,
         750,
         { align: 'center' }

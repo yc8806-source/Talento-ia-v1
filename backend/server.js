@@ -104,15 +104,19 @@ app.get('/api/health', (req, res) => {
 app.get('/api/test-db', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()');
-    res.json({ 
-      status: 'OK', 
+    res.json({
+      status: 'OK',
       message: 'Conexión a BD exitosa',
-      timestamp: result.rows[0].now
+      timestamp: result.rows[0].now,
+      nodeEnv: process.env.NODE_ENV,
+      databaseUrl: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'NOT SET'
     });
   } catch (error) {
-    res.status(500).json({ 
-      status: 'ERROR', 
-      message: error.message 
+    res.status(500).json({
+      status: 'ERROR',
+      message: error.message,
+      nodeEnv: process.env.NODE_ENV,
+      databaseUrl: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'NOT SET'
     });
   }
 });

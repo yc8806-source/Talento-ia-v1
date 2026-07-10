@@ -36,11 +36,21 @@ function EvaluationTest() {
 
       const API_URL = 'https://talento-ia-v1-production.up.railway.app/api';
 
-      // Primero verificar si el examen ya fue completado
+      // Primero verificar si el examen ya fue completado y obtener su tipo
       const statusResponse = await axios.get(`${API_URL}/evaluations/vacancy-by-token/${token}`);
       const examStatus = statusResponse.data.exams.find(e => e.id === examIdNum);
 
-      if (examStatus && examStatus.completed) {
+      if (!examStatus) {
+        throw new Error('Examen no encontrado');
+      }
+
+      // Si es un typing test, redirigir a la página de typing test
+      if (examStatus.type === 'typing') {
+        navigate(`/typing-test/${token}?typingTestId=1`);
+        return;
+      }
+
+      if (examStatus.completed) {
         setCompleted(true);
         setLoading(false);
         return;

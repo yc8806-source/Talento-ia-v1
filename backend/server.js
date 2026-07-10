@@ -126,17 +126,32 @@ app.get('/api/health', (req, res) => {
 app.get('/api/test-db', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()');
-    res.json({ 
-      status: 'OK', 
+    res.json({
+      status: 'OK',
       message: 'Conexión a BD exitosa',
       timestamp: result.rows[0].now
     });
   } catch (error) {
-    res.status(500).json({ 
-      status: 'ERROR', 
-      message: error.message 
+    res.status(500).json({
+      status: 'ERROR',
+      message: error.message
     });
   }
+});
+
+// DEBUG: Ver qué archivos .env existen y qué vars de entorno se cargaron
+app.get('/api/debug-files', (req, res) => {
+  const files = ['.env', '.env.production', '.env.local'].map(file => {
+    const fullPath = path.join(__dirname, file);
+    return { file, exists: fs.existsSync(fullPath) };
+  });
+
+  res.json({
+    files,
+    DATABASE_URL: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 80) : 'NOT SET',
+    NODE_ENV: process.env.NODE_ENV,
+    FRONTEND_URL: process.env.FRONTEND_URL
+  });
 });
 
 const PORT = process.env.PORT || 3000;

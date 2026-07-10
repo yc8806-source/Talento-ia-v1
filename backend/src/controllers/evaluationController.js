@@ -715,11 +715,23 @@ exports.generatePDF = async (req, res) => {
     const info = infoQuery.rows[0];
 
     // Obtener los resultados de TPL-80 usando la función existente
-    const tplResults = await calculateTPLResults(info.candidate_id, 27); // exam_id 27 es TPL-80
+    const competencies = await calculateTPLResults(info.candidate_id, 27); // exam_id 27 es TPL-80
 
-    if (!tplResults) {
+    if (!competencies) {
       return res.status(404).json({ error: 'Resultados de TPL-80 no disponibles' });
     }
+
+    // Calcular puntaje general
+    const totalScore = competencies.reduce((sum, c) => sum + c.score, 0);
+    const maxScore = competencies.length * 40;
+    const overallPercentage = (totalScore / maxScore) * 100;
+
+    let overallLevel;
+    if (overallPercentage >= 85) overallLevel = 'Muy Alto';
+    else if (overallPercentage >= 70) overallLevel = 'Alto';
+    else if (overallPercentage >= 55) overallLevel = 'Medio';
+    else if (overallPercentage >= 40) overallLevel = 'Bajo';
+    else overallLevel = 'Muy Bajo';
 
     const candidateData = {
       id: info.candidate_id,
@@ -731,8 +743,13 @@ exports.generatePDF = async (req, res) => {
 
     const evaluationData = {
       vacancy: info.title,
-      overall: tplResults.overall,
-      competencies: tplResults.competencies
+      overall: {
+        score: Math.round(totalScore * 100) / 100,
+        maxScore: maxScore,
+        percentage: Math.round(overallPercentage * 100) / 100,
+        level: overallLevel
+      },
+      competencies: competencies
     };
 
     // Generar PDF
@@ -775,11 +792,23 @@ exports.downloadPDF = async (req, res) => {
     const info = infoQuery.rows[0];
 
     // Obtener los resultados de TPL-80
-    const tplResults = await calculateTPLResults(info.candidate_id, 27);
+    const competencies = await calculateTPLResults(info.candidate_id, 27);
 
-    if (!tplResults) {
+    if (!competencies) {
       return res.status(404).json({ error: 'Resultados de TPL-80 no disponibles' });
     }
+
+    // Calcular puntaje general
+    const totalScore = competencies.reduce((sum, c) => sum + c.score, 0);
+    const maxScore = competencies.length * 40;
+    const overallPercentage = (totalScore / maxScore) * 100;
+
+    let overallLevel;
+    if (overallPercentage >= 85) overallLevel = 'Muy Alto';
+    else if (overallPercentage >= 70) overallLevel = 'Alto';
+    else if (overallPercentage >= 55) overallLevel = 'Medio';
+    else if (overallPercentage >= 40) overallLevel = 'Bajo';
+    else overallLevel = 'Muy Bajo';
 
     const candidateData = {
       id: info.candidate_id,
@@ -791,8 +820,13 @@ exports.downloadPDF = async (req, res) => {
 
     const evaluationData = {
       vacancy: info.title,
-      overall: tplResults.overall,
-      competencies: tplResults.competencies
+      overall: {
+        score: Math.round(totalScore * 100) / 100,
+        maxScore: maxScore,
+        percentage: Math.round(overallPercentage * 100) / 100,
+        level: overallLevel
+      },
+      competencies: competencies
     };
 
     // Generar PDF

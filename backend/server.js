@@ -1,7 +1,19 @@
+const path = require('path');
+const fs = require('fs');
+
+// Cargar .env.production PRIMERO si en producción
+if (process.env.NODE_ENV === 'production' || !process.env.DATABASE_URL) {
+  const envProdPath = path.join(__dirname, '.env.production');
+  if (fs.existsSync(envProdPath)) {
+    require('dotenv').config({ path: envProdPath });
+  }
+}
+
+// Luego cargar .env para desarrollo
 require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const pool = require('./src/config/database');
 const {
   helmetConfig,

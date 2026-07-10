@@ -1,10 +1,6 @@
 const { Pool } = require('pg');
-const path = require('path');
 
-// Cargar .env.production en Render, .env en desarrollo
-const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
-require('dotenv').config({ path: path.resolve(__dirname, '../../' + envFile) });
-
+// Las variables de entorno ya fueron cargadas en server.js
 const connectionConfig = {
   connectionString: process.env.DATABASE_URL,
 };

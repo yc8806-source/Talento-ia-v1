@@ -1,14 +1,28 @@
-// CARGAR .env.production EN RENDER (copia como .env.production del Dockerfile)
-// Esta línea debe ser LA PRIMERA cosa que haga el archivo
-require('dotenv').config({ path: require('path').join(__dirname, '.env.production') });
+const fs = require('fs');
+const path = require('path');
 
-// Si .env.production no existe, intentar .env (para desarrollo local)
-if (!process.env.DATABASE_URL) {
-  require('dotenv').config({ path: require('path').join(__dirname, '.env') });
+// SOLUCIÓN RADICAL: Leer .env.production MANUALMENTE y establecer vars directamente
+// Esto evita que las vars de sistema de Render sobrescriban el contenido
+const envProdPath = path.join(__dirname, '.env.production');
+if (fs.existsSync(envProdPath)) {
+  const envContent = fs.readFileSync(envProdPath, 'utf8');
+  envContent.split('\n').forEach(line => {
+    const [key, ...valueParts] = line.split('=');
+    if (key && valueParts.length > 0) {
+      const value = valueParts.join('=').trim();
+      if (value && !process.env[key.trim()]) {
+        process.env[key.trim()] = value;
+      }
+    }
+  });
+  console.log(`✅ .env.production cargado manualmente desde ${envProdPath}`);
+} else {
+  console.log(`⚠️  .env.production NO encontrado en ${envProdPath}`);
+  // Fallback a dotenv
+  require('dotenv').config();
 }
 
 const express = require('express');
-const path = require('path');
 const cors = require('cors');
 const pool = require('./src/config/database');
 const {

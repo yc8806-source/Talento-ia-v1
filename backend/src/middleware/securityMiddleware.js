@@ -23,7 +23,7 @@ const registerLimiter = rateLimit({
 // RATE LIMITING - Limitar requests generales de API
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // máximo 100 requests
+  max: 500, // máximo 500 requests para testing/desarrollo
   message: 'Demasiadas requests. Por favor intenta más tarde.',
   standardHeaders: true,
   legacyHeaders: false,

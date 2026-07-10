@@ -1,16 +1,23 @@
 const path = require('path');
 const fs = require('fs');
 
-// Cargar .env.production PRIMERO si en producción
-if (process.env.NODE_ENV === 'production' || !process.env.DATABASE_URL) {
-  const envProdPath = path.join(__dirname, '.env.production');
-  if (fs.existsSync(envProdPath)) {
-    require('dotenv').config({ path: envProdPath });
+// Cargar archivos .env en este orden de prioridad:
+// 1. .env.production (desarrollo local)
+// 2. .env (Render copia .env.production → .env en el contenedor)
+// 3. Buscar en raíz del proyecto
+const envFiles = [
+  path.join(__dirname, '.env.production'),
+  path.join(__dirname, '.env'),
+  path.join(__dirname, '../.env'),
+  path.join(__dirname, '../../.env')
+];
+
+for (const envFile of envFiles) {
+  if (fs.existsSync(envFile)) {
+    require('dotenv').config({ path: envFile });
+    break;
   }
 }
-
-// Luego cargar .env para desarrollo
-require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');

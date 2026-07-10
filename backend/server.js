@@ -133,4 +133,5 @@ server.listen(PORT, () => {
   console.log(`✅ Rate limiting ACTIVADO`);
   console.log(`📡 WebSocket habilitado`);
   console.log(`🔐 Usando Railway PostgreSQL`);
+  console.log(`⚡ Deployment timestamp: ${new Date().toISOString()}`);
 });

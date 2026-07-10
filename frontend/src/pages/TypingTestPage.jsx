@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 
-const API_URL = 'https://talento-ia-v1-production.up.railway.app/api';
+const API_URL = 'https://talento-ia-backend.onrender.com/api';
 
 function TypingTestPage() {
   const { token } = useParams();
@@ -60,7 +60,17 @@ function TypingTestPage() {
   const handleStartTest = () => {
     setTestStarted(true);
     setStartedAt(new Date());
-    setTimeLeft(test.durationSeconds);
+    // No iniciar timer aquí - esperamos a que escriba la 1ª letra
+    setTimeLeft(null);
+  };
+
+  const handleInputChange = (e) => {
+    const newText = e.target.value;
+    setInputText(newText);
+    // Iniciar timer solo cuando escribe la 1ª letra
+    if (newText.length === 1 && timeLeft === null) {
+      setTimeLeft(test.durationSeconds);
+    }
   };
 
   const handleSubmit = async () => {
@@ -213,10 +223,11 @@ function TypingTestPage() {
                 <p className="text-sm text-gray-600 font-semibold mb-3">TU RESPUESTA:</p>
                 <textarea
                   value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
+                  onChange={handleInputChange}
                   disabled={testCompleted}
                   placeholder="Empieza a escribir aquí..."
                   className="w-full h-40 p-4 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-600 font-mono text-lg"
+                  autoFocus
                 />
               </div>
 

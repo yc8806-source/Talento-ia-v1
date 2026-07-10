@@ -694,6 +694,7 @@ exports.createAndShareEvaluationLink = async (req, res) => {
 };
 
 // GENERAR PDF DE RESULTADOS
+// Generate PDF report for TPL-80 evaluation - v2
 exports.generatePDF = async (req, res) => {
   try {
     const { candidateVacancyId } = req.params;

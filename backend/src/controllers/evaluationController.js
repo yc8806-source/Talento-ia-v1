@@ -902,13 +902,84 @@ exports.generatePDF = async (req, res) => {
       return res.status(404).json({ error: 'No es un examen TPL-80' });
     }
 
-    // Calcular resultados
-    const competencies = await calculateTPLResults(candidateId, tpl80Exam.id);
-    if (!competencies) {
-      return res.status(404).json({ error: 'Sin resultados' });
+    // Obtener respuestas con scores de question_options
+    const answers = await pool.query(
+      `SELECT eq.question_order, q.id, q.is_inverse, CAST(qo.score AS FLOAT) as score
+       FROM exam_answers ea
+       INNER JOIN questions q ON ea.question_id = q.id
+       INNER JOIN exam_questions eq ON q.id = eq.question_id AND eq.exam_id = $2
+       INNER JOIN question_options qo ON ea.answer_value = qo.id
+       WHERE ea.candidate_id = $1 AND ea.exam_id = $2
+       ORDER BY eq.question_order`,
+      [candidateId, tpl80Exam.id]
+    );
+
+    if (answers.rows.length === 0) {
+      return res.status(404).json({ error: 'Sin respuestas' });
     }
 
-    const totalScore = competencies.reduce((sum, c) => sum + c.score, 0);
+    // Calcular competencias
+    const competencyNames = {
+      7: 'Responsabilidad',
+      8: 'Orientación al Logro',
+      9: 'Trabajo Bajo Presión',
+      10: 'Adaptabilidad',
+      11: 'Trabajo en Equipo',
+      12: 'Orientación al Cliente',
+      13: 'Integridad',
+      14: 'Inteligencia Emocional',
+      15: 'Iniciativa',
+      16: 'Resiliencia'
+    };
+
+    const compMap = {};
+    for (let i = 1; i <= 10; i++) {
+      const compId = 6 + i;
+      compMap[compId] = { name: competencyNames[compId], scores: [], total: 0 };
+    }
+
+    answers.rows.forEach(row => {
+      const compId = 7 + Math.floor((row.question_order - 1) / 8);
+      let score = row.score || 0;
+
+      if (row.is_inverse && score >= 1 && score <= 5) {
+        score = 6 - score;
+      }
+
+      if (compMap[compId]) {
+        compMap[compId].scores.push(score);
+        compMap[compId].total += score;
+      }
+    });
+
+    // Construir array de competencias
+    const competencies = [];
+    let totalScore = 0;
+    for (let i = 1; i <= 10; i++) {
+      const compId = 6 + i;
+      const comp = compMap[compId];
+      const score = comp.total;
+      const maxScore = comp.scores.length * 5;
+      const percentage = (score / maxScore) * 100;
+
+      let level;
+      if (percentage >= 85) level = 'Muy Alto';
+      else if (percentage >= 70) level = 'Alto';
+      else if (percentage >= 55) level = 'Medio';
+      else if (percentage >= 40) level = 'Bajo';
+      else level = 'Muy Bajo';
+
+      competencies.push({
+        name: comp.name,
+        score: Math.round(score * 100) / 100,
+        maxScore: maxScore,
+        percentage: Math.round(percentage * 100) / 100,
+        level: level
+      });
+
+      totalScore += score;
+    }
+
     const maxScore = competencies.length * 40;
     const overallPercentage = (totalScore / maxScore) * 100;
 
@@ -919,22 +990,13 @@ exports.generatePDF = async (req, res) => {
     else if (overallPercentage >= 40) overallLevel = 'Bajo';
     else overallLevel = 'Muy Bajo';
 
-    // Crear PDF en memoria
+    // Crear PDF
     const doc = new PDFDocument({ margin: 40 });
     const filename = `TPL80_${info.first_name}_${Date.now()}.pdf`;
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    // TODO: Generar PDF - temporalmente retornando JSON
-    return res.json({
-      message: 'PDF generado (demo JSON)',
-      candidate: info.first_name,
-      score: overallPercentage,
-      level: overallLevel,
-      competenciesCount: competencies.length
-    });
-
-    /* doc.pipe(res);
+    doc.pipe(res);
 
     // Generar PDF
     doc.fontSize(28).font('Helvetica-Bold').fillColor('#1A237E').text('Talent IA', { align: 'center' });
@@ -943,27 +1005,34 @@ exports.generatePDF = async (req, res) => {
 
     let yPos = 100;
     doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('Candidato: ' + info.first_name + ' ' + info.last_name, 50, yPos);
-    yPos += 20;
-    doc.fontSize(10).font('Helvetica').fillColor('#424242');
-    doc.text('Email: ' + info.email, 50, yPos);
+    yPos += 18;
+    doc.fontSize(10).font('Helvetica').fillColor('#424242').text('Email: ' + info.email, 50, yPos);
     yPos += 25;
 
     const overallColor = overallLevel === 'Muy Alto' ? '#1B5E20' : overallLevel === 'Alto' ? '#2E7D32' : overallLevel === 'Medio' ? '#F57F17' : '#D84315';
-    doc.rect(50, yPos - 5, 500, 40).fill(overallColor).fillColor('#FFF');
-    doc.fontSize(20).font('Helvetica-Bold').text(Math.round(overallPercentage * 100) / 100 + '%', 70, yPos + 5);
-    doc.fontSize(10).font('Helvetica').text(overallLevel, 300, yPos + 10);
-    yPos += 50;
+    doc.rect(50, yPos - 5, 500, 45).fill(overallColor).fillColor('#FFF');
+    doc.fontSize(24).font('Helvetica-Bold').text(Math.round(overallPercentage * 100) / 100 + '%', 70, yPos + 5);
+    doc.fontSize(11).font('Helvetica').text(Math.round(totalScore * 100) / 100 + '/' + maxScore + ' pts', 70, yPos + 35);
+    doc.fontSize(11).text('Nivel: ' + overallLevel, 300, yPos + 5);
+    yPos += 60;
 
-    doc.fontSize(11).font('Helvetica-Bold').fillColor('#1A237E').text('Competencias:', 50, yPos);
-    yPos += 15;
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#1A237E').text('Competencias:', 50, yPos);
+    yPos += 20;
 
     competencies.forEach((comp) => {
-      const levelColor = comp.level === 'Muy Alto' ? '#1B5E20' : comp.level === 'Alto' ? '#2E7D32' : comp.level === 'Medio' ? '#F57F17' : '#D84315';
+      const levelColor = comp.level === 'Muy Alto' ? '#1B5E20' :
+                        comp.level === 'Alto' ? '#2E7D32' :
+                        comp.level === 'Medio' ? '#F57F17' : '#D84315';
+
       doc.fontSize(9).font('Helvetica-Bold').fillColor('#000').text(comp.name, 50, yPos);
       doc.fontSize(8).fillColor('#666').text(comp.percentage + '%', 250, yPos);
-      doc.rect(300, yPos - 2, 180, 10).stroke('#CCC');
-      doc.rect(300, yPos - 2, Math.min((comp.percentage / 100) * 180, 180), 10).fill(levelColor);
-      yPos += 15;
+
+      const barWidth = 200;
+      const filledWidth = (comp.percentage / 100) * barWidth;
+      doc.rect(310, yPos - 2, barWidth, 10).stroke('#CCC');
+      doc.rect(310, yPos - 2, Math.min(filledWidth, barWidth), 10).fill(levelColor);
+
+      yPos += 18;
       if (yPos > 700) {
         doc.addPage();
         yPos = 50;

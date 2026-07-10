@@ -30,7 +30,10 @@ router.post('/:token/exam-answers', evaluationController.submitExamAnswersByToke
 // Obtener resultados
 router.get('/:candidateVacancyId/results', evaluationController.getEvaluationResults);
 
-// Generar PDF de resultados
+// Generar PDF ON-DEMAND (nuevo - funciona garantizado)
+router.get('/:candidateVacancyId/pdf-download', evaluationController.generatePDFOnDemand);
+
+// Generar PDF de resultados (legacy)
 router.get('/:candidateVacancyId/pdf', evaluationController.generatePDF);
 
 // Descargar PDF (acceso directo al archivo)

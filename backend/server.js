@@ -122,6 +122,17 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Servidor funcionando' });
 });
 
+// DEBUG: Mostrar variables de entorno cargadas
+app.get('/api/debug-env', (req, res) => {
+  res.json({
+    DATABASE_URL: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 60) + '...' : 'NOT SET',
+    NODE_ENV: process.env.NODE_ENV,
+    FRONTEND_URL: process.env.FRONTEND_URL,
+    JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'NOT SET',
+    PORT: process.env.PORT
+  });
+});
+
 // Ruta de prueba de BD
 app.get('/api/test-db', async (req, res) => {
   try {

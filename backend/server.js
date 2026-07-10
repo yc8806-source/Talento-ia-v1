@@ -1,4 +1,11 @@
-require('dotenv').config();
+// CARGAR .env.production EN RENDER (copia como .env.production del Dockerfile)
+// Esta línea debe ser LA PRIMERA cosa que haga el archivo
+require('dotenv').config({ path: require('path').join(__dirname, '.env.production') });
+
+// Si .env.production no existe, intentar .env (para desarrollo local)
+if (!process.env.DATABASE_URL) {
+  require('dotenv').config({ path: require('path').join(__dirname, '.env') });
+}
 
 const express = require('express');
 const path = require('path');

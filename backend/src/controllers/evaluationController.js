@@ -768,6 +768,53 @@ exports.generatePDF = async (req, res) => {
   }
 };
 
+// DEBUG: PDF data sin generar archivo
+exports.debugPDF = async (req, res) => {
+  try {
+    const { candidateVacancyId } = req.params;
+
+    const infoQuery = await pool.query(
+      `SELECT cv.candidate_id, c.first_name, c.last_name, c.email, c.phone, v.title
+       FROM candidate_vacancies cv
+       INNER JOIN candidates c ON cv.candidate_id = c.id
+       INNER JOIN vacancies v ON cv.vacancy_id = v.id
+       WHERE cv.id = $1`,
+      [candidateVacancyId]
+    );
+
+    if (infoQuery.rows.length === 0) {
+      return res.status(404).json({ error: 'Evaluación no encontrada' });
+    }
+
+    const info = infoQuery.rows[0];
+
+    const competencies = await calculateTPLResults(info.candidate_id, 27);
+
+    if (!competencies) {
+      return res.status(404).json({ error: 'Sin resultados', competencies: [] });
+    }
+
+    const totalScore = competencies.reduce((sum, c) => sum + c.score, 0);
+    const maxScore = competencies.length * 40;
+    const overallPercentage = (totalScore / maxScore) * 100;
+
+    res.json({
+      candidateInfo: info,
+      competenciesCount: competencies.length,
+      competencies: competencies,
+      totalScore,
+      maxScore,
+      overallPercentage
+    });
+  } catch (error) {
+    console.error('Debug error:', error);
+    res.status(500).json({
+      error: error.message,
+      stack: error.stack
+    });
+  }
+};
+
 // DESCARGAR PDF (descarga directa del archivo)
 exports.downloadPDF = async (req, res) => {
   try {

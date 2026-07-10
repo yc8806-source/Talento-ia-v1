@@ -36,4 +36,7 @@ router.get('/:candidateVacancyId/pdf', evaluationController.generatePDF);
 // Descargar PDF (acceso directo al archivo)
 router.get('/:candidateVacancyId/pdf/download', evaluationController.downloadPDF);
 
+// DEBUG: PDF data sin generar archivo
+router.get('/:candidateVacancyId/pdf/debug', evaluationController.debugPDF);
+
 module.exports = router;

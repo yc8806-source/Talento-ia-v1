@@ -15,6 +15,7 @@ import AssignEvaluationsToVacancy from './pages/AssignEvaluationsToVacancy';
 import EvaluationByToken from './pages/EvaluationByToken';
 import CandidatesByVacancy from './pages/CandidatesByVacancy';
 import ShareEvaluations from './pages/ShareEvaluations';
+import TypingTestPage from './pages/TypingTestPage';
 import PermissionsManagement from './pages/PermissionsManagement';
 import CandidateDashboard from './pages/CandidateDashboard';
 import SkillsAssessmentsPage from './pages/SkillsAssessmentsPage';
@@ -62,6 +63,7 @@ function App() {
         <Route path="/register" element={!isLoggedIn ? <Register /> : <Navigate to="/dashboard" />} />
         <Route path="/evaluacion" element={<EvaluationByToken />} />
         <Route path="/evaluacion/:token" element={<EvaluationTest />} />
+        <Route path="/typing-test/:token" element={<TypingTestPage />} />
         <Route path="/exams/:examId" element={<SoftSkillsTest />} />
         <Route path="/skills-assessment" element={<SkillsAssessmentsPage />} />
         <Route path="/skills-assessment/:assessmentId" element={<SkillsAssessmentTest />} />

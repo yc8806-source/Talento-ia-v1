@@ -163,7 +163,11 @@ export default function EvaluationByToken() {
                 <button
                   onClick={() => {
                     if (!exam.completed) {
-                      navigate(`/evaluacion/${token}?examId=${exam.id}`);
+                      if (exam.type === 'typing') {
+                        navigate(`/typing-test/${token}?typingTestId=1`);
+                      } else {
+                        navigate(`/evaluacion/${token}?examId=${exam.id}`);
+                      }
                     }
                   }}
                   disabled={exam.completed}

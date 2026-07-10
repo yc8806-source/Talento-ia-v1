@@ -14,10 +14,13 @@ const envFiles = [
 
 for (const envFile of envFiles) {
   if (fs.existsSync(envFile)) {
+    console.log(`✅ Cargando: ${envFile}`);
     require('dotenv').config({ path: envFile });
     break;
   }
 }
+
+console.log('🔍 DATABASE_URL después de cargar .env:', process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'NO ESTÁ DEFINIDO');
 
 const express = require('express');
 const cors = require('cors');

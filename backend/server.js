@@ -1,29 +1,23 @@
-// SOLUCIÓN FINAL: Leer .env manualmente e inyectar vars ANTES de todo
 const fs = require('fs');
 const path = require('path');
 
+// Leer .env antes de cualquier otra cosa
 const envPath = path.join(__dirname, '.env');
 if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, 'utf8');
-  envContent.split('\n').forEach(line => {
-    const trimmedLine = line.trim();
-    if (trimmedLine && !trimmedLine.startsWith('#')) {
-      const [key, ...rest] = trimmedLine.split('=');
-      if (key) {
-        const value = rest.join('=').trim().replace(/^["']|["']$/g, '');
-        // FUERZA establecer la variable, ignorando vars del sistema
-        process.env[key.trim()] = value;
-      }
+  const content = fs.readFileSync(envPath, 'utf8');
+  content.split('\n').forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#')) {
+      const [key, ...val] = trimmed.split('=');
+      if (key) process.env[key.trim()] = val.join('=').trim();
     }
   });
 }
 
-// Fallback a dotenv si la lectura manual no funcionó
 require('dotenv').config({ override: true });
 
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const pool = require('./src/config/database');
 const {
   helmetConfig,
@@ -37,33 +31,21 @@ const {
 
 const app = express();
 
-// SEGURIDAD - Helmet para protección de headers
 app.use(helmetConfig);
-
-// CORS mejorado
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3001',
   credentials: true,
   optionsSuccessStatus: 200
 }));
 
-// Middleware - JSON PRIMERO, luego urlencoded
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: false }));
 
-// SEGURIDAD - Sanitizar inputs
 app.use(sanitizeMiddleware);
-
-// AUDITORÍA - Logging de acciones
 app.use(auditLogger);
-
-// RATE LIMITING - Aplicar a API general
 app.use('/api/', apiLimiter);
-
-// SEGURIDAD - Validar tokens
 app.use(tokenValidator);
 
-// Servir archivos estáticos
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/pdfs', express.static(path.join(__dirname, 'pdfs')));
 
@@ -107,67 +89,41 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/permissions', permissionRoutes);
 
-// Log routes
 console.log('✅ Rutas cargadas correctamente');
-console.log('   - Exams stack length:', examRoutes.stack.length);
-examRoutes.stack.forEach((layer, i) => {
-  if (layer.route) {
-    const methods = Object.keys(layer.route.methods);
-    console.log(`   [${i}] ${methods.join(',').toUpperCase()} ${layer.route.path}`);
-  }
-});
 
-// Ruta de prueba
+// Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Servidor funcionando' });
 });
 
-// Ruta de prueba de BD
+// Test BD
 app.get('/api/test-db', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()');
     res.json({
       status: 'OK',
       message: 'Conexión a BD exitosa',
-      timestamp: result.rows[0].now
+      timestamp: result.rows[0].now,
+      databaseUrl: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'NOT SET'
     });
   } catch (error) {
     res.status(500).json({
       status: 'ERROR',
-      message: error.message
+      message: error.message,
+      databaseUrl: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'NOT SET'
     });
   }
-});
-
-// DEBUG: Ver qué archivos .env existen y qué vars de entorno se cargaron
-app.get('/api/debug-files', (req, res) => {
-  const files = ['.env', '.env.production', '.env.local'].map(file => {
-    const fullPath = path.join(__dirname, file);
-    return { file, exists: fs.existsSync(fullPath) };
-  });
-
-  res.json({
-    files,
-    DATABASE_URL: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 80) : 'NOT SET',
-    NODE_ENV: process.env.NODE_ENV,
-    FRONTEND_URL: process.env.FRONTEND_URL
-  });
 });
 
 const PORT = process.env.PORT || 3000;
 const http = require('http');
 const { initSocket } = require('./src/websocket/notificationSocket');
 
-// Crear servidor HTTP con Socket.IO
 const server = http.createServer(app);
 const io = initSocket(server);
-
-// Hacer io disponible globalmente
 global.io = io;
 
 server.listen(PORT, () => {
   console.log(`🚀 Talent IA Backend en http://localhost:${PORT}`);
-  console.log(`✅ Rate limiting ACTIVADO`);
-  console.log(`📡 WebSocket habilitado`);
-  console.log(`🔐 Usando Railway PostgreSQL`);
+  console.log(`✅ DATABASE_URL: ${process.env.DATABASE_URL ? 'SET' : 'NOT SET'}`);
 });

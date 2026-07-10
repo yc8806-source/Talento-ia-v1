@@ -119,9 +119,14 @@ function Evaluations() {
 
       const response = await evaluationAPI.generatePDF(candidateVacancyId);
 
-      if (response.data.pdf && response.data.pdf.url) {
-        window.open(response.data.pdf.url, '_blank');
-      }
+      // Crear blob URL y descargar el PDF
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `TPL80_${selectedCandidate?.first_name || 'Reporte'}_${Date.now()}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error descargando PDF:', error);
       alert('Error al generar PDF');

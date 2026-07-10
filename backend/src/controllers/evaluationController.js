@@ -719,11 +719,11 @@ exports.generatePDFOnDemand = async (req, res) => {
 
     // Obtener respuestas TPL-80 (examen ID 27)
     const answers = await pool.query(
-      `SELECT eq.question_order, q.id, qo.score, q.is_inverse
+      `SELECT eq.question_order, q.id, q.is_inverse, CAST(qo.score AS FLOAT) as score
        FROM exam_answers ea
        INNER JOIN questions q ON ea.question_id = q.id
        INNER JOIN exam_questions eq ON q.id = eq.question_id AND eq.exam_id = 27
-       LEFT JOIN question_options qo ON ea.answer_value = qo.id
+       INNER JOIN question_options qo ON ea.answer_value = qo.id
        WHERE ea.candidate_id = $1 AND ea.exam_id = 27
        ORDER BY eq.question_order`,
       [candidateId]

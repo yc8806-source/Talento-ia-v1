@@ -753,7 +753,16 @@ exports.generatePDF = async (req, res) => {
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    doc.pipe(res);
+    // TODO: Generar PDF - temporalmente retornando JSON
+    return res.json({
+      message: 'PDF generado (demo JSON)',
+      candidate: info.first_name,
+      score: overallPercentage,
+      level: overallLevel,
+      competenciesCount: competencies.length
+    });
+
+    /* doc.pipe(res);
 
     // Generar PDF
     doc.fontSize(28).font('Helvetica-Bold').fillColor('#1A237E').text('Talent IA', { align: 'center' });

@@ -698,11 +698,10 @@ exports.generatePDF = async (req, res) => {
   try {
     const { candidateVacancyId } = req.params;
     const PDFDocument = require('pdfkit');
-    const stream = require('stream');
 
     // Obtener información del candidato
     const infoQuery = await pool.query(
-      `SELECT cv.candidate_id, c.first_name, c.last_name, c.email, c.phone, v.title
+      `SELECT cv.id, cv.candidate_id, c.first_name, c.last_name, c.email, v.title
        FROM candidate_vacancies cv
        INNER JOIN candidates c ON cv.candidate_id = c.id
        INNER JOIN vacancies v ON cv.vacancy_id = v.id
@@ -715,15 +714,27 @@ exports.generatePDF = async (req, res) => {
     }
 
     const info = infoQuery.rows[0];
+    const candidateId = info.candidate_id;
 
-    // Obtener los resultados de TPL-80
-    const competencies = await calculateTPLResults(info.candidate_id, 27);
+    // Verificar si es TPL-80
+    const examCheck = await pool.query(
+      `SELECT DISTINCT e.id, e.name FROM exams e
+       INNER JOIN exam_answers ea ON e.id = ea.exam_id
+       WHERE ea.candidate_id = $1`,
+      [candidateId]
+    );
 
-    if (!competencies) {
-      return res.status(404).json({ error: 'Resultados de TPL-80 no disponibles' });
+    const tpl80Exam = examCheck.rows.find(row => row.name && row.name.includes('TPL-80'));
+    if (!tpl80Exam) {
+      return res.status(404).json({ error: 'No es un examen TPL-80' });
     }
 
-    // Calcular puntaje general
+    // Calcular resultados
+    const competencies = await calculateTPLResults(candidateId, tpl80Exam.id);
+    if (!competencies) {
+      return res.status(404).json({ error: 'Sin resultados' });
+    }
+
     const totalScore = competencies.reduce((sum, c) => sum + c.score, 0);
     const maxScore = competencies.length * 40;
     const overallPercentage = (totalScore / maxScore) * 100;
@@ -737,94 +748,51 @@ exports.generatePDF = async (req, res) => {
 
     // Crear PDF en memoria
     const doc = new PDFDocument({ margin: 40 });
-    const filename = `TPL80_${info.first_name}_${info.last_name}_${Date.now()}.pdf`;
+    const filename = `TPL80_${info.first_name}_${Date.now()}.pdf`;
 
-    // Headers para descarga
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-
-    // Generar PDF directamente al response
     doc.pipe(res);
 
-    // Header
+    // Generar PDF
     doc.fontSize(28).font('Helvetica-Bold').fillColor('#1A237E').text('Talent IA', { align: 'center' });
     doc.fontSize(14).font('Helvetica').fillColor('#424242').text('TEST DE PERSONALIDAD LABORAL (TPL-80)', { align: 'center' });
     doc.moveTo(50, 80).lineTo(550, 80).stroke('#1A237E');
 
     let yPos = 100;
-
-    // Información
-    doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('Información del Candidato', 50, yPos);
+    doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('Candidato: ' + info.first_name + ' ' + info.last_name, 50, yPos);
     yPos += 20;
     doc.fontSize(10).font('Helvetica').fillColor('#424242');
-    doc.text(`Nombre: ${info.first_name} ${info.last_name}`, 50, yPos);
-    yPos += 18;
-    doc.text(`Email: ${info.email}`, 50, yPos);
-    yPos += 18;
-    if (info.phone) {
-      doc.text(`Teléfono: ${info.phone}`, 50, yPos);
-      yPos += 18;
-    }
-    doc.text(`Vacante: ${info.title}`, 50, yPos);
+    doc.text('Email: ' + info.email, 50, yPos);
     yPos += 25;
 
-    // Resultado general
-    doc.fontSize(12).font('Helvetica-Bold').fillColor('#1A237E').text('Resultado General', 50, yPos);
-    yPos += 20;
+    const overallColor = overallLevel === 'Muy Alto' ? '#1B5E20' : overallLevel === 'Alto' ? '#2E7D32' : overallLevel === 'Medio' ? '#F57F17' : '#D84315';
+    doc.rect(50, yPos - 5, 500, 40).fill(overallColor).fillColor('#FFF');
+    doc.fontSize(20).font('Helvetica-Bold').text(Math.round(overallPercentage * 100) / 100 + '%', 70, yPos + 5);
+    doc.fontSize(10).font('Helvetica').text(overallLevel, 300, yPos + 10);
+    yPos += 50;
 
-    const overallColor = overallLevel === 'Muy Alto' ? '#1B5E20' :
-                        overallLevel === 'Alto' ? '#2E7D32' :
-                        overallLevel === 'Medio' ? '#F57F17' :
-                        overallLevel === 'Bajo' ? '#D84315' : '#B71C1C';
+    doc.fontSize(11).font('Helvetica-Bold').fillColor('#1A237E').text('Competencias:', 50, yPos);
+    yPos += 15;
 
-    doc.rect(50, yPos - 5, 500, 45).fill(overallColor).fillColor('#FFF');
-    doc.fontSize(24).font('Helvetica-Bold').text(`${Math.round(overallPercentage * 100) / 100}%`, 70, yPos + 5, { width: 200 });
-    doc.fontSize(11).font('Helvetica').text(`${Math.round(totalScore * 100) / 100}/${maxScore} puntos`, 70, yPos + 35);
-    doc.fontSize(11).font('Helvetica').text(`Nivel: ${overallLevel}`, 300, yPos + 5);
-
-    yPos += 65;
-
-    // Competencias
-    doc.fontSize(12).font('Helvetica-Bold').fillColor('#1A237E').text('Perfil de Competencias (10 Dimensiones)', 50, yPos);
-    yPos += 20;
-
-    competencies.forEach((comp, idx) => {
-      const levelColor = comp.level === 'Muy Alto' ? '#1B5E20' :
-                        comp.level === 'Alto' ? '#2E7D32' :
-                        comp.level === 'Medio' ? '#F57F17' :
-                        comp.level === 'Bajo' ? '#D84315' : '#B71C1C';
-
-      doc.fontSize(9).font('Helvetica-Bold').fillColor('#000').text(`${idx + 1}. ${comp.name}`, 50, yPos);
-      doc.fontSize(8).fillColor('#424242').text(`${comp.score}/${comp.maxScore} (${comp.percentage}%)`, 250, yPos);
-
-      const barWidth = 200;
-      const filledWidth = (comp.percentage / 100) * barWidth;
-      doc.rect(310, yPos - 2, barWidth, 10).stroke('#BDBDBD');
-      doc.rect(310, yPos - 2, Math.min(filledWidth, barWidth), 10).fill(levelColor);
-
-      doc.fontSize(8).fillColor('#666').text(comp.level, 520, yPos);
-      yPos += 20;
-
+    competencies.forEach((comp) => {
+      const levelColor = comp.level === 'Muy Alto' ? '#1B5E20' : comp.level === 'Alto' ? '#2E7D32' : comp.level === 'Medio' ? '#F57F17' : '#D84315';
+      doc.fontSize(9).font('Helvetica-Bold').fillColor('#000').text(comp.name, 50, yPos);
+      doc.fontSize(8).fillColor('#666').text(comp.percentage + '%', 250, yPos);
+      doc.rect(300, yPos - 2, 180, 10).stroke('#CCC');
+      doc.rect(300, yPos - 2, Math.min((comp.percentage / 100) * 180, 180), 10).fill(levelColor);
+      yPos += 15;
       if (yPos > 700) {
         doc.addPage();
         yPos = 50;
       }
     });
 
-    // Footer
-    doc.fontSize(8).fillColor('#999');
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-    doc.text(`Generado ${dateStr} | Talent IA v1.0`, 50, 750, { align: 'center' });
-
     doc.end();
 
   } catch (error) {
-    console.error('Error generando PDF:', error);
-    res.status(500).json({
-      error: 'Error al generar PDF',
-      details: error.message
-    });
+    console.error('PDF Error:', error);
+    res.status(500).json({ error: error.message });
   }
 };
 

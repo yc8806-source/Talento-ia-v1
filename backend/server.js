@@ -1,29 +1,7 @@
-const fs = require('fs');
-const path = require('path');
-
-// SOLUCIÓN RADICAL: Leer .env.production MANUALMENTE y establecer vars directamente
-// Esto evita que las vars de sistema de Render sobrescriban el contenido
-const envProdPath = path.join(__dirname, '.env.production');
-if (fs.existsSync(envProdPath)) {
-  const envContent = fs.readFileSync(envProdPath, 'utf8');
-  envContent.split('\n').forEach(line => {
-    const [key, ...valueParts] = line.split('=');
-    if (key && valueParts.length > 0) {
-      const value = valueParts.join('=').trim();
-      if (value && !process.env[key.trim()]) {
-        process.env[key.trim()] = value;
-      }
-    }
-  });
-  console.log(`✅ .env.production cargado manualmente desde ${envProdPath}`);
-} else {
-  console.log(`⚠️  .env.production NO encontrado en ${envProdPath}`);
-  // Fallback a dotenv
-  require('dotenv').config();
-}
-
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const pool = require('./src/config/database');
 const {
   helmetConfig,
@@ -122,34 +100,19 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Servidor funcionando' });
 });
 
-// DEBUG: Mostrar variables de entorno cargadas
-app.get('/api/debug-env', (req, res) => {
-  res.json({
-    DATABASE_URL: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 60) + '...' : 'NOT SET',
-    NODE_ENV: process.env.NODE_ENV,
-    FRONTEND_URL: process.env.FRONTEND_URL,
-    JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'NOT SET',
-    PORT: process.env.PORT
-  });
-});
-
 // Ruta de prueba de BD
 app.get('/api/test-db', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()');
-    res.json({
-      status: 'OK',
+    res.json({ 
+      status: 'OK', 
       message: 'Conexión a BD exitosa',
-      timestamp: result.rows[0].now,
-      nodeEnv: process.env.NODE_ENV,
-      databaseUrl: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'NOT SET'
+      timestamp: result.rows[0].now
     });
   } catch (error) {
-    res.status(500).json({
-      status: 'ERROR',
-      message: error.message,
-      nodeEnv: process.env.NODE_ENV,
-      databaseUrl: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'NOT SET'
+    res.status(500).json({ 
+      status: 'ERROR', 
+      message: error.message 
     });
   }
 });
@@ -170,5 +133,4 @@ server.listen(PORT, () => {
   console.log(`✅ Rate limiting ACTIVADO`);
   console.log(`📡 WebSocket habilitado`);
   console.log(`🔐 Usando Railway PostgreSQL`);
-  console.log(`⚡ Deployment timestamp: ${new Date().toISOString()}`);
 });

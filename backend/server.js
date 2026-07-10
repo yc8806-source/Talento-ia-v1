@@ -1,4 +1,6 @@
-require('dotenv').config();
+// CRÍTICO: Forzar carga de .env - override vars del sistema en Render
+require('dotenv').config({ override: true });
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');

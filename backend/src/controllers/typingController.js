@@ -180,8 +180,8 @@ exports.submitResult = async (req, res) => {
   }
 };
 
-// ENVIAR RESULTADO DE TYPING TEST (para candidatos anónimos con token)
-exports.submitResultAnonymous = async (req, res) => {
+// ENVIAR RESULTADO - Maneja tanto JWT como token de candidato
+exports.submitResultWithToken = async (req, res) => {
   try {
     const {
       token,
@@ -189,12 +189,33 @@ exports.submitResultAnonymous = async (req, res) => {
       inputText,
       timeSeconds,
       startedAt,
+      candidateVacancyId,
     } = req.body;
 
-    // Validar token
-    if (!token) {
-      return res.status(400).json({
-        error: 'Token requerido'
+    let candidateId;
+    let cvId = candidateVacancyId;
+
+    // Intentar obtener candidateId del token de candidato (en body)
+    if (token) {
+      const cvResult = await pool.query(
+        'SELECT id, candidate_id FROM candidate_vacancies WHERE token = $1',
+        [token]
+      );
+
+      if (cvResult.rows.length === 0) {
+        return res.status(401).json({
+          error: 'Token no válido o expirado'
+        });
+      }
+
+      candidateId = cvResult.rows[0].candidate_id;
+      cvId = cvResult.rows[0].id;
+    } else if (req.user?.id) {
+      // Usar JWT si no hay token de candidato
+      candidateId = req.user.id;
+    } else {
+      return res.status(401).json({
+        error: 'Autenticación requerida'
       });
     }
 
@@ -202,7 +223,7 @@ exports.submitResultAnonymous = async (req, res) => {
     if (!typingTestId || !inputText || !timeSeconds) {
       return res.status(400).json({
         error: 'Faltan datos requeridos',
-        required: ['token', 'typingTestId', 'inputText', 'timeSeconds']
+        required: ['typingTestId', 'inputText', 'timeSeconds']
       });
     }
 
@@ -211,21 +232,6 @@ exports.submitResultAnonymous = async (req, res) => {
         error: 'El tiempo mínimo es 10 segundos'
       });
     }
-
-    // Buscar candidate_vacancy por token
-    const cvResult = await pool.query(
-      'SELECT id, candidate_id FROM candidate_vacancies WHERE token = $1',
-      [token]
-    );
-
-    if (cvResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Token no válido o expirado'
-      });
-    }
-
-    const candidateVacancyId = cvResult.rows[0].id;
-    const candidateId = cvResult.rows[0].candidate_id;
 
     // Obtener el texto original del test
     const test = await TypingService.getTest(typingTestId);
@@ -241,7 +247,7 @@ exports.submitResultAnonymous = async (req, res) => {
     // Guardar resultado
     const result = await TypingService.saveResult({
       candidateId,
-      candidateVacancyId,
+      candidateVacancyId: cvId || null,
       typingTestId,
       inputText,
       wpm: metrics.wpm,
@@ -267,7 +273,7 @@ exports.submitResultAnonymous = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error guardando resultado anónimo de typing:', error);
+    console.error('Error guardando resultado de typing:', error);
     res.status(500).json({
       error: 'Error al guardar resultado',
       details: error.message

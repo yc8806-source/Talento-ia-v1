@@ -84,15 +84,12 @@ function TypingTestPage() {
     try {
       const timeSeconds = Math.max(1, test.durationSeconds - timeLeft);
 
-      const submitResponse = await axios.post(`${API_URL}/typing/results/submit`, {
+      const submitResponse = await axios.post(`${API_URL}/typing/results/submit-anonymous`, {
+        token: token,
         typingTestId: test.id,
         inputText: inputText,
         timeSeconds: timeSeconds,
         startedAt: startedAt,
-      }, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-        }
       });
 
       setResult(submitResponse.data.result);

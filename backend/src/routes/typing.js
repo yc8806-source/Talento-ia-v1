@@ -26,6 +26,9 @@ router.get('/tests/:testId/text', verifyToken, typingController.getTestText);
 // ENVIAR RESULTADO DE TYPING TEST (requiere autenticación)
 router.post('/results/submit', verifyToken, typingController.submitResult);
 
+// ENVIAR RESULTADO DE TYPING TEST (para candidatos anónimos con token)
+router.post('/results/submit-anonymous', typingController.submitResultAnonymous);
+
 // OBTENER RESULTADOS DE UN CANDIDATO (protegido)
 router.get('/results/candidate/:candidateId', verifyToken, typingController.getCandidateResults);
 

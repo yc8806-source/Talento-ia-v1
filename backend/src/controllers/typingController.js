@@ -180,6 +180,103 @@ exports.submitResult = async (req, res) => {
   }
 };
 
+// ENVIAR RESULTADO DE TYPING TEST (para candidatos anónimos con token)
+exports.submitResultAnonymous = async (req, res) => {
+  try {
+    const {
+      token,
+      typingTestId,
+      inputText,
+      timeSeconds,
+      startedAt,
+    } = req.body;
+
+    // Validar token
+    if (!token) {
+      return res.status(400).json({
+        error: 'Token requerido'
+      });
+    }
+
+    // Validar datos
+    if (!typingTestId || !inputText || !timeSeconds) {
+      return res.status(400).json({
+        error: 'Faltan datos requeridos',
+        required: ['token', 'typingTestId', 'inputText', 'timeSeconds']
+      });
+    }
+
+    if (timeSeconds < 10) {
+      return res.status(400).json({
+        error: 'El tiempo mínimo es 10 segundos'
+      });
+    }
+
+    // Buscar candidate_vacancy por token
+    const pool = require('../config/database');
+    const cvResult = await pool.query(
+      'SELECT id, candidate_id FROM candidate_vacancies WHERE token = $1',
+      [token]
+    );
+
+    if (cvResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Token no válido o expirado'
+      });
+    }
+
+    const candidateVacancyId = cvResult.rows[0].id;
+    const candidateId = cvResult.rows[0].candidate_id;
+
+    // Obtener el texto original del test
+    const test = await require('../services/typingService').getTest(typingTestId);
+    if (!test) {
+      return res.status(404).json({
+        error: 'Typing test no encontrado'
+      });
+    }
+
+    // Calcular WPM y métricas
+    const TypingService = require('../services/typingService');
+    const metrics = TypingService.calculateWPM(test.text, inputText, timeSeconds);
+
+    // Guardar resultado
+    const result = await TypingService.saveResult({
+      candidateId,
+      candidateVacancyId,
+      typingTestId,
+      inputText,
+      wpm: metrics.wpm,
+      accuracy: metrics.accuracy,
+      grossWPM: metrics.grossWPM,
+      netWPM: metrics.netWPM,
+      totalErrors: metrics.totalErrors,
+      timeSeconds,
+      startedAt,
+    });
+
+    res.status(201).json({
+      message: 'Resultado de typing test guardado exitosamente',
+      result: {
+        id: result.id,
+        wpm: metrics.wpm,
+        grossWPM: metrics.grossWPM,
+        netWPM: metrics.netWPM,
+        accuracy: metrics.accuracy,
+        totalErrors: metrics.totalErrors,
+        wordCount: metrics.wordCount,
+        completedAt: result.completed_at,
+      }
+    });
+  } catch (error) {
+    console.error('Error guardando resultado anónimo de typing:', error);
+    res.status(500).json({
+      error: 'Error al guardar resultado',
+      details: error.message
+    });
+  }
+};
+
 // OBTENER RESULTADOS DE TYPING DEL CANDIDATO
 exports.getCandidateResults = async (req, res) => {
   try {

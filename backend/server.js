@@ -97,6 +97,15 @@ app.get('/api/health', (req, res) => {
 });
 
 // Test BD
+// Debug: Show all database variables
+app.get('/api/debug-db', (req, res) => {
+  res.json({
+    RAILWAY_DATABASE_URL: process.env.RAILWAY_DATABASE_URL ? process.env.RAILWAY_DATABASE_URL.substring(0, 80) : 'NOT SET',
+    DATABASE_URL: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 80) : 'NOT SET',
+    NODE_ENV: process.env.NODE_ENV
+  });
+});
+
 app.get('/api/test-db', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW()');
@@ -104,13 +113,15 @@ app.get('/api/test-db', async (req, res) => {
       status: 'OK',
       message: 'Conexión a BD exitosa',
       timestamp: result.rows[0].now,
-      databaseUrl: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'NOT SET'
+      databaseUrl: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'NOT SET',
+      railwayDatabaseUrl: process.env.RAILWAY_DATABASE_URL ? process.env.RAILWAY_DATABASE_URL.substring(0, 50) + '...' : 'NOT SET'
     });
   } catch (error) {
     res.status(500).json({
       status: 'ERROR',
       message: error.message,
-      databaseUrl: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'NOT SET'
+      databaseUrl: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'NOT SET',
+      railwayDatabaseUrl: process.env.RAILWAY_DATABASE_URL ? process.env.RAILWAY_DATABASE_URL.substring(0, 50) + '...' : 'NOT SET'
     });
   }
 });

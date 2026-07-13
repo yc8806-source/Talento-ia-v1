@@ -46,7 +46,12 @@ const app = express();
 
 app.use(helmetConfig);
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://talento-ia-v1-frontend.onrender.com',
+    process.env.FRONTEND_URL
+  ].filter(Boolean),
   credentials: true,
   optionsSuccessStatus: 200
 }));

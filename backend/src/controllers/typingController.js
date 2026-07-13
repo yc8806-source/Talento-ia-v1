@@ -40,6 +40,8 @@ exports.getTestInfo = async (req, res) => {
       });
     }
 
+    console.log('🔍 DEBUG getTestInfo:', { testId, test_keys: Object.keys(test), has_text: !!test.text });
+
     // Incluir el texto en la respuesta
     res.json({
       id: test.id,

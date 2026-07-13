@@ -1,20 +1,33 @@
 const fs = require('fs');
 const path = require('path');
 
-// Leer .env antes de cualquier otra cosa
-const envPath = path.join(__dirname, '.env');
-if (fs.existsSync(envPath)) {
-  const content = fs.readFileSync(envPath, 'utf8');
-  content.split('\n').forEach(line => {
-    const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith('#')) {
-      const [key, ...val] = trimmed.split('=');
-      if (key) process.env[key.trim()] = val.join('=').trim();
-    }
-  });
+// NUCLEAR OPTION: Leer .env y REEMPLAZAR variables del sistema
+// Esto es DESPUÉS de que Render cargue sus vars, así reemplazamos las viejas
+function forceLoadEnv() {
+  const envPath = path.join(__dirname, '.env');
+  if (fs.existsSync(envPath)) {
+    const content = fs.readFileSync(envPath, 'utf8');
+    content.split('\n').forEach(line => {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('#')) {
+        const [key, ...val] = trimmed.split('=');
+        if (key) {
+          const value = val.join('=').trim().replace(/^["']|["']$/g, '');
+          process.env[key.trim()] = value;
+          if (key.trim() === 'DATABASE_URL') {
+            console.log(`🔒 OVERRIDE: DATABASE_URL set from .env file`);
+          }
+        }
+      }
+    });
+  }
 }
 
+// Primero intenta dotenv normal
 require('dotenv').config({ override: true });
+
+// LUEGO FUERZA con la lectura del archivo para asegurar que .env gana
+forceLoadEnv();
 
 const express = require('express');
 const cors = require('cors');

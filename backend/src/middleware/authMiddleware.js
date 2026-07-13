@@ -130,7 +130,49 @@ const getTeamPermissions = async (req, res, next) => {
   }
 };
 
+// Middleware para verificar token de candidato (para typing tests anónimos)
+const verifyTypingToken = async (req, res, next) => {
+  try {
+    const token = req.body.token || req.query.token;
+
+    if (!token) {
+      return res.status(401).json({
+        error: 'Token no proporcionado',
+        message: 'Se requiere un token de candidato',
+      });
+    }
+
+    // Buscar candidate_vacancy con este token
+    const cvResult = await pool.query(
+      'SELECT id, candidate_id FROM candidate_vacancies WHERE token = $1',
+      [token]
+    );
+
+    if (cvResult.rows.length === 0) {
+      return res.status(401).json({
+        error: 'Token inválido o expirado',
+      });
+    }
+
+    // Asignar datos al request
+    req.candidateVacancy = {
+      id: cvResult.rows[0].id,
+      candidateId: cvResult.rows[0].candidate_id,
+    };
+
+    req.user = {
+      id: cvResult.rows[0].candidate_id,
+    };
+
+    next();
+  } catch (error) {
+    console.error('Error verificando typing token:', error);
+    res.status(500).json({ error: 'Error al verificar token' });
+  }
+};
+
 module.exports = {
   verifyToken,
   getTeamPermissions,
+  verifyTypingToken,
 };

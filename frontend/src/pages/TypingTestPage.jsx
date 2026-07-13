@@ -84,7 +84,7 @@ function TypingTestPage() {
     try {
       const timeSeconds = Math.max(1, test.durationSeconds - timeLeft);
 
-      const submitResponse = await axios.post(`${API_URL}/typing/results/submit-token`, {
+      const submitResponse = await axios.post(`${API_URL}/typing/results/submit`, {
         token: token,
         typingTestId: test.id,
         inputText: inputText,

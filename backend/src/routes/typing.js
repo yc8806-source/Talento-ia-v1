@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const typingController = require('../controllers/typingController');
-const { verifyToken } = require('../middleware/authMiddleware');
+const { verifyToken, verifyTypingToken } = require('../middleware/authMiddleware');
 
 // Middleware para verificar que es admin
 const isAdmin = (req, res, next) => {
@@ -23,14 +23,8 @@ router.get('/tests/:testId', typingController.getTestInfo);
 // OBTENER TEXTO DEL TEST (requiere autenticación)
 router.get('/tests/:testId/text', verifyToken, typingController.getTestText);
 
-// ENVIAR RESULTADO DE TYPING TEST (requiere autenticación)
-router.post('/results/submit', verifyToken, typingController.submitResult);
-
-// ENVIAR RESULTADO DE TYPING TEST (para candidatos anónimos con token)
-router.post('/results/submit-anonymous', typingController.submitResultAnonymous);
-
-// SUBMIT SIN AUTENTICACIÓN (fallback para typing tests)
-router.post('/results/submit-token', typingController.submitResultAnonymous);
+// ENVIAR RESULTADO DE TYPING TEST (requiere token de candidato)
+router.post('/results/submit', verifyTypingToken, typingController.submitResult);
 
 // OBTENER RESULTADOS DE UN CANDIDATO (protegido)
 router.get('/results/candidate/:candidateId', verifyToken, typingController.getCandidateResults);

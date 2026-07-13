@@ -40,7 +40,7 @@ exports.getTestInfo = async (req, res) => {
       });
     }
 
-    // No enviar el texto al principio, solo información
+    // Incluir el texto en la respuesta
     res.json({
       id: test.id,
       title: test.title,
@@ -48,6 +48,7 @@ exports.getTestInfo = async (req, res) => {
       difficulty: test.difficulty,
       durationSeconds: test.duration_seconds,
       wordCount: test.word_count,
+      text: test.text,
     });
   } catch (error) {
     console.error('Error obteniendo typing test:', error);

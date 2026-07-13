@@ -135,6 +135,7 @@ const io = initSocket(server);
 global.io = io;
 
 server.listen(PORT, () => {
-  console.log(`🚀 Talent IA Backend en http://localhost:${PORT}`);
+  console.log(`🚀 Talent IA Backend corriendo en puerto ${PORT}`);
+  console.log(`✅ RAILWAY_DATABASE_URL: ${process.env.RAILWAY_DATABASE_URL ? 'SET' : 'NOT SET'}`);
   console.log(`✅ DATABASE_URL: ${process.env.DATABASE_URL ? 'SET' : 'NOT SET'}`);
 });

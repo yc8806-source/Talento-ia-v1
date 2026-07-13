@@ -14,7 +14,7 @@ export default function CandidatesByVacancy() {
   const [invitingToken, setInvitingToken] = useState(null);
 
   const API_URL = typeof window !== 'undefined' && window.location.hostname === 'talento-ia-v1-frontend.onrender.com'
-    ? 'https://talento-ia-v1-production.up.railway.app/api'
+    ? 'https://talento-ia-backend.onrender.com/api'
     : 'http://localhost:3000/api';
 
   useEffect(() => {

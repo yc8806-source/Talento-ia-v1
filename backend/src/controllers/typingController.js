@@ -213,7 +213,6 @@ exports.submitResultAnonymous = async (req, res) => {
     }
 
     // Buscar candidate_vacancy por token
-    const pool = require('../config/database');
     const cvResult = await pool.query(
       'SELECT id, candidate_id FROM candidate_vacancies WHERE token = $1',
       [token]
@@ -229,7 +228,7 @@ exports.submitResultAnonymous = async (req, res) => {
     const candidateId = cvResult.rows[0].candidate_id;
 
     // Obtener el texto original del test
-    const test = await require('../services/typingService').getTest(typingTestId);
+    const test = await TypingService.getTest(typingTestId);
     if (!test) {
       return res.status(404).json({
         error: 'Typing test no encontrado'
@@ -237,7 +236,6 @@ exports.submitResultAnonymous = async (req, res) => {
     }
 
     // Calcular WPM y métricas
-    const TypingService = require('../services/typingService');
     const metrics = TypingService.calculateWPM(test.text, inputText, timeSeconds);
 
     // Guardar resultado

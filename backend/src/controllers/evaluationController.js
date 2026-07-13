@@ -1215,6 +1215,30 @@ exports.getVacancyEvaluationByToken = async (req, res) => {
       [candidateVacancy.vacancy_id, candidateVacancy.candidate_id]
     );
 
+    // Verificar estado completado para typing tests también
+    const examsWithTypingStatus = await Promise.all(
+      examsResult.rows.map(async (exam) => {
+        let completed = exam.completed;
+
+        if (exam.type === 'typing') {
+          const typingResult = await pool.query(
+            'SELECT COUNT(*) as count FROM typing_results WHERE candidate_id = $1 AND typing_test_id = 1',
+            [candidateVacancy.candidate_id]
+          );
+          completed = typingResult.rows[0].count > 0;
+        }
+
+        return {
+          id: exam.id,
+          name: exam.name,
+          description: exam.description,
+          type: exam.type,
+          maxTimeMinutes: exam.max_time_minutes,
+          completed: completed
+        };
+      })
+    );
+
     res.json({
       candidateVacancy: {
         id: candidateVacancy.id,
@@ -1223,14 +1247,7 @@ exports.getVacancyEvaluationByToken = async (req, res) => {
         vacancyTitle: candidateVacancy.title,
         vacancyDescription: candidateVacancy.description
       },
-      exams: examsResult.rows.map(exam => ({
-        id: exam.id,
-        name: exam.name,
-        description: exam.description,
-        type: exam.type,
-        maxTimeMinutes: exam.max_time_minutes,
-        completed: exam.completed
-      }))
+      exams: examsWithTypingStatus
     });
   } catch (error) {
     console.error('Error obteniendo información de vacante:', error);

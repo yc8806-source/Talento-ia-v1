@@ -1,15 +1,13 @@
 const { Pool } = require('pg');
 
 // Las variables de entorno ya fueron cargadas en server.js
-// Intentar RAILWAY_DATABASE_URL primero (para evitar var de Render), luego DATABASE_URL
-const dbUrl = process.env.RAILWAY_DATABASE_URL || process.env.DATABASE_URL;
-
+// .env.production tiene DATABASE_URL correcto (Railway)
 const connectionConfig = {
-  connectionString: dbUrl,
+  connectionString: process.env.DATABASE_URL,
 };
 
 // Usar SSL solo si no es localhost
-if (dbUrl && !dbUrl.includes('localhost')) {
+if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('localhost')) {
   connectionConfig.ssl = {
     rejectUnauthorized: false,
   };

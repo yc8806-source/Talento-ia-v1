@@ -23,8 +23,8 @@ router.get('/tests/:testId', typingController.getTestInfo);
 // OBTENER TEXTO DEL TEST (requiere autenticación)
 router.get('/tests/:testId/text', verifyToken, typingController.getTestText);
 
-// ENVIAR RESULTADO DE TYPING TEST (requiere token de candidato o JWT)
-router.post('/results/submit', typingController.submitResultWithToken);
+// ENVIAR RESULTADO DE TYPING TEST (acepta token de candidato en body o JWT en header)
+router.post('/results/submit', verifyToken, typingController.submitResult);
 
 // OBTENER RESULTADOS DE UN CANDIDATO (protegido)
 router.get('/results/candidate/:candidateId', verifyToken, typingController.getCandidateResults);

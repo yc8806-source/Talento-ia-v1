@@ -2,11 +2,32 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
 const { getPermissionsForRole } = require('./permissionsMiddleware');
 
-// Verificar y extraer token JWT
+// Verificar y extraer token JWT o token de candidato
 const verifyToken = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
+    const bodyToken = req.body?.token;
 
+    // Intenta primero con token de candidato en body (para typing tests)
+    if (bodyToken) {
+      const cvResult = await pool.query(
+        'SELECT id, candidate_id FROM candidate_vacancies WHERE token = $1',
+        [bodyToken]
+      );
+
+      if (cvResult.rows.length > 0) {
+        req.user = {
+          id: cvResult.rows[0].candidate_id,
+        };
+        req.candidateVacancy = {
+          id: cvResult.rows[0].id,
+          candidateId: cvResult.rows[0].candidate_id,
+        };
+        return next();
+      }
+    }
+
+    // Si no hay token de candidato, requiere JWT
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         error: 'Token no proporcionado',

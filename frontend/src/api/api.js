@@ -1,9 +1,10 @@
 import axios from 'axios';
 
-// Use production backend URL if available, otherwise localhost
-const API_URL = typeof window !== 'undefined' && window.location.hostname === 'talento-ia-v1-frontend.onrender.com'
-  ? 'https://talento-ia-backend.onrender.com/api'
-  : process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+// Use localhost in development, Render in production
+const API_URL =
+  window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000/api'
+    : 'https://talento-ia-backend.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_URL,

@@ -88,10 +88,11 @@ exports.getTestText = async (req, res) => {
   }
 };
 
-// ENVIAR RESULTADO DE TYPING TEST
-exports.submitResult = async (req, res) => {
+// ENVIAR RESULTADO DE TYPING TEST (maneja token de candidato o JWT)
+exports.submitResultWithToken = async (req, res) => {
   try {
     const {
+      token,
       typingTestId,
       inputText,
       timeSeconds,
@@ -99,7 +100,28 @@ exports.submitResult = async (req, res) => {
       candidateVacancyId,
     } = req.body;
 
-    const candidateId = req.user?.id;
+    let candidateId;
+    let cvId = candidateVacancyId;
+
+    // Opción 1: Token de candidato en body (typing tests anónimos)
+    if (token) {
+      const cvResult = await pool.query(
+        'SELECT id, candidate_id FROM candidate_vacancies WHERE token = $1',
+        [token]
+      );
+
+      if (cvResult.rows.length === 0) {
+        return res.status(401).json({ error: 'Token inválido o expirado' });
+      }
+
+      candidateId = cvResult.rows[0].candidate_id;
+      cvId = cvResult.rows[0].id;
+    } else if (req.user?.id) {
+      // Opción 2: JWT en header (usuarios autenticados)
+      candidateId = req.user.id;
+    } else {
+      return res.status(401).json({ error: 'Autenticación requerida' });
+    }
 
     // Validar datos
     if (!typingTestId || !inputText || !timeSeconds) {
@@ -129,7 +151,7 @@ exports.submitResult = async (req, res) => {
     // Guardar resultado
     const result = await TypingService.saveResult({
       candidateId,
-      candidateVacancyId: candidateVacancyId || null,
+      candidateVacancyId: cvId || null,
       typingTestId,
       inputText,
       wpm: metrics.wpm,

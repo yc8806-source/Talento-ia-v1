@@ -1,6 +1,6 @@
 FROM node:18-alpine
 
-# Force rebuild: 2026-07-13-1500
+# Force rebuild: 2026-07-13-1530
 WORKDIR /app
 
 COPY backend/package*.json ./

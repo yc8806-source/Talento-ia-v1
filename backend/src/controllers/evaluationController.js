@@ -1196,7 +1196,7 @@ exports.getVacancyEvaluationByToken = async (req, res) => {
 
     if (cvResult.rows.length === 0) {
       // Para pruebas: retornar datos ficticios si el token no existe
-      console.log('Token no encontrado, devolviendo datos de prueba');
+      console.log('✅ Token no encontrado en DB, devolviendo datos de prueba para typing test');
       return res.json({
         candidateVacancy: {
           id: 1,

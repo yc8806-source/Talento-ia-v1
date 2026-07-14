@@ -1212,7 +1212,7 @@ exports.getVacancyEvaluationByToken = async (req, res) => {
             description: 'Prueba de velocidad de mecanografía',
             type: 'typing_test',
             max_time_minutes: 1,
-            completed: true
+            completed: false
           }
         ]
       });

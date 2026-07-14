@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
-
-const API_URL = 'https://talento-ia-backend.onrender.com/api';
 
 function TypingTestPage() {
   const { token } = useParams();
@@ -19,33 +16,33 @@ function TypingTestPage() {
   const [result, setResult] = useState(null);
   const [startedAt, setStartedAt] = useState(null);
 
+  const API_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:3000/api'
+    : 'https://talento-ia-backend.onrender.com/api';
+
   useEffect(() => {
     if (!token || !typingTestId) {
       setLoading(false);
       return;
     }
-    fetchTestData();
-  }, [token, typingTestId]);
 
-  const fetchTestData = async () => {
-    try {
-      const testIdNum = parseInt(typingTestId, 10);
-      const response = await axios.get(`${API_URL}/typing/tests/${testIdNum}`);
-      setTest(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error cargando typing test:', error);
-      alert('Error al cargar el test de tipeo');
-      navigate(`/evaluacion?token=${token}`);
-    }
-  };
+    fetch(`${API_URL}/typing/tests/${typingTestId}`)
+      .then(res => res.json())
+      .then(data => {
+        setTest(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error cargando test:', err);
+        setLoading(false);
+      });
+  }, [token, typingTestId, API_URL]);
 
-  // Timer que comienza cuando inicia el test
   useEffect(() => {
     if (!testStarted || timeLeft === null || testCompleted) return;
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
+      setTimeLeft(prev => {
         if (prev <= 1) {
           handleSubmit();
           return 0;
@@ -60,14 +57,12 @@ function TypingTestPage() {
   const handleStartTest = () => {
     setTestStarted(true);
     setStartedAt(new Date());
-    // No iniciar timer aquí - esperamos a que escriba la 1ª letra
     setTimeLeft(null);
   };
 
   const handleInputChange = (e) => {
     const newText = e.target.value;
     setInputText(newText);
-    // Iniciar timer solo cuando escribe la 1ª letra
     if (newText.length === 1 && timeLeft === null) {
       setTimeLeft(test.durationSeconds);
     }
@@ -82,17 +77,22 @@ function TypingTestPage() {
     setTestCompleted(true);
 
     try {
-      const timeSeconds = Math.max(1, test.durationSeconds - timeLeft);
+      const timeSeconds = Math.max(1, test.durationSeconds - (timeLeft || 0));
 
-      const submitResponse = await axios.post(`${API_URL}/typing/results/submit`, {
-        token: token,
-        typingTestId: test.id,
-        inputText: inputText,
-        timeSeconds: timeSeconds,
-        startedAt: startedAt,
+      const submitResponse = await fetch(`${API_URL}/typing/results/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: token,
+          typingTestId: test.id,
+          inputText: inputText,
+          timeSeconds: timeSeconds,
+          startedAt: startedAt,
+        })
       });
 
-      setResult(submitResponse.data.result);
+      const data = await submitResponse.json();
+      setResult(data.result);
     } catch (error) {
       console.error('Error enviando resultado:', error);
       alert('Error al guardar el resultado');
@@ -142,20 +142,10 @@ function TypingTestPage() {
               </div>
             </div>
 
-            <div className="bg-gray-100 rounded-lg p-6 mb-8">
-              <h3 className="font-bold text-lg mb-3">Análisis Detallado:</h3>
-              <ul className="space-y-2 text-gray-700">
-                <li>✓ Caracteres escritos: {result.charCount}</li>
-                <li>✓ Caracteres correctos: {result.correctChars}</li>
-                <li>✓ Caracteres erróneos: {result.charErrors}</li>
-                <li>✓ Palabras en el texto: {result.wordCount}</li>
-              </ul>
-            </div>
-
             <div className="flex gap-4">
               <button
                 onClick={() => navigate(`/evaluacion?token=${token}`)}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 rounded-lg font-semibold transition-all"
+                className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 rounded-lg font-semibold"
               >
                 Volver a Evaluaciones
               </button>
@@ -188,21 +178,12 @@ function TypingTestPage() {
                   <li>Haz clic en "Comenzar Prueba" cuando estés listo</li>
                   <li>Tienes {test.durationSeconds} segundos para transcribir el texto</li>
                   <li>Tu velocidad (WPM) y precisión serán calculados automáticamente</li>
-                  <li>Los errores se penalizarán en el cálculo final de WPM</li>
                 </ol>
-              </div>
-
-              <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6">
-                <p className="font-bold text-green-900">📊 Criterios de Evaluación:</p>
-                <p className="text-green-800 mt-2">
-                  Se evaluará tu velocidad de mecanografía (palabras por minuto) y precisión.
-                  Intenta mantener un buen balance entre velocidad y exactitud.
-                </p>
               </div>
 
               <button
                 onClick={handleStartTest}
-                className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-4 rounded-lg font-bold text-lg transition-all"
+                className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-4 rounded-lg font-bold text-lg"
               >
                 🚀 Comenzar Prueba
               </button>
@@ -231,7 +212,7 @@ function TypingTestPage() {
               {!testCompleted && (
                 <button
                   onClick={handleSubmit}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 rounded-lg font-bold text-lg transition-all"
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 rounded-lg font-bold text-lg"
                 >
                   ✅ Enviar Prueba
                 </button>

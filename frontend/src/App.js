@@ -25,6 +25,7 @@ import AdminEvaluationResults from './components/AdminEvaluationResults';
 import NotificationCenter from './components/NotificationCenter';
 import { connectNotificationSocket, disconnectNotificationSocket } from './services/notificationService';
 
+// Typing test routes enabled - v1.0.1
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'));
   const [userRole, setUserRole] = useState(localStorage.getItem('role'));

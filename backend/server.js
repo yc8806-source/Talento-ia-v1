@@ -145,6 +145,20 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
+// Version check
+app.get('/api/version', (req, res) => {
+  res.json({
+    version: '1.0.0',
+    compiledAt: new Date().toISOString(),
+    features: {
+      typingTestSupport: true,
+      testDataFallback: true,
+      evaluationByToken: true
+    },
+    commit: 'f9f2448'
+  });
+});
+
 const PORT = process.env.PORT || 3000;
 const http = require('http');
 const { initSocket } = require('./src/websocket/notificationSocket');

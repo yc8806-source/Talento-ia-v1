@@ -110,9 +110,15 @@ app.use('/api/permissions', permissionRoutes);
 
 console.log('✅ Rutas cargadas correctamente');
 
-// Health check
+// Health check - UPDATED 2026-07-15
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Servidor funcionando' });
+  res.json({
+    status: 'OK',
+    message: 'Servidor funcionando - Build 2026-07-15 13:15',
+    typing_test: 'ENABLED',
+    timer_delay: 'IMPLEMENTED',
+    completion_status: 'IMPLEMENTED'
+  });
 });
 
 // Test BD

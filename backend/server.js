@@ -123,6 +123,10 @@ app.get('/api/spelling-grammar-public/tests/:testId', async (req, res) => {
 app.post('/api/spelling-grammar-public/results/submit', async (req, res) => {
   try {
     const { token, testId, answers, timeSeconds, startedAt } = req.body;
+    const testIdNum = parseInt(testId, 10);
+
+    console.log(`📝 [SUBMIT] Received submission for test ${testIdNum}`);
+    console.log(`📝 Answers count: ${Object.keys(answers || {}).length}`);
 
     let candidateId = 1;
     let cvId = null;
@@ -138,15 +142,20 @@ app.post('/api/spelling-grammar-public/results/submit', async (req, res) => {
           cvId = cvResult.rows[0].id;
         }
       } catch (e) {
+        console.warn('⚠️ Token lookup failed, using default candidateId');
         candidateId = 1;
       }
     }
 
-    const validation = await SpellingGrammarService.validateAnswers(testId, answers);
+    console.log(`📝 Validating answers...`);
+    const validation = await SpellingGrammarService.validateAnswers(testIdNum, answers);
+    console.log(`✅ Validation complete: ${validation.correctAnswers}/${validation.totalQuestions}`);
+
+    console.log(`📝 Saving result...`);
     const result = await SpellingGrammarService.saveResult({
       candidateId,
       candidateVacancyId: cvId,
-      testId,
+      testId: testIdNum,
       totalQuestions: validation.totalQuestions,
       correctAnswers: validation.correctAnswers,
       score: validation.score,
@@ -155,6 +164,8 @@ app.post('/api/spelling-grammar-public/results/submit', async (req, res) => {
       answers: validation.detailedResults,
       startedAt,
     });
+
+    console.log(`✅ Result saved: ${result.id}`);
 
     res.status(201).json({
       message: 'Resultado guardado exitosamente',
@@ -168,8 +179,8 @@ app.post('/api/spelling-grammar-public/results/submit', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ error: error.message });
+    console.error('❌ ERROR in submit endpoint:', error.message, error.stack);
+    res.status(500).json({ error: error.message, details: error.toString() });
   }
 });
 

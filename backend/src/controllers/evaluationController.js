@@ -1197,6 +1197,13 @@ exports.getVacancyEvaluationByToken = async (req, res) => {
     if (cvResult.rows.length === 0) {
       // Para pruebas: retornar datos ficticios si el token no existe
       console.log('✅ Token no encontrado en DB, devolviendo datos de prueba para typing test');
+
+      // Verificar si el candidato de prueba (ID 1) ya completó la prueba de tipeo
+      const typingCompletedResult = await pool.query(
+        'SELECT COUNT(*) as count FROM typing_results WHERE candidate_id = 1 AND typing_test_id = 1'
+      );
+      const typingCompleted = typingCompletedResult.rows[0].count > 0;
+
       return res.json({
         candidateVacancy: {
           id: 1,
@@ -1212,7 +1219,7 @@ exports.getVacancyEvaluationByToken = async (req, res) => {
             description: 'Prueba de velocidad de mecanografía',
             type: 'typing_test',
             max_time_minutes: 1,
-            completed: false
+            completed: typingCompleted
           }
         ]
       });

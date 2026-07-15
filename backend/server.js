@@ -106,7 +106,7 @@ app.get('/api/spelling-grammar-public/tests/:testId', async (req, res) => {
         question_type: q.question_type,
         question_text: q.question_text,
         explanation: q.explanation,
-        options: q.options ? JSON.parse(q.options) : null,
+        options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
         difficulty: q.difficulty,
         order_number: q.order_number
       }))

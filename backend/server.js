@@ -122,7 +122,16 @@ app.get('/api/health', (req, res) => {
     message: 'Servidor funcionando - Build 2026-07-15 13:15',
     typing_test: 'ENABLED',
     timer_delay: 'IMPLEMENTED',
-    completion_status: 'IMPLEMENTED'
+    completion_status: 'IMPLEMENTED',
+    spelling_grammar_test: 'ENABLED'
+  });
+});
+
+// DEBUG: Test spelling grammar endpoint
+app.get('/api/test-spelling', (req, res) => {
+  res.json({
+    message: 'Spelling grammar module is loaded',
+    testEndpoint: '/api/spelling-grammar/tests/:testId'
   });
 });
 

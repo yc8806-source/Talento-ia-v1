@@ -70,13 +70,51 @@ app.post('/api/typing/results/submit-public', typingController.submitResultWithT
 app.get('/api/spelling-grammar-public/tests/:testId', async (req, res) => {
   try {
     const testId = parseInt(req.params.testId, 10);
-    const test = await SpellingGrammarService.getTestWithQuestions(testId);
-    if (!test) {
-      return res.status(404).json({ error: 'Test no encontrado' });
+    console.log(`🔍 [PUBLIC] Getting test ${testId}`);
+
+    // Direct query
+    const testResult = await pool.query(
+      `SELECT id, title, description, difficulty, test_type, language, duration_seconds, total_questions
+       FROM spelling_grammar_tests WHERE id = $1`,
+      [testId]
+    );
+
+    console.log(`✅ Query returned ${testResult.rows.length} rows for test ${testId}`);
+
+    if (testResult.rows.length === 0) {
+      console.log(`❌ Test ${testId} not found`);
+      return res.status(404).json({ error: 'Test no encontrado', testId });
     }
-    res.json(test);
+
+    const test = testResult.rows[0];
+
+    const questionsResult = await pool.query(
+      `SELECT id, question_type, question_text, explanation, options, difficulty, order_number
+       FROM spelling_grammar_questions
+       WHERE test_id = $1
+       ORDER BY order_number ASC`,
+      [testId]
+    );
+
+    console.log(`✅ Found ${questionsResult.rows.length} questions for test ${testId}`);
+
+    const response = {
+      ...test,
+      totalQuestions: questionsResult.rows.length,
+      questions: questionsResult.rows.map(q => ({
+        id: q.id,
+        question_type: q.question_type,
+        question_text: q.question_text,
+        explanation: q.explanation,
+        options: q.options ? JSON.parse(q.options) : null,
+        difficulty: q.difficulty,
+        order_number: q.order_number
+      }))
+    };
+
+    res.json(response);
   } catch (error) {
-    console.error('Error:', error);
+    console.error('❌ ERROR in public endpoint:', error.message, error.stack);
     res.status(500).json({ error: error.message });
   }
 });

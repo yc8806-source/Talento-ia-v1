@@ -150,21 +150,47 @@ app.get('/api/debug-spelling-tests', async (req, res) => {
   }
 });
 
-// DEBUG: Get test with questions
+// DEBUG: Get test with questions - INLINE VERSION
 app.get('/api/debug-spelling-test/:testId', async (req, res) => {
   try {
     const { testId } = req.params;
-    const SpellingGrammarService = require('./src/services/spellingGrammarService');
-    const test = await SpellingGrammarService.getTestWithQuestions(testId);
-    res.json({
-      testId,
-      result: test,
-      found: test !== null
-    });
+    console.log('🔍 DEBUG: Getting test', testId);
+
+    // Test the query directly
+    const testResult = await pool.query(
+      `SELECT id, title, description, difficulty, test_type, language
+       FROM spelling_grammar_tests WHERE id = $1`,
+      [testId]
+    );
+    console.log('📋 Test query result:', testResult.rows.length, 'rows');
+
+    if (testResult.rows.length === 0) {
+      return res.json({ error: 'Test not found', testResult: testResult.rows });
+    }
+
+    const test = testResult.rows[0];
+
+    const questionsResult = await pool.query(
+      `SELECT id, question_type, question_text, explanation, options, difficulty, order_number
+       FROM spelling_grammar_questions
+       WHERE test_id = $1
+       ORDER BY order_number ASC`,
+      [testId]
+    );
+    console.log('❓ Questions query result:', questionsResult.rows.length, 'rows');
+
+    const response = {
+      ...test,
+      totalQuestions: questionsResult.rows.length,
+      questions: questionsResult.rows
+    };
+
+    res.json(response);
   } catch (error) {
+    console.error('❌ Error in debug endpoint:', error);
     res.status(500).json({
       error: error.message,
-      stack: error.stack
+      details: error.toString()
     });
   }
 });

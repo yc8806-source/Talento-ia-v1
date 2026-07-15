@@ -26,6 +26,9 @@ router.get('/tests/:testId/text', verifyToken, typingController.getTestText);
 // ENVIAR RESULTADO DE TYPING TEST (sin middleware - el controlador maneja autenticación)
 router.post('/results/submit', typingController.submitResultWithToken);
 
+// RUTA ALTERNATIVA: Sin middleware para asegurar que funciona
+router.post('/results/submit-public', typingController.submitResultWithToken);
+
 // OBTENER RESULTADOS DE UN CANDIDATO (protegido)
 router.get('/results/candidate/:candidateId', verifyToken, typingController.getCandidateResults);
 

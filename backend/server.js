@@ -135,6 +135,21 @@ app.get('/api/test-spelling', (req, res) => {
   });
 });
 
+// DEBUG: List all spelling grammar tests
+app.get('/api/debug-spelling-tests', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, title FROM spelling_grammar_tests');
+    res.json({
+      count: result.rows.length,
+      tests: result.rows
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+
 // Test BD
 // Debug: Show all database variables
 app.get('/api/debug-db', (req, res) => {

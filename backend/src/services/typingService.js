@@ -134,6 +134,8 @@ class TypingService {
         startedAt,
       } = resultData;
 
+      console.log('🔍 INSERT Query params:', { candidateId, candidateVacancyId, typingTestId, wpm, accuracy, totalErrors });
+
       const result = await pool.query(
         `INSERT INTO typing_results
          (candidate_id, candidate_vacancy_id, typing_test_id, input_text, wpm, accuracy,
@@ -155,6 +157,7 @@ class TypingService {
         ]
       );
 
+      console.log('✅ INSERT Result:', { rows: result.rows.length, row0: result.rows[0] });
       return result.rows[0];
     } catch (error) {
       console.error('Error guardando resultado de typing:', error);

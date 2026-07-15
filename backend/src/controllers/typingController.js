@@ -154,6 +154,16 @@ exports.submitResultWithToken = async (req, res) => {
     const metrics = TypingService.calculateWPM(test.text, inputText, timeSeconds);
 
     // Guardar resultado
+    console.log('📝 GUARDANDO RESULTADO:', {
+      candidateId,
+      cvId,
+      typingTestId,
+      wpm: metrics.wpm,
+      accuracy: metrics.accuracy,
+      totalErrors: metrics.totalErrors,
+      timeSeconds
+    });
+
     const result = await TypingService.saveResult({
       candidateId,
       candidateVacancyId: cvId || null,
@@ -167,6 +177,8 @@ exports.submitResultWithToken = async (req, res) => {
       timeSeconds,
       startedAt,
     });
+
+    console.log('✅ RESULTADO GUARDADO:', result);
 
     res.status(201).json({
       message: 'Resultado de typing test guardado exitosamente',

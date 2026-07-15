@@ -28,7 +28,7 @@ function SpellingGrammarTestPage() {
       return;
     }
 
-    fetch(`${API_URL}/spelling-grammar/tests/${testId}`)
+    fetch(`${API_URL}/spelling-grammar-public/tests/${testId}`)
       .then(res => res.json())
       .then(data => {
         setTest(data);
@@ -96,11 +96,7 @@ function SpellingGrammarTestPage() {
     try {
       const timeSeconds = Math.max(1, (test.duration_seconds || 1200) - (timeLeft || 0));
 
-      const submitEndpoint = window.location.hostname === 'localhost'
-        ? '/spelling-grammar/results/submit'
-        : '/spelling-grammar/results/submit-public';
-
-      const submitResponse = await fetch(`${API_URL}${submitEndpoint}`, {
+      const submitResponse = await fetch(`${API_URL}/spelling-grammar-public/results/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

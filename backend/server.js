@@ -62,11 +62,78 @@ app.use(express.urlencoded({ limit: '10mb', extended: false }));
 
 // PUBLIC ENDPOINTS SIN MIDDLEWARE - Antes de tokenValidator
 const typingController = require('./src/controllers/typingController');
-const spellingGrammarController = require('./src/controllers/spellingGrammarController');
+const SpellingGrammarService = require('./src/services/spellingGrammarService');
 
 app.post('/api/typing/results/submit-public', typingController.submitResultWithToken);
-app.get('/api/spelling-grammar/tests/:testId', spellingGrammarController.getTest);
-app.post('/api/spelling-grammar/results/submit-public', spellingGrammarController.submitAnswersWithToken);
+
+// Spelling Grammar - GET test
+app.get('/api/spelling-grammar-public/tests/:testId', async (req, res) => {
+  try {
+    const { testId } = req.params;
+    const test = await SpellingGrammarService.getTestWithQuestions(testId);
+    if (!test) {
+      return res.status(404).json({ error: 'Test no encontrado' });
+    }
+    res.json(test);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Spelling Grammar - POST submit
+app.post('/api/spelling-grammar-public/results/submit', async (req, res) => {
+  try {
+    const { token, testId, answers, timeSeconds, startedAt } = req.body;
+
+    let candidateId = 1;
+    let cvId = null;
+
+    if (token) {
+      try {
+        const cvResult = await pool.query(
+          'SELECT id, candidate_id FROM candidate_vacancies WHERE token = $1',
+          [token]
+        );
+        if (cvResult.rows.length > 0) {
+          candidateId = cvResult.rows[0].candidate_id;
+          cvId = cvResult.rows[0].id;
+        }
+      } catch (e) {
+        candidateId = 1;
+      }
+    }
+
+    const validation = await SpellingGrammarService.validateAnswers(testId, answers);
+    const result = await SpellingGrammarService.saveResult({
+      candidateId,
+      candidateVacancyId: cvId,
+      testId,
+      totalQuestions: validation.totalQuestions,
+      correctAnswers: validation.correctAnswers,
+      score: validation.score,
+      accuracy: validation.accuracy,
+      timeSeconds,
+      answers: validation.detailedResults,
+      startedAt,
+    });
+
+    res.status(201).json({
+      message: 'Resultado guardado exitosamente',
+      result: {
+        id: result.id,
+        score: validation.score,
+        accuracy: validation.accuracy,
+        correctAnswers: validation.correctAnswers,
+        totalQuestions: validation.totalQuestions,
+        completedAt: result.completed_at,
+      }
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 app.use(sanitizeMiddleware);
 app.use(auditLogger);

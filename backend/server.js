@@ -60,9 +60,13 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: false }));
 
-// PUBLIC ENDPOINT SIN MIDDLEWARE - Para typing test submit (debe ir ANTES de tokenValidator)
+// PUBLIC ENDPOINTS SIN MIDDLEWARE - Antes de tokenValidator
 const typingController = require('./src/controllers/typingController');
+const spellingGrammarController = require('./src/controllers/spellingGrammarController');
+
 app.post('/api/typing/results/submit-public', typingController.submitResultWithToken);
+app.post('/api/spelling-grammar/results/submit-public', spellingGrammarController.submitAnswersWithToken);
+app.get('/api/spelling-grammar/tests/:testId/public', spellingGrammarController.getTest);
 
 app.use(sanitizeMiddleware);
 app.use(auditLogger);

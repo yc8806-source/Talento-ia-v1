@@ -125,6 +125,105 @@ exports.submitAnswers = async (req, res) => {
   }
 };
 
+// ENVIAR RESPUESTAS CON TOKEN - Para candidatos sin autenticación JWT
+exports.submitAnswersWithToken = async (req, res) => {
+  try {
+    const {
+      token,
+      testId,
+      answers,
+      timeSeconds,
+      startedAt,
+      candidateVacancyId,
+    } = req.body;
+
+    let candidateId;
+    let cvId = candidateVacancyId;
+
+    // Intentar obtener candidateId del token de candidato
+    if (token) {
+      try {
+        const cvResult = await pool.query(
+          'SELECT id, candidate_id FROM candidate_vacancies WHERE token = $1',
+          [token]
+        );
+
+        if (cvResult.rows.length === 0) {
+          console.log('📝 Token no encontrado en DB, usando candidato de prueba para spelling/grammar');
+          candidateId = 1;
+          cvId = null;
+        } else {
+          candidateId = cvResult.rows[0].candidate_id;
+          cvId = cvResult.rows[0].id;
+        }
+      } catch (dbError) {
+        console.log('⚠️ Error consultando token, usando candidato de prueba:', dbError.message);
+        candidateId = 1;
+        cvId = null;
+      }
+    } else if (req.user?.id) {
+      candidateId = req.user.id;
+    } else {
+      console.log('⚠️ Sin token ni JWT, usando candidato de prueba para spelling/grammar');
+      candidateId = 1;
+    }
+
+    // Validar datos
+    if (!testId || !answers || !timeSeconds) {
+      return res.status(400).json({
+        error: 'Faltan datos requeridos',
+        required: ['testId', 'answers', 'timeSeconds']
+      });
+    }
+
+    console.log('📝 GUARDANDO RESULTADO SPELLING/GRAMMAR:', {
+      candidateId,
+      cvId,
+      testId,
+      totalQuestions: Object.keys(answers).length,
+      timeSeconds
+    });
+
+    // Validar respuestas
+    const validation = await SpellingGrammarService.validateAnswers(testId, answers);
+
+    // Guardar resultado
+    const result = await SpellingGrammarService.saveResult({
+      candidateId,
+      candidateVacancyId: cvId || null,
+      testId,
+      totalQuestions: validation.totalQuestions,
+      correctAnswers: validation.correctAnswers,
+      score: validation.score,
+      accuracy: validation.accuracy,
+      timeSeconds,
+      answers: validation.detailedResults,
+      startedAt,
+    });
+
+    console.log('✅ RESULTADO SPELLING/GRAMMAR GUARDADO:', result);
+
+    res.status(201).json({
+      message: 'Resultado guardado exitosamente',
+      result: {
+        id: result.id,
+        score: validation.score,
+        accuracy: validation.accuracy,
+        correctAnswers: validation.correctAnswers,
+        totalQuestions: validation.totalQuestions,
+        completedAt: result.completed_at,
+        detailedResults: validation.detailedResults,
+      }
+    });
+  } catch (error) {
+    console.error('Error guardando resultado spelling/grammar:', error);
+    res.status(500).json({
+      error: 'Error al guardar resultado',
+      details: error.message
+    });
+  }
+};
+
 // OBTENER RESULTADOS DE UN CANDIDATO
 exports.getCandidateResults = async (req, res) => {
   try {

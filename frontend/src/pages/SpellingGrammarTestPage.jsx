@@ -28,11 +28,7 @@ function SpellingGrammarTestPage() {
       return;
     }
 
-    const endpoint = window.location.hostname === 'localhost'
-      ? `/spelling-grammar/tests/${testId}`
-      : `/spelling-grammar/tests/${testId}/public`;
-
-    fetch(`${API_URL}${endpoint}`)
+    fetch(`${API_URL}/spelling-grammar/tests/${testId}`)
       .then(res => res.json())
       .then(data => {
         setTest(data);

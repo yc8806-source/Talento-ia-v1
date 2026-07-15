@@ -65,8 +65,8 @@ const typingController = require('./src/controllers/typingController');
 const spellingGrammarController = require('./src/controllers/spellingGrammarController');
 
 app.post('/api/typing/results/submit-public', typingController.submitResultWithToken);
+app.get('/api/spelling-grammar/tests/:testId', spellingGrammarController.getTest);
 app.post('/api/spelling-grammar/results/submit-public', spellingGrammarController.submitAnswersWithToken);
-app.get('/api/spelling-grammar/tests/:testId/public', spellingGrammarController.getTest);
 
 app.use(sanitizeMiddleware);
 app.use(auditLogger);

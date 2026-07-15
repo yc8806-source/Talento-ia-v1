@@ -79,7 +79,12 @@ function TypingTestPage() {
     try {
       const timeSeconds = Math.max(1, test.durationSeconds - (timeLeft || 0));
 
-      const submitResponse = await fetch(`${API_URL}/typing/results/submit`, {
+      // Usar endpoint público en Render, endpoint normal en localhost
+      const submitEndpoint = window.location.hostname === 'localhost'
+        ? '/typing/results/submit'
+        : '/typing/results/submit-public';
+
+      const submitResponse = await fetch(`${API_URL}${submitEndpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

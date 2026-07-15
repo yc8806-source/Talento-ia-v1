@@ -60,6 +60,10 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: false }));
 
+// PUBLIC ENDPOINT SIN MIDDLEWARE - Para typing test submit (debe ir ANTES de tokenValidator)
+const typingController = require('./src/controllers/typingController');
+app.post('/api/typing/results/submit-public', typingController.submitResultWithToken);
+
 app.use(sanitizeMiddleware);
 app.use(auditLogger);
 app.use('/api/', apiLimiter);

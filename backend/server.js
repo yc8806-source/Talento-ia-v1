@@ -150,6 +150,25 @@ app.get('/api/debug-spelling-tests', async (req, res) => {
   }
 });
 
+// DEBUG: Get test with questions
+app.get('/api/debug-spelling-test/:testId', async (req, res) => {
+  try {
+    const { testId } = req.params;
+    const SpellingGrammarService = require('./src/services/spellingGrammarService');
+    const test = await SpellingGrammarService.getTestWithQuestions(testId);
+    res.json({
+      testId,
+      result: test,
+      found: test !== null
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+      stack: error.stack
+    });
+  }
+});
+
 // Test BD
 // Debug: Show all database variables
 app.get('/api/debug-db', (req, res) => {

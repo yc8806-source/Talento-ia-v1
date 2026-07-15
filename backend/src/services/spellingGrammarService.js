@@ -56,7 +56,7 @@ class SpellingGrammarService {
           id: q.id,
           type: q.question_type,
           text: q.question_text,
-          options: q.options ? JSON.parse(q.options) : null,
+          options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
           difficulty: q.difficulty,
           explanation: q.explanation,
         }))

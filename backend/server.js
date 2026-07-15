@@ -69,7 +69,7 @@ app.post('/api/typing/results/submit-public', typingController.submitResultWithT
 // Spelling Grammar - GET test
 app.get('/api/spelling-grammar-public/tests/:testId', async (req, res) => {
   try {
-    const { testId } = req.params;
+    const testId = parseInt(req.params.testId, 10);
     const test = await SpellingGrammarService.getTestWithQuestions(testId);
     if (!test) {
       return res.status(404).json({ error: 'Test no encontrado' });

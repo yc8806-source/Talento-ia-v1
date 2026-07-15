@@ -170,15 +170,14 @@ class SpellingGrammarService {
 
       const result = await pool.query(
         `INSERT INTO spelling_grammar_results
-         (candidate_id, candidate_vacancy_id, test_id, total_questions,
-          correct_answers, score, accuracy, time_taken_seconds, answers, started_at, completed_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
-         RETURNING id, score, accuracy, completed_at`,
+         (candidate_id, candidate_vacancy_id, test_id,
+          correct_answers, score, percentage, time_taken_seconds, answers, started_at, completed_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+         RETURNING id, score, percentage, completed_at`,
         [
           candidateId,
           candidateVacancyId,
           testId,
-          totalQuestions,
           correctAnswers,
           score,
           accuracy,

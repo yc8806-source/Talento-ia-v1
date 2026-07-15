@@ -17,8 +17,8 @@ const isAdmin = (req, res, next) => {
 // OBTENER TODOS LOS TESTS (público)
 router.get('/tests', spellingGrammarController.getAllTests);
 
-// OBTENER TEST CON PREGUNTAS (requiere autenticación)
-router.get('/tests/:testId', verifyToken, spellingGrammarController.getTest);
+// OBTENER TEST CON PREGUNTAS (público - sin middleware)
+router.get('/tests/:testId', spellingGrammarController.getTest);
 
 // ENVIAR RESPUESTAS (requiere autenticación)
 router.post('/results/submit', verifyToken, spellingGrammarController.submitAnswers);

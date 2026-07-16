@@ -52,6 +52,7 @@ export const candidateAPI = {
     };
     return api.post('/candidates/import-csv', data, config);
   },
+  getCandidateTokens: (candidateId) => api.get(`/candidates/${candidateId}/tokens`),
 };
 
 // Vacancies

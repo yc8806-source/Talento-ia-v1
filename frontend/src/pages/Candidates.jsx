@@ -37,6 +37,9 @@ function Candidates() {
   const [showBulkActionsModal, setShowBulkActionsModal] = useState(false);
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [invitationToken, setInvitationToken] = useState('');
+  const [showTokensModal, setShowTokensModal] = useState(false);
+  const [candidateTokens, setCandidateTokens] = useState([]);
+  const [loadingTokens, setLoadingTokens] = useState(false);
 
   const itemsPerPage = 10;
 
@@ -112,6 +115,20 @@ function Candidates() {
       loadData();
     } catch (error) {
       alert('Error: ' + (error.response?.data?.error || 'No se pudo invitar'));
+    }
+  };
+
+  const handleViewTokens = async (candidate) => {
+    setLoadingTokens(true);
+    try {
+      const response = await candidateAPI.getCandidateTokens(candidate.id);
+      setCandidateTokens(response.data.tokens);
+      setSelectedCandidate(candidate);
+      setShowTokensModal(true);
+    } catch (error) {
+      alert('Error: ' + (error.response?.data?.error || 'No se pudieron obtener los tokens'));
+    } finally {
+      setLoadingTokens(false);
     }
   };
 
@@ -401,15 +418,24 @@ function Candidates() {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <button
-                          onClick={() => {
-                            setSelectedCandidate(candidate);
-                            setShowInviteForm(true);
-                          }}
-                          className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
-                        >
-                          Invitar
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedCandidate(candidate);
+                              setShowInviteForm(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
+                          >
+                            Invitar
+                          </button>
+                          <button
+                            onClick={() => handleViewTokens(candidate)}
+                            className="text-green-600 hover:text-green-800 font-medium text-sm hover:underline"
+                            title="Ver URL con token"
+                          >
+                            Ver URL
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -528,6 +554,66 @@ function Candidates() {
             <button
               onClick={() => setShowTokenModal(false)}
               className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg font-medium"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showTokensModal && selectedCandidate && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">
+              URLs de {selectedCandidate.firstName} {selectedCandidate.lastName}
+            </h2>
+            <p className="text-gray-600 mb-4 text-sm">
+              {selectedCandidate.email}
+            </p>
+
+            {loadingTokens ? (
+              <div className="text-center py-8">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p className="mt-2 text-gray-600">Cargando...</p>
+              </div>
+            ) : candidateTokens.length === 0 ? (
+              <div className="bg-gray-50 p-4 rounded-lg text-center">
+                <p className="text-gray-600">No hay URLs disponibles. Invita al candidato a una vacante primero.</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {candidateTokens.map((tokenData, idx) => (
+                  <div key={tokenData.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div className="mb-2">
+                      <p className="font-medium text-gray-900">{tokenData.vacancyTitle}</p>
+                      <p className="text-xs text-gray-500">
+                        Estado: <span className="font-semibold">{tokenData.status}</span>
+                      </p>
+                    </div>
+                    <div className="bg-white p-3 rounded border border-gray-300 mb-2 break-all font-mono text-xs">
+                      {tokenData.testUrl}
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(tokenData.testUrl);
+                        alert('URL copiada al portapapeles');
+                      }}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-medium text-sm"
+                    >
+                      Copiar URL
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button
+              onClick={() => {
+                setShowTokensModal(false);
+                setSelectedCandidate(null);
+                setCandidateTokens([]);
+              }}
+              className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg font-medium mt-4"
             >
               Cerrar
             </button>

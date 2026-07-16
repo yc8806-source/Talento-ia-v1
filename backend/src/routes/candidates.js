@@ -21,6 +21,9 @@ router.post('/assign-vacancy', candidateController.assignVacancy);
 // Obtener candidatos de una vacante
 router.get('/vacancy/:vacancyId', candidateController.getCandidatesByVacancy);
 
+// Obtener tokens de un candidato (para recuperar URLs)
+router.get('/:candidateId/tokens', candidateController.getCandidateTokens);
+
 // RUTAS GENÉRICAS AL FINAL
 
 // Registrar nuevo candidato con CV opcional

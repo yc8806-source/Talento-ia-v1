@@ -734,3 +734,47 @@ exports.importCSV = async (req, res) => {
     });
   }
 };
+
+// OBTENER TOKENS DE UN CANDIDATO (para recuperar URLs)
+exports.getCandidateTokens = async (req, res) => {
+  try {
+    const { candidateId } = req.params;
+
+    const result = await pool.query(
+      `SELECT
+        cv.id,
+        cv.token,
+        cv.status,
+        cv.created_at,
+        v.id as vacancy_id,
+        v.title as vacancy_title
+      FROM candidate_vacancies cv
+      INNER JOIN vacancies v ON cv.vacancy_id = v.id
+      WHERE cv.candidate_id = $1
+      ORDER BY cv.created_at DESC`,
+      [candidateId]
+    );
+
+    const tokens = result.rows.map(row => ({
+      id: row.id,
+      token: row.token,
+      status: row.status,
+      vacancyId: row.vacancy_id,
+      vacancyTitle: row.vacancy_title,
+      createdAt: row.created_at,
+      testUrl: `${process.env.FRONTEND_URL || 'https://talento-ia-v1-frontend.onrender.com'}/evaluation/${row.token}`
+    }));
+
+    res.json({
+      candidateId,
+      total: tokens.length,
+      tokens
+    });
+  } catch (error) {
+    console.error('Error obteniendo tokens:', error);
+    res.status(500).json({
+      error: 'Error al obtener tokens',
+      details: error.message
+    });
+  }
+};

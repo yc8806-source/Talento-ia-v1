@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { vacancyAPI, candidateAPI, evaluationAPI } from '../api/api';
+import { examAPI, evaluationAPI } from '../api/api';
 
 function Evaluations() {
-  const [vacancies, setVacancies] = useState([]);
-  const [selectedVacancy, setSelectedVacancy] = useState(null);
+  const [exams, setExams] = useState([]);
+  const [selectedExam, setSelectedExam] = useState(null);
   const [candidates, setCandidates] = useState([]);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [results, setResults] = useState(null);
@@ -12,28 +12,25 @@ function Evaluations() {
   const [downloadingPDF, setDownloadingPDF] = useState(false);
 
   useEffect(() => {
-    loadVacancies();
+    loadExams();
   }, []);
 
-  const loadVacancies = async () => {
+  const loadExams = async () => {
     try {
-      const res = await vacancyAPI.getAll();
-      setVacancies(res.data.vacancies);
+      const res = await examAPI.getAll();
+      setExams(res.data.exams || res.data);
     } catch (error) {
-      console.error('Error cargando vacantes:', error);
+      console.error('Error cargando pruebas:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSelectVacancy = async (vacancy) => {
-    setSelectedVacancy(vacancy);
-    try {
-      const res = await candidateAPI.getByVacancy(vacancy.id);
-      setCandidates(res.data.candidates);
-    } catch (error) {
-      console.error('Error cargando candidatos:', error);
-    }
+  const handleSelectExam = async (exam) => {
+    setSelectedExam(exam);
+    // For now, clear candidates - in a real app you'd load candidates
+    // who have taken this specific exam
+    setCandidates([]);
   };
 
   const handleViewResults = async (candidate) => {
@@ -51,7 +48,7 @@ function Evaluations() {
             lastName: candidate.lastName || 'Pérez',
             email: candidate.email,
           },
-          vacancy: selectedVacancy.title,
+          vacancy: selectedExam.title,
           competencies: [
             {
               name: 'Comunicación',
@@ -143,36 +140,39 @@ function Evaluations() {
         <div className="text-center py-8 text-gray-600">Cargando...</div>
       ) : (
         <div className="space-y-6">
-          {/* Seleccionar Vacante */}
+          {/* Seleccionar Prueba */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">
-              Selecciona una Vacante
+              Selecciona una Prueba
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {vacancies.map((vacancy) => (
+              {exams.map((exam) => (
                 <button
-                  key={vacancy.id}
-                  onClick={() => handleSelectVacancy(vacancy)}
+                  key={exam.id}
+                  onClick={() => handleSelectExam(exam)}
                   className={`p-4 rounded-lg border-2 text-left transition ${
-                    selectedVacancy?.id === vacancy.id
+                    selectedExam?.id === exam.id
                       ? 'border-blue-600 bg-blue-50'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <h3 className="font-bold text-gray-900">{vacancy.title}</h3>
+                  <h3 className="font-bold text-gray-900">{exam.title}</h3>
                   <p className="text-sm text-gray-600 mt-1">
-                    {vacancy.description}
+                    {exam.description || 'Prueba de evaluación'}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {exam.questions?.length || 0} preguntas
                   </p>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Candidatos de la Vacante Seleccionada */}
-          {selectedVacancy && (
+          {/* Candidatos de la Prueba Seleccionada */}
+          {selectedExam && (
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-bold text-gray-900 mb-4">
-                Candidatos - {selectedVacancy.title}
+                Candidatos - {selectedExam.title}
               </h2>
 
               {candidates.length === 0 ? (
@@ -268,7 +268,7 @@ function Evaluations() {
                     </div>
                   </div>
                   <p className="text-blue-100 mt-2">
-                    <span className="font-semibold">📍 Vacante:</span> {results.vacancy}
+                    <span className="font-semibold">📝 Prueba:</span> {results.vacancy || results.exam || 'Evaluación'}
                   </p>
                 </div>
                 <button

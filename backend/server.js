@@ -46,12 +46,23 @@ const app = express();
 
 app.use(helmetConfig);
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'https://talento-ia-v1-frontend.onrender.com',
-    process.env.FRONTEND_URL
-  ].filter(Boolean),
+  origin: function(origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://talento-ia-v1-frontend.onrender.com',
+      process.env.FRONTEND_URL
+    ].filter(Boolean);
+
+    // Allow localhost on any port in development
+    if (!origin || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      callback(null, true);
+    } else if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
 }));

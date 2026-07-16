@@ -123,7 +123,7 @@ export default function CandidatesByVacancy() {
 
   return (
     <div style={{ padding: '40px', maxWidth: '1200px', margin: '0 auto' }}>
-      {/* Encabezado */}
+      {/* Encabezado simplificado */}
       <div style={{ marginBottom: '30px' }}>
         <button
           onClick={() => navigate('/vacantes')}
@@ -141,44 +141,28 @@ export default function CandidatesByVacancy() {
         </button>
 
         <h1>{vacancy.title}</h1>
-        <p style={{ color: '#666', marginBottom: '20px' }}>
-          {vacancy.description}
-        </p>
-
-        <div style={{
-          backgroundColor: '#f0f4ff',
-          padding: '15px',
-          borderRadius: '8px',
-          marginBottom: '30px',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '15px'
-        }}>
-          <div>
-            <p style={{ margin: '0', color: '#666', fontSize: '0.9em' }}>Posiciones</p>
-            <p style={{ margin: '5px 0', fontSize: '1.3em', fontWeight: 'bold', color: '#0066ff' }}>
-              {vacancy.filledPositions}/{vacancy.availablePositions}
+        {vacancy.exams && vacancy.exams.length > 0 && (
+          <div style={{ marginBottom: '20px' }}>
+            <p style={{ color: '#666', marginBottom: '8px', fontSize: '0.9em' }}>
+              <strong>Pruebas asignadas:</strong>
             </p>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              {vacancy.exams.map((exam, idx) => (
+                <span key={idx} style={{
+                  backgroundColor: '#e7f3ff',
+                  border: '1px solid #0066ff',
+                  color: '#0066ff',
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  fontSize: '0.9em',
+                  fontWeight: '500'
+                }}>
+                  📝 {exam.name}
+                </span>
+              ))}
+            </div>
           </div>
-          <div>
-            <p style={{ margin: '0', color: '#666', fontSize: '0.9em' }}>Aptos ✅</p>
-            <p style={{ margin: '5px 0', fontSize: '1.3em', fontWeight: 'bold', color: '#28a745' }}>
-              {aptos}
-            </p>
-          </div>
-          <div>
-            <p style={{ margin: '0', color: '#666', fontSize: '0.9em' }}>Invitados ⏳</p>
-            <p style={{ margin: '5px 0', fontSize: '1.3em', fontWeight: 'bold', color: '#ffc107' }}>
-              {invitados}
-            </p>
-          </div>
-          <div>
-            <p style={{ margin: '0', color: '#666', fontSize: '0.9em' }}>Rechazados ❌</p>
-            <p style={{ margin: '5px 0', fontSize: '1.3em', fontWeight: 'bold', color: '#dc3545' }}>
-              {rechazados}
-            </p>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Tabla de Candidatos */}

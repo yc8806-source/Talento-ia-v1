@@ -12,6 +12,10 @@ export default function CandidatesByVacancy() {
   const [availableCandidates, setAvailableCandidates] = useState([]);
   const [selectedCandidateId, setSelectedCandidateId] = useState(null);
   const [invitingToken, setInvitingToken] = useState(null);
+  const [showTokensModal, setShowTokensModal] = useState(false);
+  const [candidateTokens, setCandidateTokens] = useState([]);
+  const [loadingTokens, setLoadingTokens] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
 
   const API_URL = typeof window !== 'undefined' && window.location.hostname === 'talento-ia-v1-frontend.onrender.com'
     ? 'https://talento-ia-backend.onrender.com/api'
@@ -88,6 +92,20 @@ export default function CandidatesByVacancy() {
       alert(`Candidato marcado como ${newStatus}`);
     } catch (error) {
       alert('Error: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
+  const handleViewTokens = async (candidate) => {
+    setLoadingTokens(true);
+    try {
+      const response = await axios.get(`${API_URL}/candidates/${candidate.candidateId}/tokens`);
+      setCandidateTokens(response.data.tokens);
+      setSelectedCandidate(candidate);
+      setShowTokensModal(true);
+    } catch (error) {
+      alert('Error: ' + (error.response?.data?.error || 'No se pudieron obtener los tokens'));
+    } finally {
+      setLoadingTokens(false);
     }
   };
 
@@ -228,38 +246,55 @@ export default function CandidatesByVacancy() {
                     </span>
                   </td>
                   <td style={{ padding: '12px', textAlign: 'center' }}>
-                    {candidate.status === 'invited' && (
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                        <button
-                          onClick={() => handleMarkStatus(candidate.candidateVacancyId, 'apto')}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#28a745',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '0.85em'
-                          }}
-                        >
-                          ✅ Apto
-                        </button>
-                        <button
-                          onClick={() => handleMarkStatus(candidate.candidateVacancyId, 'rechazado')}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#dc3545',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '0.85em'
-                          }}
-                        >
-                          ❌ Rechazar
-                        </button>
-                      </div>
-                    )}
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                      {candidate.status === 'invited' && (
+                        <>
+                          <button
+                            onClick={() => handleMarkStatus(candidate.candidateVacancyId, 'apto')}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#28a745',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '0.85em'
+                            }}
+                          >
+                            ✅ Apto
+                          </button>
+                          <button
+                            onClick={() => handleMarkStatus(candidate.candidateVacancyId, 'rechazado')}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#dc3545',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '0.85em'
+                            }}
+                          >
+                            ❌ Rechazar
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => handleViewTokens(candidate)}
+                        style={{
+                          padding: '6px 12px',
+                          backgroundColor: '#17a2b8',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.85em'
+                        }}
+                        title="Ver URL con token"
+                      >
+                        🔗 URL
+                      </button>
+                    </div>
                     {candidate.status === 'apto' && (
                       <button
                         onClick={() => handleMarkStatus(candidate.candidateVacancyId, 'invited')}
@@ -480,6 +515,96 @@ export default function CandidatesByVacancy() {
                 </button>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Tokens */}
+      {showTokensModal && selectedCandidate && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '30px',
+            borderRadius: '8px',
+            maxWidth: '600px',
+            width: '90%',
+            maxHeight: '80vh',
+            overflowY: 'auto'
+          }}>
+            <h2 style={{ marginTop: 0 }}>URLs de {selectedCandidate.firstName} {selectedCandidate.lastName}</h2>
+            <p style={{ color: '#666', marginBottom: '20px' }}>{selectedCandidate.email}</p>
+
+            {loadingTokens ? (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                <p>Cargando...</p>
+              </div>
+            ) : candidateTokens.length === 0 ? (
+              <div style={{ backgroundColor: '#f0f0f0', padding: '15px', borderRadius: '4px', textAlign: 'center' }}>
+                <p>No hay URLs disponibles. Invita al candidato a una vacante primero.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                {candidateTokens.map((token) => (
+                  <div key={token.id} style={{ backgroundColor: '#f8f9fa', padding: '15px', borderRadius: '8px', border: '1px solid #ddd' }}>
+                    <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>{token.vacancyTitle}</p>
+                    <p style={{ margin: '0 0 10px 0', fontSize: '0.85em', color: '#666' }}>Estado: {token.status}</p>
+                    <div style={{ backgroundColor: 'white', padding: '10px', borderRadius: '4px', border: '1px solid #ddd', marginBottom: '10px', wordBreak: 'break-all', fontSize: '0.85em', fontFamily: 'monospace' }}>
+                      {token.testUrl}
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(token.testUrl);
+                        alert('URL copiada al portapapeles');
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        backgroundColor: '#0066cc',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.85em'
+                      }}
+                    >
+                      Copiar URL
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button
+              onClick={() => {
+                setShowTokensModal(false);
+                setSelectedCandidate(null);
+                setCandidateTokens([]);
+              }}
+              style={{
+                width: '100%',
+                padding: '12px',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '0.95em',
+                marginTop: '20px'
+              }}
+            >
+              Cerrar
+            </button>
           </div>
         </div>
       )}

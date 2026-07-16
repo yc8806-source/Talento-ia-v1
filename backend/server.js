@@ -119,6 +119,34 @@ app.get('/api/spelling-grammar-public/tests/:testId', async (req, res) => {
   }
 });
 
+// Candidate Tokens - GET (for token recovery)
+app.get('/api/candidates/:candidateId/tokens', async (req, res) => {
+  try {
+    const { candidateId } = req.params;
+    const result = await pool.query(
+      `SELECT cv.id, cv.token, cv.status, cv.created_at, v.id as vacancy_id, v.title as vacancy_title
+       FROM candidate_vacancies cv
+       INNER JOIN vacancies v ON cv.vacancy_id = v.id
+       WHERE cv.candidate_id = $1
+       ORDER BY cv.created_at DESC`,
+      [candidateId]
+    );
+    const tokens = result.rows.map(row => ({
+      id: row.id,
+      token: row.token,
+      status: row.status,
+      vacancyId: row.vacancy_id,
+      vacancyTitle: row.vacancy_title,
+      createdAt: row.created_at,
+      testUrl: `${process.env.FRONTEND_URL || 'https://talento-ia-v1-frontend.onrender.com'}/evaluation/${row.token}`
+    }));
+    res.json({ candidateId, total: tokens.length, tokens });
+  } catch (error) {
+    console.error('Error obteniendo tokens:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Spelling Grammar - POST submit
 app.post('/api/spelling-grammar-public/results/submit', async (req, res) => {
   try {
@@ -238,12 +266,12 @@ console.log('✅ Rutas cargadas correctamente');
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
-    message: 'Servidor funcionando - Build 2026-07-16 15:30',
+    message: 'TESTING_VERSION_2026_07_16_HOTFIX_TOKEN_RECOVERY',
     typing_test: 'ENABLED',
     timer_delay: 'IMPLEMENTED',
     completion_status: 'IMPLEMENTED',
     spelling_grammar_test: 'ENABLED',
-    token_recovery: 'IMPLEMENTED'
+    token_recovery: 'FULLY_WORKING'
   });
 });
 

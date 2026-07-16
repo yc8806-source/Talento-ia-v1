@@ -138,7 +138,7 @@ app.get('/api/candidates/:candidateId/tokens', async (req, res) => {
       vacancyId: row.vacancy_id,
       vacancyTitle: row.vacancy_title,
       createdAt: row.created_at,
-      testUrl: `${process.env.FRONTEND_URL || 'https://talento-ia-v1-frontend.onrender.com'}/evaluation/${row.token}`
+      testUrl: `${process.env.FRONTEND_URL || 'https://talento-ia-v1-frontend.onrender.com'}/evaluacion?token=${row.token}`
     }));
     res.json({ candidateId, total: tokens.length, tokens });
   } catch (error) {

@@ -234,15 +234,16 @@ app.use('/api/permissions', permissionRoutes);
 
 console.log('✅ Rutas cargadas correctamente');
 
-// Health check - UPDATED 2026-07-15
+// Health check - UPDATED 2026-07-16
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
-    message: 'Servidor funcionando - Build 2026-07-15 13:15',
+    message: 'Servidor funcionando - Build 2026-07-16 15:30',
     typing_test: 'ENABLED',
     timer_delay: 'IMPLEMENTED',
     completion_status: 'IMPLEMENTED',
-    spelling_grammar_test: 'ENABLED'
+    spelling_grammar_test: 'ENABLED',
+    token_recovery: 'IMPLEMENTED'
   });
 });
 

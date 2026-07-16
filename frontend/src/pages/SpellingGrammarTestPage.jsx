@@ -270,22 +270,6 @@ function SpellingGrammarTestPage() {
             ← Anterior
           </button>
 
-          <div className="flex gap-2 flex-wrap justify-center">
-            {questions.map((q, idx) => (
-              <button
-                key={q.id}
-                onClick={() => setCurrentQuestion(idx)}
-                className="w-10 h-10 rounded-lg font-semibold transition"
-                style={{
-                  backgroundColor: idx === currentQuestion ? '#3b82f6' : answers[q.id] ? '#10b981' : '#e5e7eb',
-                  color: idx === currentQuestion || answers[q.id] ? 'white' : 'black'
-                }}
-              >
-                {idx + 1}
-              </button>
-            ))}
-          </div>
-
           <div className="flex gap-2">
             <button
               onClick={handleNextQuestion}

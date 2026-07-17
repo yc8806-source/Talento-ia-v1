@@ -50,25 +50,49 @@ exports.createExam = async (req, res) => {
   }
 };
 
-// OBTENER TODOS LOS EXÁMENES
+// OBTENER TODOS LOS EXÁMENES (incluyendo Spelling & Grammar)
 exports.getExams = async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT * FROM exams ORDER BY created_at DESC'
+    // Obtener exams regulares
+    const examsResult = await pool.query(
+      'SELECT id, name, description, type, max_time_minutes as maxTimeMinutes, created_at as createdAt FROM exams ORDER BY created_at DESC'
     );
 
-    const exams = result.rows.map(row => ({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      type: row.type,
-      maxTimeMinutes: row.max_time_minutes,
-      createdAt: row.created_at
-    }));
+    // Obtener spelling & grammar tests
+    const spellingResult = await pool.query(
+      `SELECT id, title as name, description, 'spelling_grammar' as type, duration_seconds, created_at as createdAt
+       FROM spelling_grammar_tests
+       ORDER BY created_at DESC`
+    );
+
+    // Combinar ambos conjuntos
+    const allExams = [
+      ...examsResult.rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        type: row.type,
+        maxTimeMinutes: row.maxTimeMinutes,
+        createdAt: row.createdAt,
+        tableType: 'exams'
+      })),
+      ...spellingResult.rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        type: row.type,
+        maxTimeMinutes: row.duration_seconds ? Math.ceil(row.duration_seconds / 60) : 20,
+        createdAt: row.createdAt,
+        tableType: 'spelling_grammar_tests'
+      }))
+    ];
+
+    // Ordenar por fecha de creación descendente
+    allExams.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     res.json({
-      total: exams.length,
-      exams: exams
+      total: allExams.length,
+      exams: allExams
     });
   } catch (error) {
     console.error('Error obteniendo exámenes:', error);

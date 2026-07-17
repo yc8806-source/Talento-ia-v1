@@ -36,11 +36,12 @@ const {
   helmetConfig,
   sanitizeMiddleware,
   auditLogger,
-  tokenValidator,
   loginLimiter,
   registerLimiter,
   apiLimiter,
 } = require('./src/middleware/securityMiddleware');
+
+const { verifyToken } = require('./src/middleware/authMiddleware');
 
 const app = express();
 
@@ -226,7 +227,7 @@ app.post('/api/spelling-grammar-public/results/submit', async (req, res) => {
 app.use(sanitizeMiddleware);
 app.use(auditLogger);
 app.use('/api/', apiLimiter);
-app.use(tokenValidator);
+app.use(verifyToken);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/pdfs', express.static(path.join(__dirname, 'pdfs')));

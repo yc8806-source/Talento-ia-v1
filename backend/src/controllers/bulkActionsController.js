@@ -239,6 +239,13 @@ const bulkDeleteCandidates = async (req, res) => {
   }
 
   try {
+    // Primero eliminar candidate_vacancies que hacen referencia a estos candidatos
+    await pool.query(
+      `DELETE FROM candidate_vacancies WHERE candidate_id = ANY($1)`,
+      [candidateIds]
+    );
+
+    // Luego eliminar los candidatos
     const result = await pool.query(
       `DELETE FROM candidates WHERE id = ANY($1) RETURNING id`,
       [candidateIds]
@@ -251,7 +258,7 @@ const bulkDeleteCandidates = async (req, res) => {
     });
   } catch (error) {
     console.error('Error eliminando candidatos:', error);
-    res.status(500).json({ error: 'Error al eliminar candidatos' });
+    res.status(500).json({ error: 'Error al eliminar candidatos', details: error.message });
   }
 };
 

@@ -64,6 +64,11 @@ const helmetConfig = helmet({
 const sanitizeInput = (obj) => {
   if (!obj) return obj;
 
+  // Preserve arrays
+  if (Array.isArray(obj)) {
+    return obj.map(item => sanitizeInput(item));
+  }
+
   const sanitizedObj = {};
 
   for (const key in obj) {

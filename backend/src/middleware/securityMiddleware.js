@@ -62,13 +62,24 @@ const helmetConfig = helmet({
 
 // SANITIZACIÓN - Limpiar inputs de XSS
 const sanitizeInput = (obj) => {
-  if (!obj) return obj;
+  // Handle primitives and null
+  if (obj === null || typeof obj !== 'object') {
+    // Sanitize strings, return other primitives as-is
+    if (typeof obj === 'string') {
+      return sanitizeHtml(obj, {
+        allowedTags: [],
+        allowedAttributes: {},
+      });
+    }
+    return obj;
+  }
 
   // Preserve arrays
   if (Array.isArray(obj)) {
     return obj.map(item => sanitizeInput(item));
   }
 
+  // Handle objects
   const sanitizedObj = {};
 
   for (const key in obj) {

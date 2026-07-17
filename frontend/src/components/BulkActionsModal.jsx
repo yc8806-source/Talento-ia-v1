@@ -13,10 +13,10 @@ function BulkActionsModal({ isOpen, onClose, vacancyId, onSuccess }) {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && step === 1) {
       loadCandidates();
     }
-  }, [isOpen, search]);
+  }, [isOpen, search, step]);
 
   const loadCandidates = async () => {
     try {
@@ -50,8 +50,10 @@ function BulkActionsModal({ isOpen, onClose, vacancyId, onSuccess }) {
   };
 
   const handleExecuteAction = async () => {
-    if (selected.length === 0) {
+    // Validación doble - asegurar que hay candidatos seleccionados
+    if (!selected || selected.length === 0) {
       alert('Por favor selecciona al menos un candidato');
+      setStep(3); // Volver al paso 3
       return;
     }
 
@@ -346,7 +348,8 @@ function BulkActionsModal({ isOpen, onClose, vacancyId, onSuccess }) {
                 </button>
                 <button
                   onClick={handleExecuteAction}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition"
+                  disabled={selected.length === 0}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition"
                 >
                   Ejecutar Acción
                 </button>

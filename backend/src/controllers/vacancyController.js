@@ -4,6 +4,7 @@ const pool = require('../config/database');
 exports.createVacancy = async (req, res) => {
   try {
     const { title, description, department, status, available_positions } = req.body;
+    const userId = req.user?.id; // Get analyst ID from JWT token
 
     if (!title) {
       return res.status(400).json({
@@ -11,10 +12,16 @@ exports.createVacancy = async (req, res) => {
       });
     }
 
-    // Crear vacante
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Usuario no autenticado'
+      });
+    }
+
+    // Crear vacante con assigned_to_user_id
     const vacancyResult = await pool.query(
-      'INSERT INTO vacancies (title, description, department, status, available_positions) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [title, description || '', department || '', status || 'open', available_positions || 1]
+      'INSERT INTO vacancies (title, description, department, status, available_positions, assigned_to_user_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [title, description || '', department || '', status || 'open', available_positions || 1, userId]
     );
 
     const vacancy = vacancyResult.rows[0];
@@ -44,9 +51,21 @@ exports.createVacancy = async (req, res) => {
 // OBTENER TODAS LAS VACANTES
 exports.getVacancies = async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT * FROM vacancies ORDER BY created_at DESC'
-    );
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
+
+    // Admins see all vacancies, analysts see only theirs
+    let query = 'SELECT * FROM vacancies';
+    const params = [];
+
+    if (userRole !== 'admin' && userId) {
+      query += ' WHERE assigned_to_user_id = $1';
+      params.push(userId);
+    }
+
+    query += ' ORDER BY created_at DESC';
+
+    const result = await pool.query(query, params);
 
     const vacancies = result.rows.map(row => ({
       id: row.id,
@@ -56,7 +75,8 @@ exports.getVacancies = async (req, res) => {
       status: row.status,
       availablePositions: row.available_positions,
       filledPositions: row.filled_positions,
-      createdAt: row.created_at
+      createdAt: row.created_at,
+      assignedToUserId: row.assigned_to_user_id
     }));
 
     res.json({
@@ -76,6 +96,8 @@ exports.getVacancies = async (req, res) => {
 exports.getVacancyById = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
 
     const vacancyResult = await pool.query(
       'SELECT * FROM vacancies WHERE id = $1',
@@ -89,6 +111,13 @@ exports.getVacancyById = async (req, res) => {
     }
 
     const vacancy = vacancyResult.rows[0];
+
+    // Check access: only owner or admin can view
+    if (userRole !== 'admin' && vacancy.assigned_to_user_id !== userId) {
+      return res.status(403).json({
+        error: 'No tienes permiso para acceder a esta vacante'
+      });
+    }
 
     // Obtener exámenes de esta vacante
     const examsResult = await pool.query(

@@ -25,6 +25,7 @@ import SoftSkillsTest from './components/SoftSkillsTest';
 import AdminEvaluationResults from './components/AdminEvaluationResults';
 import NotificationCenter from './components/NotificationCenter';
 import UserProfile from './pages/UserProfile';
+import AnalyticsDashboard from './pages/AnalyticsDashboard';
 import { connectNotificationSocket, disconnectNotificationSocket } from './services/notificationService';
 
 // Typing test routes enabled - v1.0.1
@@ -75,6 +76,7 @@ function App() {
         <Route element={isLoggedIn ? <Layout onLogout={handleLogout} /> : <Navigate to="/login" />}>
           <Route path="/dashboard" element={<Dashboard userRole={userRole} />} />
           <Route path="/mi-perfil" element={<UserProfile />} />
+          <Route path="/analytics" element={<AnalyticsDashboard />} />
           <Route path="/candidatos" element={<Candidates userRole={userRole} />} />
           <Route path="/vacantes" element={<Vacantes userRole={userRole} />} />
           <Route path="/vacantes/:vacancyId/assign-evaluations" element={<AssignEvaluationsToVacancy />} />

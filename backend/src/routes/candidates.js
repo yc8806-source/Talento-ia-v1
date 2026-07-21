@@ -6,6 +6,16 @@ const { verifyToken } = require('../middleware/authMiddleware');
 
 // RUTAS ESPECÍFICAS PRIMERO (más específicas antes de genéricas)
 
+// PUBLIC ROUTES - Sin autenticación requerida
+// Registrar nuevo candidato con CV opcional
+router.post('/', upload.single('cv'), handleUploadError, candidateController.registerCandidate);
+
+// Obtener tokens de un candidato (para recuperar URLs) - público para recuperación
+router.get('/:candidateId/tokens', candidateController.getCandidateTokens);
+
+// PROTECTED ROUTES - Requieren autenticación
+router.use(verifyToken);
+
 // Importar candidatos desde CSV
 router.post('/import-csv', upload.single('file'), handleUploadError, candidateController.importCSV);
 
@@ -20,14 +30,6 @@ router.post('/assign-vacancy', candidateController.assignVacancy);
 
 // Obtener candidatos de una vacante
 router.get('/vacancy/:vacancyId', candidateController.getCandidatesByVacancy);
-
-// Obtener tokens de un candidato (para recuperar URLs)
-router.get('/:candidateId/tokens', candidateController.getCandidateTokens);
-
-// RUTAS GENÉRICAS AL FINAL
-
-// Registrar nuevo candidato con CV opcional
-router.post('/', upload.single('cv'), handleUploadError, candidateController.registerCandidate);
 
 // Obtener todos los candidatos
 router.get('/', candidateController.getCandidates);

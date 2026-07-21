@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const examController = require('../controllers/examController');
+const { verifyToken } = require('../middleware/authMiddleware');
+
+// Aplicar autenticación a todas las rutas de exams
+router.use(verifyToken);
 
 // POST routes
 router.post('/', examController.createExam);

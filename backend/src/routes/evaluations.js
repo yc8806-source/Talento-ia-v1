@@ -2,6 +2,44 @@ const express = require('express');
 const router = express.Router();
 const evaluationController = require('../controllers/evaluationController');
 const { evaluationLimiter } = require('../middleware/securityMiddleware');
+const { verifyToken } = require('../middleware/authMiddleware');
+
+// PUBLIC ROUTES - Candidatos sin login
+// Responder una pregunta
+router.post('/answer', evaluationController.answerQuestion);
+
+// Finalizar evaluación
+router.post('/:evaluationId/submit', evaluationController.submitEvaluation);
+
+// Obtener evaluación por token (acceso anónimo)
+router.get('/token/:token', evaluationController.getEvaluationByToken);
+
+// Obtener información de vacante y exámenes por token
+router.get('/vacancy-by-token/:token', evaluationController.getVacancyEvaluationByToken);
+
+// Obtener estado de exámenes
+router.get('/status/:token', evaluationController.getExamStatusByToken);
+
+// Guardar respuestas de examen por token
+router.post('/:token/exam-answers', evaluationController.submitExamAnswersByToken);
+
+// Obtener resultados (público - candidato ve sus resultados)
+router.get('/:candidateVacancyId/results', evaluationController.getEvaluationResults);
+
+// Generar PDF ON-DEMAND (público)
+router.get('/:candidateVacancyId/pdf-download', evaluationController.generatePDFOnDemand);
+
+// Generar PDF de resultados (legacy - público)
+router.get('/:candidateVacancyId/pdf', evaluationController.generatePDF);
+
+// Descargar PDF (público)
+router.get('/:candidateVacancyId/pdf/download', evaluationController.downloadPDF);
+
+// DEBUG: PDF data sin generar archivo (público)
+router.get('/:candidateVacancyId/pdf/debug', evaluationController.debugPDF);
+
+// PROTECTED ROUTES - Requieren autenticación
+router.use(verifyToken);
 
 // RATE LIMITING - Limitar creación de evaluaciones
 router.post('/start', evaluationLimiter, evaluationController.startEvaluation);

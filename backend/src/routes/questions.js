@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const questionController = require('../controllers/questionController');
+const { verifyToken } = require('../middleware/authMiddleware');
+
+// Aplicar autenticación a todas las rutas de questions
+router.use(verifyToken);
 
 // Crear nueva pregunta
 router.post('/', questionController.createQuestion);

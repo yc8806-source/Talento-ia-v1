@@ -13,6 +13,9 @@ router.post('/', upload.single('cv'), handleUploadError, candidateController.reg
 // Obtener tokens de un candidato (para recuperar URLs) - público para recuperación
 router.get('/:candidateId/tokens', candidateController.getCandidateTokens);
 
+// Obtener un candidato por ID (público)
+router.get('/:id', candidateController.getCandidateById);
+
 // PROTECTED ROUTES - Requieren autenticación
 router.use(verifyToken);
 
@@ -28,19 +31,16 @@ router.post('/mark-status', candidateController.markCandidateStatus);
 // Asignar vacante a candidato
 router.post('/assign-vacancy', candidateController.assignVacancy);
 
-// Obtener candidatos de una vacante
-router.get('/vacancy/:vacancyId', candidateController.getCandidatesByVacancy);
-
-// Obtener todos los candidatos
+// Obtener todos los candidatos (protegido - solo analistas ven sus candidatos)
 router.get('/', candidateController.getCandidates);
 
-// Obtener historial de auditoría de un candidato (protegido)
-router.get('/:id/audit-history', verifyToken, candidateController.getCandidateAuditHistory);
+// Obtener candidatos de una vacante (protegido)
+router.get('/vacancy/:vacancyId', candidateController.getCandidatesByVacancy);
 
-// Obtener un candidato por ID
-router.get('/:id', candidateController.getCandidateById);
+// Obtener historial de auditoría de un candidato (protegido)
+router.get('/:id/audit-history', candidateController.getCandidateAuditHistory);
 
 // Actualizar perfil de candidato (con opción de subir CV) - REQUIERE AUTENTICACIÓN
-router.put('/:id', verifyToken, upload.single('cv'), handleUploadError, candidateController.updateCandidateProfile);
+router.put('/:id', upload.single('cv'), handleUploadError, candidateController.updateCandidateProfile);
 
 module.exports = router;

@@ -227,7 +227,6 @@ app.post('/api/spelling-grammar-public/results/submit', async (req, res) => {
 app.use(sanitizeMiddleware);
 app.use(auditLogger);
 app.use('/api/', apiLimiter);
-app.use(verifyToken);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/pdfs', express.static(path.join(__dirname, 'pdfs')));
@@ -254,6 +253,10 @@ const softSkillsRoutes = require('./src/routes/softSkills');
 
 // Usar rutas
 app.use('/api/auth', authRoutes);
+
+// Aplicar autenticación DESPUÉS de auth routes
+app.use(verifyToken);
+
 app.use('/api/candidates', candidateRoutes);
 app.use('/api/candidate-dashboard', candidateDashboardRoutes);
 app.use('/api/bulk-actions', bulkActionsRoutes);

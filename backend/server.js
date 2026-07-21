@@ -231,6 +231,19 @@ app.use('/api/', apiLimiter);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/pdfs', express.static(path.join(__dirname, 'pdfs')));
 
+// Health check - PUBLIC endpoint (before auth middleware)
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    message: 'TESTING_VERSION_2026_07_21_MIDDLEWARE_FIX',
+    typing_test: 'ENABLED',
+    timer_delay: 'IMPLEMENTED',
+    completion_status: 'IMPLEMENTED',
+    spelling_grammar_test: 'ENABLED',
+    token_recovery: 'FULLY_WORKING'
+  });
+});
+
 // Importar rutas
 const authRoutes = require('./src/routes/auth');
 const candidateRoutes = require('./src/routes/candidates');
@@ -276,19 +289,6 @@ app.use('/api/teams', teamRoutes);
 app.use('/api/permissions', permissionRoutes);
 
 console.log('✅ Rutas cargadas correctamente');
-
-// Health check - UPDATED 2026-07-16
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    message: 'TESTING_VERSION_2026_07_16_HOTFIX_TOKEN_RECOVERY',
-    typing_test: 'ENABLED',
-    timer_delay: 'IMPLEMENTED',
-    completion_status: 'IMPLEMENTED',
-    spelling_grammar_test: 'ENABLED',
-    token_recovery: 'FULLY_WORKING'
-  });
-});
 
 // DEBUG: Test spelling grammar endpoint
 app.get('/api/test-spelling', (req, res) => {

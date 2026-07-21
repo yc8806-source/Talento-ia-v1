@@ -239,13 +239,28 @@ const bulkDeleteCandidates = async (req, res) => {
   }
 
   try {
-    // Primero eliminar candidate_vacancies que hacen referencia a estos candidatos
+    // Cascading deletes en orden de dependencias
+    // 1. Eliminar exam_answers (hace referencia a candidates)
+    await pool.query(
+      `DELETE FROM exam_answers WHERE candidate_id = ANY($1)`,
+      [candidateIds]
+    );
+
+    // 2. Eliminar evaluations (hace referencia a candidate_vacancies)
+    await pool.query(
+      `DELETE FROM evaluations WHERE candidate_vacancy_id IN (
+        SELECT id FROM candidate_vacancies WHERE candidate_id = ANY($1)
+      )`,
+      [candidateIds]
+    );
+
+    // 3. Eliminar candidate_vacancies que hacen referencia a estos candidatos
     await pool.query(
       `DELETE FROM candidate_vacancies WHERE candidate_id = ANY($1)`,
       [candidateIds]
     );
 
-    // Luego eliminar los candidatos
+    // 4. Finalmente eliminar los candidatos
     const result = await pool.query(
       `DELETE FROM candidates WHERE id = ANY($1) RETURNING id`,
       [candidateIds]

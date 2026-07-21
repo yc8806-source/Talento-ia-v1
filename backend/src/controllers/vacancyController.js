@@ -243,3 +243,68 @@ exports.assignExamsToVacancy = async (req, res) => {
     });
   }
 };
+
+// ELIMINAR VACANTE
+exports.deleteVacancy = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        error: 'Se requiere ID de la vacante'
+      });
+    }
+
+    // Verificar que la vacante existe
+    const checkResult = await pool.query(
+      'SELECT id, status FROM vacancies WHERE id = $1',
+      [id]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Vacante no encontrada'
+      });
+    }
+
+    const vacancy = checkResult.rows[0];
+
+    // Solo permitir eliminar vacantes cerradas
+    if (vacancy.status !== 'closed') {
+      return res.status(400).json({
+        error: 'Solo se pueden eliminar vacantes cerradas'
+      });
+    }
+
+    // Eliminar referencias en cascada
+    // 1. Eliminar vacancy_exams
+    await pool.query(
+      'DELETE FROM vacancy_exams WHERE vacancy_id = $1',
+      [id]
+    );
+
+    // 2. Eliminar candidate_vacancies
+    await pool.query(
+      'DELETE FROM candidate_vacancies WHERE vacancy_id = $1',
+      [id]
+    );
+
+    // 3. Finalmente, eliminar la vacante
+    const result = await pool.query(
+      'DELETE FROM vacancies WHERE id = $1 RETURNING id, title',
+      [id]
+    );
+
+    res.json({
+      message: 'Vacante eliminada exitosamente',
+      deletedId: result.rows[0].id,
+      deletedTitle: result.rows[0].title
+    });
+  } catch (error) {
+    console.error('Error eliminando vacante:', error);
+    res.status(500).json({
+      error: 'Error al eliminar vacante',
+      details: error.message
+    });
+  }
+};

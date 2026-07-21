@@ -267,8 +267,8 @@ const softSkillsRoutes = require('./src/routes/softSkills');
 // Usar rutas
 app.use('/api/auth', authRoutes);
 
-// Aplicar autenticación DESPUÉS de auth routes
-app.use(verifyToken);
+// Cada ruta aplica verifyToken internamente si lo necesita
+// NO aplicar globalmente para permitir rutas públicas en cada router
 
 app.use('/api/candidates', candidateRoutes);
 app.use('/api/candidate-dashboard', candidateDashboardRoutes);

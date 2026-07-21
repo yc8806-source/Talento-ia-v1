@@ -9,7 +9,7 @@ export default function UserProfile() {
     lastName: '',
     email: '',
     password: '',
-    role: 'analista'
+    role: 'rrhh'
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -39,7 +39,8 @@ export default function UserProfile() {
         last_name: newUser.lastName
       });
 
-      setMessage(`✅ Usuario ${newUser.firstName} ${newUser.lastName} creado exitosamente como ${newUser.role}`);
+      const roleLabel = newUser.role === 'admin' ? 'Administrador' : 'Analista de RRHH';
+      setMessage(`✅ Usuario ${newUser.firstName} ${newUser.lastName} creado exitosamente como ${roleLabel}`);
       setNewUser({
         firstName: '',
         lastName: '',
@@ -243,7 +244,7 @@ export default function UserProfile() {
                     fontSize: '1em'
                   }}
                 >
-                  <option value="analista">Analista de RRHH</option>
+                  <option value="rrhh">Analista de RRHH</option>
                   <option value="admin">Administrador</option>
                 </select>
               </div>

@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const vacancyController = require('../controllers/vacancyController');
+const { verifyToken } = require('../middleware/authMiddleware');
+
+// Aplicar verificación de token a todas las rutas
+router.use(verifyToken);
 
 // Crear nueva vacante
 router.post('/', vacancyController.createVacancy);

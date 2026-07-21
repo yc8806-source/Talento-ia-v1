@@ -62,6 +62,18 @@ export default function Vacantes() {
     }
   };
 
+  const handleDeleteVacancy = async (vacancyId, vacancyTitle) => {
+    if (window.confirm(`¿Estás seguro de que deseas eliminar la vacante "${vacancyTitle}"? Esta acción no se puede deshacer.`)) {
+      try {
+        await vacancyAPI.delete(vacancyId);
+        fetchVacancies();
+        alert('Vacante eliminada exitosamente');
+      } catch (error) {
+        alert('Error al eliminar vacante: ' + (error.response?.data?.error || error.message));
+      }
+    }
+  };
+
   if (loading) {
     return <div style={{ textAlign: 'center', padding: '40px' }}>Cargando vacantes...</div>;
   }
@@ -172,7 +184,7 @@ export default function Vacantes() {
               <p><strong>Estado:</strong> <span style={{ color: vacancy.status === 'open' ? 'green' : 'red' }}>{vacancy.status === 'open' ? 'Abierta' : 'Cerrada'}</span></p>
               <p><strong>Vacantes:</strong> {vacancy.filledPositions || 0}/{vacancy.availablePositions || 1} ocupadas</p>
               <p>{vacancy.description}</p>
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 <button
                   onClick={() => navigate(`/vacantes/${vacancy.id}/candidatos`)}
                   style={{
@@ -183,7 +195,8 @@ export default function Vacantes() {
                     border: 'none',
                     borderRadius: '5px',
                     cursor: 'pointer',
-                    fontSize: '0.9em'
+                    fontSize: '0.9em',
+                    minWidth: '80px'
                   }}
                 >
                   👥 Candidatos
@@ -198,7 +211,8 @@ export default function Vacantes() {
                     border: 'none',
                     borderRadius: '5px',
                     cursor: 'pointer',
-                    fontSize: '0.9em'
+                    fontSize: '0.9em',
+                    minWidth: '80px'
                   }}
                 >
                   Examen
@@ -213,11 +227,30 @@ export default function Vacantes() {
                     border: 'none',
                     borderRadius: '5px',
                     cursor: 'pointer',
-                    fontSize: '0.9em'
+                    fontSize: '0.9em',
+                    minWidth: '80px'
                   }}
                 >
                   {vacancy.status === 'open' ? 'Cerrar' : 'Reabrir'}
                 </button>
+                {vacancy.status === 'closed' && (
+                  <button
+                    onClick={() => handleDeleteVacancy(vacancy.id, vacancy.title)}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      backgroundColor: '#6c757d',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      fontSize: '0.9em',
+                      minWidth: '80px'
+                    }}
+                  >
+                    🗑️ Eliminar
+                  </button>
+                )}
               </div>
             </div>
           ))

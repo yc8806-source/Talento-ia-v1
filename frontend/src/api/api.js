@@ -61,6 +61,7 @@ export const vacancyAPI = {
   getAll: () => api.get('/vacancies'),
   getById: (id) => api.get(`/vacancies/${id}`),
   update: (id, data) => api.put(`/vacancies/${id}`, data),
+  delete: (id) => api.delete(`/vacancies/${id}`),
   assignExams: (vacancyId, data, config = {}) => api.post(`/vacancies/${vacancyId}/exams`, data, {
     headers: { 'Content-Type': 'application/json' },
     ...config

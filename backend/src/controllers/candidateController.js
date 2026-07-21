@@ -64,9 +64,28 @@ exports.registerCandidate = async (req, res) => {
 // OBTENER TODOS LOS CANDIDATOS
 exports.getCandidates = async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT id, first_name, last_name, email, phone, cv_url, created_at FROM candidates ORDER BY created_at DESC'
-    );
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
+
+    let query = `
+      SELECT DISTINCT
+        c.id, c.first_name, c.last_name, c.email, c.phone, c.cv_url, c.created_at
+      FROM candidates c
+      LEFT JOIN candidate_vacancies cv ON c.id = cv.candidate_id
+      LEFT JOIN vacancies v ON cv.vacancy_id = v.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    // Filter by analyst: only see candidates from their vacancies
+    if (userRole !== 'admin' && userId) {
+      query += ` AND v.assigned_to_user_id = $${params.length + 1}`;
+      params.push(userId);
+    }
+
+    query += ` ORDER BY c.created_at DESC`;
+
+    const result = await pool.query(query, params);
 
     const candidates = result.rows.map(row => ({
       id: row.id,

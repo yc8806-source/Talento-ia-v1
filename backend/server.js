@@ -263,6 +263,7 @@ const spellingGrammarRoutes = require('./src/routes/spellingGrammar');
 const skillsAssessmentRoutes = require('./src/routes/skillsAssessment');
 const evaluationAssignmentRoutes = require('./src/routes/evaluationAssignments');
 const softSkillsRoutes = require('./src/routes/softSkills');
+const analyticsRoutes = require('./src/routes/analytics');
 
 // Usar rutas
 app.use('/api/auth', authRoutes);
@@ -287,6 +288,7 @@ app.use('/api/exams', examRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/permissions', permissionRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 console.log('✅ Rutas cargadas correctamente');
 

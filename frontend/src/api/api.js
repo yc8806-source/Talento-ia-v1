@@ -196,4 +196,10 @@ export const skillsAssessmentAPI = {
   getReport: (candidateId) => api.get(`/skills/report/candidate/${candidateId}`),
 };
 
+// Analytics & Metrics
+export const analyticsAPI = {
+  getMyMetrics: () => api.get('/analytics/my-metrics'),
+  getAllAnalystsMetrics: () => api.get('/analytics/all-analysts'),
+};
+
 export default api;

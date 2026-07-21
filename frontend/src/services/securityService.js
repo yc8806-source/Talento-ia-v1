@@ -92,6 +92,7 @@ export const setUserData = (userData) => {
     const safeData = {
       firstName: userData.firstName,
       lastName: userData.lastName,
+      email: userData.email,
       role: userData.role,
     };
     localStorage.setItem('user', JSON.stringify(safeData));

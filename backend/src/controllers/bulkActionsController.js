@@ -21,6 +21,7 @@ const convertToCSV = (data, headers) => {
 // Asignar múltiples candidatos a una vacante
 const bulkAssignCandidatesToVacancy = async (req, res) => {
   const { candidateIds, vacancyId, examId } = req.body;
+  const userId = req.user?.id;
 
   if (!candidateIds || !Array.isArray(candidateIds) || candidateIds.length === 0) {
     return res.status(400).json({ error: 'candidateIds debe ser un array no vacío' });
@@ -28,6 +29,10 @@ const bulkAssignCandidatesToVacancy = async (req, res) => {
 
   if (!vacancyId) {
     return res.status(400).json({ error: 'vacancyId es requerido' });
+  }
+
+  if (!userId) {
+    return res.status(401).json({ error: 'Usuario no autenticado' });
   }
 
   try {
@@ -50,12 +55,12 @@ const bulkAssignCandidatesToVacancy = async (req, res) => {
           continue;
         }
 
-        // Insertar asignación
+        // Insertar asignación con assigned_by_user_id
         const insertResult = await pool.query(
-          `INSERT INTO candidate_vacancies (candidate_id, vacancy_id, status)
-           VALUES ($1, $2, $3)
+          `INSERT INTO candidate_vacancies (candidate_id, vacancy_id, status, assigned_by_user_id)
+           VALUES ($1, $2, $3, $4)
            RETURNING *`,
-          [candidateId, vacancyId, 'not_started']
+          [candidateId, vacancyId, 'not_started', userId]
         );
 
         results.push({

@@ -32,6 +32,7 @@ forceLoadEnv();
 const express = require('express');
 const cors = require('cors');
 const pool = require('./src/config/database');
+const { runMigrations } = require('./src/migrations/runMigrations');
 const {
   helmetConfig,
   sanitizeMiddleware,
@@ -412,9 +413,16 @@ const server = http.createServer(app);
 const io = initSocket(server);
 global.io = io;
 
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`🚀 Talent IA Backend corriendo en puerto ${PORT}`);
   console.log(`✅ RAILWAY_DATABASE_URL: ${process.env.RAILWAY_DATABASE_URL ? 'SET' : 'NOT SET'}`);
   console.log(`✅ DATABASE_URL: ${process.env.DATABASE_URL ? 'SET' : 'NOT SET'}`);
+
+  // Run database migrations
+  try {
+    await runMigrations();
+  } catch (error) {
+    console.error('❌ Failed to run migrations:', error.message);
+  }
 });
 RENDER_REBUILD=1784129080

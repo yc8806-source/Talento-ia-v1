@@ -50,6 +50,7 @@ function Navbar({ onLogout }) {
               <NavLink to="/vacantes" icon={FiBriefcase} label="Vacantes" />
               <NavLink to="/evaluaciones" icon={FiTrendingUp} label="Evaluaciones" />
               <NavLink to="/reportes" icon={FiBarChart2} label="Reportes" />
+              <NavLink to="/analytics" icon={FiTrendingUp} label="Analytics" />
               {role === 'admin' && (
                 <>
                   <NavLink to="/compartir" icon={FiShare2} label="Compartir" />
@@ -96,6 +97,7 @@ function Navbar({ onLogout }) {
               <NavLink to="/vacantes" icon={FiBriefcase} label="Vacantes" />
               <NavLink to="/evaluaciones" icon={FiTrendingUp} label="Evaluaciones" />
               <NavLink to="/reportes" icon={FiBarChart2} label="Reportes" />
+              <NavLink to="/analytics" icon={FiTrendingUp} label="Analytics" />
               {role === 'admin' && (
                 <>
                   <NavLink to="/compartir" icon={FiShare2} label="Compartir" />

@@ -8,6 +8,12 @@ const verifyToken = async (req, res, next) => {
     const authHeader = req.headers.authorization;
     const bodyToken = req.body?.token;
 
+    console.log(`🔐 [AUTH] Endpoint: ${req.method} ${req.path}`);
+    console.log(`🔐 [AUTH] Has Authorization Header: ${!!authHeader}`);
+    console.log(`🔐 [AUTH] JWT_SECRET set: ${!!process.env.JWT_SECRET}`);
+    console.log(`🔐 [AUTH] JWT_SECRET value: ${process.env.JWT_SECRET ? process.env.JWT_SECRET.substring(0, 20) + '...' : 'UNDEFINED'}`);
+    console.log(`🔐 [AUTH] NODE_ENV: ${process.env.NODE_ENV}`);
+
     // Intenta primero con token de candidato en body (para typing tests)
     if (bodyToken) {
       const cvResult = await pool.query(

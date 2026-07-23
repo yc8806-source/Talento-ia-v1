@@ -43,8 +43,13 @@ const verifyToken = async (req, res, next) => {
 
     const token = authHeader.substring(7); // Remover "Bearer "
 
+    // DEBUG: Log JWT_SECRET being used
+    const secretUsed = process.env.JWT_SECRET;
+    console.log(`🔐 [JWT_VERIFY] Using JWT_SECRET: ${secretUsed ? secretUsed.substring(0, 30) + '...' : 'UNDEFINED'}`);
+    console.log(`🔐 [JWT_VERIFY] Token: ${token.substring(0, 50)}...`);
+
     // Verificar firma del token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, secretUsed);
 
     // Obtener usuario y permisos de la BD
     const userResult = await pool.query(

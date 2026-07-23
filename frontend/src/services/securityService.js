@@ -7,9 +7,10 @@ export const setToken = (token) => {
     return;
   }
 
-  // Validar formato básico de JWT
-  if (!token.match(/^[A-Za-z0-9\-_.]*$/)) {
-    console.error('Token con formato inválido');
+  // Validar formato básico de JWT (Header.Payload.Signature)
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    console.error('Token con formato inválido - debe tener 3 partes');
     return;
   }
 

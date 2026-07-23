@@ -26,8 +26,11 @@ function forceLoadEnv() {
 // Primero intenta dotenv normal
 require('dotenv').config({ override: true });
 
-// LUEGO FUERZA con la lectura del archivo para asegurar que .env gana
-forceLoadEnv();
+// LUEGO FUERZA con la lectura del archivo SOLO EN DESARROLLO
+// En producción (Render), usa las variables de entorno del dashboard
+if (process.env.NODE_ENV !== 'production') {
+  forceLoadEnv();
+}
 
 const express = require('express');
 const cors = require('cors');

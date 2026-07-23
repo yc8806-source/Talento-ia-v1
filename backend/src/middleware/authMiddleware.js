@@ -48,8 +48,9 @@ const verifyToken = async (req, res, next) => {
     console.log(`🔐 [JWT_VERIFY] Using JWT_SECRET: ${secretUsed ? secretUsed.substring(0, 30) + '...' : 'UNDEFINED'}`);
     console.log(`🔐 [JWT_VERIFY] Token: ${token.substring(0, 50)}...`);
 
-    // Verificar firma del token
-    const decoded = jwt.verify(token, secretUsed);
+    // Verificar firma del token con tolerancia de tiempo (clock skew)
+    // WORKAROUND: Render tiene sincronización de hora incorrecta, permitir hasta 1 hora de diferencia
+    const decoded = jwt.verify(token, secretUsed, { clockTolerance: 3600 });
 
     // Obtener usuario y permisos de la BD
     const userResult = await pool.query(

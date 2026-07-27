@@ -19,9 +19,9 @@ export default function AssignEvaluationsToVacancy() {
 
         // Obtener exámenes disponibles
         const examsRes = await examAPI.getAll();
-        // Deduplicar exámenes por ID para evitar duplicados
+        // Deduplicar exámenes por nombre (más confiable que por ID)
         const uniqueExams = Array.from(
-          new Map((examsRes.data.exams || []).map(exam => [exam.id, exam])).values()
+          new Map((examsRes.data.exams || []).map(exam => [exam.name, exam])).values()
         );
         setExams(uniqueExams);
       } catch (error) {

@@ -90,9 +90,14 @@ exports.getExams = async (req, res) => {
     // Ordenar por fecha de creación descendente
     allExams.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
+    // Deduplicar por nombre para evitar exámenes duplicados
+    const uniqueExams = Array.from(
+      new Map(allExams.map(exam => [exam.name, exam])).values()
+    );
+
     res.json({
-      total: allExams.length,
-      exams: allExams
+      total: uniqueExams.length,
+      exams: uniqueExams
     });
   } catch (error) {
     console.error('Error obteniendo exámenes:', error);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { vacancyAPI, candidateAPI } from '../api/api';
 
 export default function CandidatesByVacancy() {
   const { vacancyId } = useParams();
@@ -17,10 +17,6 @@ export default function CandidatesByVacancy() {
   const [loadingTokens, setLoadingTokens] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
 
-  const API_URL = typeof window !== 'undefined' && window.location.hostname === 'talento-ia-v1-frontend.onrender.com'
-    ? 'https://talento-ia-backend.onrender.com/api'
-    : 'http://localhost:3000/api';
-
   useEffect(() => {
     fetchData();
   }, [vacancyId]);
@@ -28,8 +24,8 @@ export default function CandidatesByVacancy() {
   const fetchData = async () => {
     try {
       const [vacancyRes, candidatesRes] = await Promise.all([
-        axios.get(`${API_URL}/vacancies/${vacancyId}`),
-        axios.get(`${API_URL}/candidates/vacancy/${vacancyId}`)
+        vacancyAPI.getById(vacancyId),
+        candidateAPI.getByVacancy(vacancyId)
       ]);
       setVacancy(vacancyRes.data);
       setCandidates(candidatesRes.data.candidates);
@@ -43,7 +39,7 @@ export default function CandidatesByVacancy() {
 
   const loadAvailableCandidates = async () => {
     try {
-      const res = await axios.get(`${API_URL}/candidates`);
+      const res = await candidateAPI.getAll();
       const invitedIds = candidates.map(c => c.candidateId);
       const candidatesList = res.data.candidates || res.data;
       // Filtrar candidatos que NO estén invitados a esta vacante (comparar por id)

@@ -67,23 +67,14 @@ exports.getCandidates = async (req, res) => {
     const userId = req.user?.id;
     const userRole = req.user?.role;
 
+    // Get all candidates - both admin and rrhh can see all candidates for inviting
     let query = `
       SELECT DISTINCT
         c.id, c.first_name, c.last_name, c.email, c.phone, c.cv_url, c.created_at
       FROM candidates c
-      LEFT JOIN candidate_vacancies cv ON c.id = cv.candidate_id
-      LEFT JOIN vacancies v ON cv.vacancy_id = v.id
-      WHERE 1=1
+      ORDER BY c.created_at DESC
     `;
     const params = [];
-
-    // Filter by analyst: only see candidates from their vacancies
-    if (userRole !== 'admin' && userId) {
-      query += ` AND v.assigned_to_user_id = $${params.length + 1}`;
-      params.push(userId);
-    }
-
-    query += ` ORDER BY c.created_at DESC`;
 
     const result = await pool.query(query, params);
 

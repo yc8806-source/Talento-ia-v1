@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/api';
 
 export default function CandidatesByVacancy() {
   const { vacancyId } = useParams();
@@ -28,8 +28,8 @@ export default function CandidatesByVacancy() {
   const fetchData = async () => {
     try {
       const [vacancyRes, candidatesRes] = await Promise.all([
-        axios.get(`${API_URL}/vacancies/${vacancyId}`),
-        axios.get(`${API_URL}/candidates/vacancy/${vacancyId}`)
+        api.get(`/vacancies/${vacancyId}`),
+        api.get(`/candidates/vacancy/${vacancyId}`)
       ]);
       setVacancy(vacancyRes.data);
       setCandidates(candidatesRes.data.candidates);
@@ -43,7 +43,7 @@ export default function CandidatesByVacancy() {
 
   const loadAvailableCandidates = async () => {
     try {
-      const res = await axios.get(`${API_URL}/candidates`);
+      const res = await api.get(`/candidates`);
       const invitedIds = candidates.map(c => c.candidateId);
       const candidatesList = res.data.candidates || res.data;
       // Filtrar candidatos que NO estén invitados a esta vacante (comparar por id)
@@ -64,7 +64,7 @@ export default function CandidatesByVacancy() {
     }
 
     try {
-      const response = await axios.post(`${API_URL}/candidates/invite`, {
+      const response = await api.post(`/candidates/invite`, {
         candidateId: parseInt(selectedCandidateId, 10),
         vacancyId: parseInt(vacancyId, 10)
       });
@@ -84,7 +84,7 @@ export default function CandidatesByVacancy() {
 
   const handleMarkStatus = async (candidateVacancyId, newStatus) => {
     try {
-      await axios.post(`${API_URL}/candidates/mark-status`, {
+      await api.post(`/candidates/mark-status`, {
         candidateVacancyId,
         status: newStatus
       });
@@ -98,7 +98,7 @@ export default function CandidatesByVacancy() {
   const handleViewTokens = async (candidate) => {
     setLoadingTokens(true);
     try {
-      const response = await axios.get(`${API_URL}/candidates/${candidate.candidateId}/tokens`);
+      const response = await api.get(`/candidates/${candidate.candidateId}/tokens`);
       setCandidateTokens(response.data.tokens);
       setSelectedCandidate(candidate);
       setShowTokensModal(true);

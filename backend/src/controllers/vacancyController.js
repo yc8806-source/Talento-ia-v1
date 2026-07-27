@@ -241,30 +241,26 @@ exports.assignExamsToVacancy = async (req, res) => {
     // Eliminar exámenes actuales
     await pool.query('DELETE FROM vacancy_exams WHERE vacancy_id = $1', [vacancyId]);
 
-    // Asignar nuevos exámenes (pueden venir de exams o spelling_grammar_tests)
+    // Asignar nuevos exámenes
     let insertedCount = 0;
     for (let i = 0; i < examIds.length; i++) {
       const examId = examIds[i];
 
       // Verificar si es un ID combinado (formato: "tipo:id")
+      // Si es "spelling:X", ignorar por ahora ya que no hay soporte en vacancy_exams
+      // Solo insertar exámenes regulares (exam:X)
       if (typeof examId === 'string' && examId.includes(':')) {
         const [examType, sourceId] = examId.split(':');
 
-        if (examType === 'spelling') {
-          // Insertar como examen de ortografía
+        if (examType === 'exam' || examType !== 'spelling') {
+          // Solo insertar exámenes regulares
           const insertResult = await pool.query(
-            'INSERT INTO vacancy_exams (vacancy_id, spelling_exam_id, exam_order, exam_type) VALUES ($1, $2, $3, $4)',
-            [vacancyId, sourceId, i + 1, 'spelling']
-          );
-          insertedCount += insertResult.rowCount;
-        } else if (examType === 'exam') {
-          // Insertar como examen regular
-          const insertResult = await pool.query(
-            'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_order, exam_type) VALUES ($1, $2, $3, $4)',
-            [vacancyId, sourceId, i + 1, 'regular']
+            'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_order) VALUES ($1, $2, $3)',
+            [vacancyId, sourceId, i + 1]
           );
           insertedCount += insertResult.rowCount;
         }
+        // Los exámenes de ortografía (spelling:X) se ignoran por ahora
       } else {
         // ID directo (retrocompatibilidad)
         const insertResult = await pool.query(

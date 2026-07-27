@@ -19,7 +19,11 @@ export default function AssignEvaluationsToVacancy() {
 
         // Obtener exámenes disponibles
         const examsRes = await examAPI.getAll();
-        setExams(examsRes.data.exams || []);
+        // Deduplicar exámenes por ID para evitar duplicados
+        const uniqueExams = Array.from(
+          new Map((examsRes.data.exams || []).map(exam => [exam.id, exam])).values()
+        );
+        setExams(uniqueExams);
       } catch (error) {
         console.error('Error cargando datos:', error);
         alert('Error al cargar los datos');

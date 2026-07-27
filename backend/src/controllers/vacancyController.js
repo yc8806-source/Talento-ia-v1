@@ -240,7 +240,6 @@ exports.assignExamsToVacancy = async (req, res) => {
 
     // Eliminar exámenes actuales
     await pool.query('DELETE FROM vacancy_exams WHERE vacancy_id = $1', [vacancyId]);
-    await pool.query('DELETE FROM vacancy_spelling_exams WHERE vacancy_id = $1', [vacancyId]);
 
     // Asignar nuevos exámenes (pueden venir de exams o spelling_grammar_tests)
     let insertedCount = 0;
@@ -252,17 +251,17 @@ exports.assignExamsToVacancy = async (req, res) => {
         const [examType, sourceId] = examId.split(':');
 
         if (examType === 'spelling') {
-          // Insertar en tabla de exámenes de ortografía
+          // Insertar como examen de ortografía
           const insertResult = await pool.query(
-            'INSERT INTO vacancy_spelling_exams (vacancy_id, spelling_exam_id, exam_order) VALUES ($1, $2, $3)',
-            [vacancyId, sourceId, i + 1]
+            'INSERT INTO vacancy_exams (vacancy_id, spelling_exam_id, exam_order, exam_type) VALUES ($1, $2, $3, $4)',
+            [vacancyId, sourceId, i + 1, 'spelling']
           );
           insertedCount += insertResult.rowCount;
         } else if (examType === 'exam') {
-          // Insertar en tabla regular de exámenes
+          // Insertar como examen regular
           const insertResult = await pool.query(
-            'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_order) VALUES ($1, $2, $3)',
-            [vacancyId, sourceId, i + 1]
+            'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_order, exam_type) VALUES ($1, $2, $3, $4)',
+            [vacancyId, sourceId, i + 1, 'regular']
           );
           insertedCount += insertResult.rowCount;
         }
@@ -276,27 +275,18 @@ exports.assignExamsToVacancy = async (req, res) => {
       }
     }
 
-    // Verificar que se guardaron en ambas tablas
-    const verifyRegular = await pool.query(
+    // Verificar que se guardaron
+    const verifyResult = await pool.query(
       'SELECT COUNT(*) as count FROM vacancy_exams WHERE vacancy_id = $1',
       [vacancyId]
     );
-
-    const verifySpelling = await pool.query(
-      'SELECT COUNT(*) as count FROM vacancy_spelling_exams WHERE vacancy_id = $1',
-      [vacancyId]
-    );
-
-    const totalVerified = parseInt(verifyRegular.rows[0].count) + parseInt(verifySpelling.rows[0].count);
 
     res.json({
       message: 'Exámenes asignados exitosamente',
       vacancyId,
       examsAssigned: examIds.length,
       insertedCount,
-      regularExams: verifyRegular.rows[0].count,
-      spellingExams: verifySpelling.rows[0].count,
-      totalVerified
+      verification: verifyResult.rows[0].count
     });
   } catch (error) {
     console.error('Error asignando exámenes:', error);

@@ -148,6 +148,16 @@ CREATE TABLE IF NOT EXISTS vacancy_exams (
   UNIQUE(vacancy_id, exam_id)
 );
 
+-- 11B. Vacancy Spelling Exams (for spelling grammar tests)
+CREATE TABLE IF NOT EXISTS vacancy_spelling_exams (
+  id SERIAL PRIMARY KEY,
+  vacancy_id INTEGER NOT NULL REFERENCES vacancies(id) ON DELETE CASCADE,
+  spelling_exam_id INTEGER NOT NULL REFERENCES spelling_grammar_tests(id) ON DELETE CASCADE,
+  exam_order INTEGER DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(vacancy_id, spelling_exam_id)
+);
+
 -- 12. Teams Table
 CREATE TABLE IF NOT EXISTS teams (
   id SERIAL PRIMARY KEY,

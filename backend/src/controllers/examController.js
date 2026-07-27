@@ -65,10 +65,11 @@ exports.getExams = async (req, res) => {
        ORDER BY created_at DESC`
     );
 
-    // Combinar ambos conjuntos
+    // Combinar ambos conjuntos con IDs combinados (tableType:id)
     const allExams = [
       ...examsResult.rows.map(row => ({
-        id: row.id,
+        id: `exam:${row.id}`,
+        sourceId: row.id,
         name: row.name,
         description: row.description,
         type: row.type,
@@ -77,7 +78,8 @@ exports.getExams = async (req, res) => {
         tableType: 'exams'
       })),
       ...spellingResult.rows.map(row => ({
-        id: row.id,
+        id: `spelling:${row.id}`,
+        sourceId: row.id,
         name: row.name,
         description: row.description,
         type: row.type,

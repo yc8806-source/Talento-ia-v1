@@ -240,29 +240,63 @@ exports.assignExamsToVacancy = async (req, res) => {
 
     // Eliminar exámenes actuales
     await pool.query('DELETE FROM vacancy_exams WHERE vacancy_id = $1', [vacancyId]);
+    await pool.query('DELETE FROM vacancy_spelling_exams WHERE vacancy_id = $1', [vacancyId]);
 
-    // Asignar nuevos exámenes
+    // Asignar nuevos exámenes (pueden venir de exams o spelling_grammar_tests)
     let insertedCount = 0;
     for (let i = 0; i < examIds.length; i++) {
-      const insertResult = await pool.query(
-        'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_order) VALUES ($1, $2, $3)',
-        [vacancyId, examIds[i], i + 1]
-      );
-      insertedCount += insertResult.rowCount;
+      const examId = examIds[i];
+
+      // Verificar si es un ID combinado (formato: "tipo:id")
+      if (typeof examId === 'string' && examId.includes(':')) {
+        const [examType, sourceId] = examId.split(':');
+
+        if (examType === 'spelling') {
+          // Insertar en tabla de exámenes de ortografía
+          const insertResult = await pool.query(
+            'INSERT INTO vacancy_spelling_exams (vacancy_id, spelling_exam_id, exam_order) VALUES ($1, $2, $3)',
+            [vacancyId, sourceId, i + 1]
+          );
+          insertedCount += insertResult.rowCount;
+        } else if (examType === 'exam') {
+          // Insertar en tabla regular de exámenes
+          const insertResult = await pool.query(
+            'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_order) VALUES ($1, $2, $3)',
+            [vacancyId, sourceId, i + 1]
+          );
+          insertedCount += insertResult.rowCount;
+        }
+      } else {
+        // ID directo (retrocompatibilidad)
+        const insertResult = await pool.query(
+          'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_order) VALUES ($1, $2, $3)',
+          [vacancyId, examId, i + 1]
+        );
+        insertedCount += insertResult.rowCount;
+      }
     }
 
-    // Verificar que se guardaron
-    const verifyResult = await pool.query(
+    // Verificar que se guardaron en ambas tablas
+    const verifyRegular = await pool.query(
       'SELECT COUNT(*) as count FROM vacancy_exams WHERE vacancy_id = $1',
       [vacancyId]
     );
+
+    const verifySpelling = await pool.query(
+      'SELECT COUNT(*) as count FROM vacancy_spelling_exams WHERE vacancy_id = $1',
+      [vacancyId]
+    );
+
+    const totalVerified = parseInt(verifyRegular.rows[0].count) + parseInt(verifySpelling.rows[0].count);
 
     res.json({
       message: 'Exámenes asignados exitosamente',
       vacancyId,
       examsAssigned: examIds.length,
       insertedCount,
-      verification: verifyResult.rows[0].count
+      regularExams: verifyRegular.rows[0].count,
+      spellingExams: verifySpelling.rows[0].count,
+      totalVerified
     });
   } catch (error) {
     console.error('Error asignando exámenes:', error);

@@ -3,7 +3,10 @@ const router = express.Router();
 const examController = require('../controllers/examController');
 const { verifyToken } = require('../middleware/authMiddleware');
 
-// Aplicar autenticación a todas las rutas de exams
+// DEBUG: Endpoint público para verificar spelling exams
+router.get('/debug/spelling', examController.debugSpellingExams);
+
+// Aplicar autenticación a todas las otras rutas
 router.use(verifyToken);
 
 // POST routes
@@ -12,7 +15,6 @@ router.post('/:examId/questions', examController.addQuestionsToExam);
 
 // GET routes
 router.get('/', examController.getExams);
-router.get('/debug/spelling', examController.debugSpellingExams);
 router.get('/:id', examController.getExamById);
 
 // PUT routes

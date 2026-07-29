@@ -319,14 +319,17 @@ app.get('/api/debug-spelling-tests', async (req, res) => {
   }
 });
 
-// DEBUG: Comprehensive spelling exams debug
+// DEBUG: Comprehensive spelling exams debug with question count
 app.get('/api/debug/all-spelling-exams', async (req, res) => {
   try {
     console.log('🔍 DEBUG: Fetching all spelling exams from DB');
     const result = await pool.query(
-      `SELECT id, title, description, duration_seconds, test_type, language, created_at
-       FROM spelling_grammar_tests
-       ORDER BY created_at DESC`
+      `SELECT sg.id, sg.title, sg.description, sg.duration_seconds,
+              COUNT(sgq.id) as question_count
+       FROM spelling_grammar_tests sg
+       LEFT JOIN spelling_grammar_questions sgq ON sg.id = sgq.test_id
+       GROUP BY sg.id, sg.title, sg.description, sg.duration_seconds
+       ORDER BY sg.id`
     );
 
     console.log(`✅ Found ${result.rows.length} spelling exams in DB`);
@@ -334,15 +337,13 @@ app.get('/api/debug/all-spelling-exams', async (req, res) => {
     res.json({
       success: true,
       total: result.rows.length,
-      message: 'Spelling exams que existen en la base de datos:',
+      message: 'Spelling exams y cantidad de preguntas:',
       exams: result.rows.map(row => ({
         id: row.id,
         title: row.title,
         description: row.description,
         durationSeconds: row.duration_seconds,
-        testType: row.test_type,
-        language: row.language,
-        createdAt: row.created_at,
+        questionCount: parseInt(row.question_count),
         exampleId: `spelling:${row.id}`
       }))
     });
@@ -350,6 +351,67 @@ app.get('/api/debug/all-spelling-exams', async (req, res) => {
     console.error('❌ ERROR in debug endpoint:', error);
     res.status(500).json({
       error: 'Error fetching spelling exams',
+      details: error.message
+    });
+  }
+});
+
+// CLEANUP: Eliminar spelling exams duplicados (mantener solo el que tiene preguntas o el id=1)
+app.get('/api/cleanup/remove-duplicate-spelling-exams', async (req, res) => {
+  try {
+    console.log('🧹 CLEANUP: Removiendo spelling exams duplicados...');
+
+    // Encontrar todos los spelling exams con el mismo nombre
+    const duplicates = await pool.query(
+      `SELECT title, COUNT(*) as count, array_agg(id ORDER BY id) as ids
+       FROM spelling_grammar_tests
+       GROUP BY title
+       HAVING COUNT(*) > 1`
+    );
+
+    console.log(`Found ${duplicates.rows.length} groups of duplicate titles`);
+
+    let deletedCount = 0;
+
+    // Para cada grupo de duplicados
+    for (const group of duplicates.rows) {
+      const ids = group.ids;
+      const keepId = ids[0]; // Mantener el primero (id más bajo)
+      const deleteIds = ids.slice(1); // Eliminar los demás
+
+      console.log(`  Title: "${group.title}"`);
+      console.log(`    Keep: ${keepId}, Delete: ${deleteIds.join(', ')}`);
+
+      // Eliminar los duplicados
+      for (const deleteId of deleteIds) {
+        await pool.query(
+          `DELETE FROM spelling_grammar_questions WHERE test_id = $1`,
+          [deleteId]
+        );
+        await pool.query(
+          `DELETE FROM spelling_grammar_tests WHERE id = $1`,
+          [deleteId]
+        );
+        deletedCount++;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Cleaned up successfully`,
+      duplicateGroupsFound: duplicates.rows.length,
+      testsDeleted: deletedCount,
+      details: duplicates.rows.map(row => ({
+        title: row.title,
+        totalCount: row.count,
+        kept: row.ids[0],
+        deleted: row.ids.slice(1)
+      }))
+    });
+  } catch (error) {
+    console.error('❌ ERROR in cleanup endpoint:', error);
+    res.status(500).json({
+      error: 'Error cleaning up spelling exams',
       details: error.message
     });
   }

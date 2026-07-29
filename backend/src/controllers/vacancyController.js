@@ -241,36 +241,35 @@ exports.assignExamsToVacancy = async (req, res) => {
     // Eliminar exámenes actuales
     await pool.query('DELETE FROM vacancy_exams WHERE vacancy_id = $1', [vacancyId]);
 
-    // Asignar nuevos exámenes (regular y spelling)
+    // Asignar nuevos exámenes
     let insertedCount = 0;
     for (let i = 0; i < examIds.length; i++) {
       const examId = examIds[i];
 
-      if (typeof examId === 'string' && examId.includes(':')) {
-        const [examType, sourceId] = examId.split(':');
+      try {
+        if (typeof examId === 'string' && examId.includes(':')) {
+          const [examType, sourceId] = examId.split(':');
 
-        if (examType === 'spelling') {
-          // Insertar examen de ortografía
-          const insertResult = await pool.query(
-            'INSERT INTO vacancy_exams (vacancy_id, spelling_exam_id, exam_type, exam_order) VALUES ($1, $2, $3, $4)',
-            [vacancyId, sourceId, 'spelling', i + 1]
-          );
-          insertedCount += insertResult.rowCount;
-        } else if (examType === 'exam') {
-          // Insertar examen regular
-          const insertResult = await pool.query(
+          if (examType === 'spelling') {
+            await pool.query(
+              'INSERT INTO vacancy_exams (vacancy_id, spelling_exam_id, exam_type, exam_order) VALUES ($1, $2, $3, $4)',
+              [vacancyId, sourceId, 'spelling', i + 1]
+            );
+          } else if (examType === 'exam') {
+            await pool.query(
+              'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_type, exam_order) VALUES ($1, $2, $3, $4)',
+              [vacancyId, sourceId, 'regular', i + 1]
+            );
+          }
+        } else {
+          await pool.query(
             'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_type, exam_order) VALUES ($1, $2, $3, $4)',
-            [vacancyId, sourceId, 'regular', i + 1]
+            [vacancyId, examId, 'regular', i + 1]
           );
-          insertedCount += insertResult.rowCount;
         }
-      } else {
-        // ID directo (retrocompatibilidad)
-        const insertResult = await pool.query(
-          'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_type, exam_order) VALUES ($1, $2, $3, $4)',
-          [vacancyId, examId, 'regular', i + 1]
-        );
-        insertedCount += insertResult.rowCount;
+        insertedCount++;
+      } catch (insertError) {
+        console.error(`Error insertando examen ${examId}:`, insertError.message);
       }
     }
 

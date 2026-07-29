@@ -1227,22 +1227,43 @@ exports.getVacancyEvaluationByToken = async (req, res) => {
 
     const candidateVacancy = cvResult.rows[0];
 
-    // Obtener los exámenes asignados a la vacante con estado de completitud
-    const examsResult = await pool.query(
-      `SELECT e.id, e.name, e.description, e.type, e.max_time_minutes,
+    // Obtener exámenes regulares
+    const regularExamsResult = await pool.query(
+      `SELECT e.id, e.name, e.description, e.type, e.max_time_minutes, 'regular' as exam_type, ve.exam_order,
               (COUNT(ea.id) > 0) as completed
        FROM exams e
        INNER JOIN vacancy_exams ve ON e.id = ve.exam_id
        LEFT JOIN exam_answers ea ON e.id = ea.exam_id AND ea.candidate_id = $2
-       WHERE ve.vacancy_id = $1
+       WHERE ve.vacancy_id = $1 AND ve.exam_type = 'regular'
        GROUP BY e.id, e.name, e.description, e.type, e.max_time_minutes, ve.exam_order
        ORDER BY ve.exam_order`,
       [candidateVacancy.vacancy_id, candidateVacancy.candidate_id]
     );
 
+    // Obtener exámenes de ortografía
+    const spellingExamsResult = await pool.query(
+      `SELECT sg.id, sg.title as name, sg.description, 'spelling' as type,
+              CAST(CEIL(sg.duration_seconds::float / 60) AS INTEGER) as max_time_minutes,
+              'spelling' as exam_type, ve.exam_order,
+              (COUNT(sgr.id) > 0) as completed
+       FROM spelling_grammar_tests sg
+       INNER JOIN vacancy_exams ve ON sg.id = ve.spelling_exam_id
+       LEFT JOIN spelling_grammar_results sgr ON sg.id = sgr.test_id AND sgr.candidate_id = $2
+       WHERE ve.vacancy_id = $1 AND ve.exam_type = 'spelling'
+       GROUP BY sg.id, sg.title, sg.description, sg.duration_seconds, ve.exam_order
+       ORDER BY ve.exam_order`,
+      [candidateVacancy.vacancy_id, candidateVacancy.candidate_id]
+    );
+
+    // Combinar exámenes y ordenar
+    const allExams = [
+      ...regularExamsResult.rows,
+      ...spellingExamsResult.rows
+    ].sort((a, b) => a.exam_order - b.exam_order);
+
     // Verificar estado completado para typing tests también
     const examsWithTypingStatus = await Promise.all(
-      examsResult.rows.map(async (exam) => {
+      allExams.map(async (exam) => {
         let completed = exam.completed;
 
         if (exam.type === 'typing') {

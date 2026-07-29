@@ -246,29 +246,22 @@ exports.assignExamsToVacancy = async (req, res) => {
     for (let i = 0; i < examIds.length; i++) {
       const examId = examIds[i];
 
-      // Verificar si es un ID combinado (formato: "tipo:id")
-      // Si es "spelling:X", ignorar por ahora ya que no hay soporte en vacancy_exams
-      // Solo insertar exámenes regulares (exam:X)
-      if (typeof examId === 'string' && examId.includes(':')) {
-        const [examType, sourceId] = examId.split(':');
-
-        if (examType === 'exam' || examType !== 'spelling') {
-          // Solo insertar exámenes regulares
-          const insertResult = await pool.query(
-            'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_order) VALUES ($1, $2, $3)',
-            [vacancyId, sourceId, i + 1]
-          );
-          insertedCount += insertResult.rowCount;
-        }
-        // Los exámenes de ortografía (spelling:X) se ignoran por ahora
-      } else {
-        // ID directo (retrocompatibilidad)
-        const insertResult = await pool.query(
-          'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_order) VALUES ($1, $2, $3)',
-          [vacancyId, examId, i + 1]
-        );
-        insertedCount += insertResult.rowCount;
+      // Ignorar si es un ID combinado "spelling:X" (exámenes de ortografía no soportados aún)
+      if (typeof examId === 'string' && examId.startsWith('spelling:')) {
+        continue; // Ignorar exámenes de ortografía
       }
+
+      // Extraer ID si tiene formato "exam:X", sino usar directamente
+      const actualExamId = typeof examId === 'string' && examId.startsWith('exam:')
+        ? examId.split(':')[1]
+        : examId;
+
+      // Insertar examen regular
+      const insertResult = await pool.query(
+        'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_order) VALUES ($1, $2, $3)',
+        [vacancyId, actualExamId, i + 1]
+      );
+      insertedCount += insertResult.rowCount;
     }
 
     // Verificar que se guardaron

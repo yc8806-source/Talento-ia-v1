@@ -119,21 +119,14 @@ exports.getVacancyById = async (req, res) => {
       });
     }
 
-    // Obtener exámenes regulares + spelling exams de esta vacante
+    // Obtener exámenes de esta vacante
     const examsResult = await pool.query(
-      `SELECT ve.id, e.id as exam_id, e.name, e.description, e.max_time_minutes, ve.exam_type, ve.exam_order
-       FROM vacancy_exams ve
-       LEFT JOIN exams e ON e.id = ve.exam_id
-       WHERE ve.vacancy_id = $1 AND ve.exam_type = 'regular'
-       UNION ALL
-       SELECT ve.id, sg.id as exam_id, sg.title as name, sg.description,
-              CAST(CEIL(sg.duration_seconds::float / 60) AS INTEGER) as max_time_minutes,
-              ve.exam_type, ve.exam_order
-       FROM vacancy_exams ve
-       LEFT JOIN spelling_grammar_tests sg ON sg.id = ve.spelling_exam_id
-       WHERE ve.vacancy_id = $1 AND ve.exam_type = 'spelling'
-       ORDER BY exam_order`,
-      [id, id]
+      `SELECT e.id, e.name, e.description, e.max_time_minutes
+       FROM exams e
+       INNER JOIN vacancy_exams ve ON e.id = ve.exam_id
+       WHERE ve.vacancy_id = $1
+       ORDER BY ve.exam_order`,
+      [id]
     );
 
     res.json({

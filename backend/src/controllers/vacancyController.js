@@ -321,27 +321,34 @@ exports.assignExamsToVacancy = async (req, res) => {
       try {
         if (typeof examId === 'string' && examId.includes(':')) {
           const [examType, sourceId] = examId.split(':');
+          const numericId = parseInt(sourceId, 10);
 
           if (examType === 'spelling') {
             await pool.query(
               'INSERT INTO vacancy_exams (vacancy_id, spelling_exam_id, exam_type, exam_order) VALUES ($1, $2, $3, $4)',
-              [vacancyId, sourceId, 'spelling', i + 1]
+              [vacancyId, numericId, 'spelling', i + 1]
             );
+            insertedCount++;
+            console.log(`✅ Spelling exam ${numericId} asignado correctamente`);
           } else if (examType === 'exam') {
             await pool.query(
               'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_type, exam_order) VALUES ($1, $2, $3, $4)',
-              [vacancyId, sourceId, 'regular', i + 1]
+              [vacancyId, numericId, 'regular', i + 1]
             );
+            insertedCount++;
+            console.log(`✅ Regular exam ${numericId} asignado correctamente`);
           }
         } else {
+          const numericId = parseInt(examId, 10);
           await pool.query(
             'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_type, exam_order) VALUES ($1, $2, $3, $4)',
-            [vacancyId, examId, 'regular', i + 1]
+            [vacancyId, numericId, 'regular', i + 1]
           );
+          insertedCount++;
+          console.log(`✅ Regular exam ${numericId} asignado correctamente`);
         }
-        insertedCount++;
       } catch (insertError) {
-        console.error(`Error insertando examen ${examId}:`, insertError.message);
+        console.error(`❌ Error insertando examen ${examId}:`, insertError.message);
       }
     }
 

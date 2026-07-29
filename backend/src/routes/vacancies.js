@@ -21,6 +21,9 @@ router.put('/:id', vacancyController.updateVacancy);
 // Eliminar vacante
 router.delete('/:id', vacancyController.deleteVacancy);
 
+// Obtener todos los exámenes de una vacante (regular + spelling)
+router.get('/:vacancyId/exams', vacancyController.getVacancyExams);
+
 // Asignar exámenes a vacante
 router.post('/:vacancyId/exams', vacancyController.assignExamsToVacancy);
 

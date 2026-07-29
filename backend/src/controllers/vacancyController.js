@@ -188,6 +188,53 @@ exports.updateVacancy = async (req, res) => {
   }
 };
 
+// OBTENER EXÁMENES DE UNA VACANTE (regulares + spelling)
+exports.getVacancyExams = async (req, res) => {
+  try {
+    const { vacancyId } = req.params;
+
+    // Obtener exámenes regulares
+    const regularExams = await pool.query(
+      `SELECT e.id, e.name, e.description, e.max_time_minutes, 'regular' as type
+       FROM exams e
+       INNER JOIN vacancy_exams ve ON e.id = ve.exam_id
+       WHERE ve.vacancy_id = $1 AND ve.exam_type = 'regular'
+       ORDER BY ve.exam_order`,
+      [vacancyId]
+    );
+
+    // Obtener exámenes de ortografía
+    const spellingExams = await pool.query(
+      `SELECT sg.id, sg.title as name, sg.description,
+              CAST(CEIL(sg.duration_seconds::float / 60) AS INTEGER) as max_time_minutes,
+              'spelling' as type
+       FROM spelling_grammar_tests sg
+       INNER JOIN vacancy_exams ve ON sg.id = ve.spelling_exam_id
+       WHERE ve.vacancy_id = $1 AND ve.exam_type = 'spelling'
+       ORDER BY ve.exam_order`,
+      [vacancyId]
+    );
+
+    // Combinar ambos
+    const allExams = [
+      ...regularExams.rows,
+      ...spellingExams.rows
+    ];
+
+    res.json({
+      vacancyId,
+      total: allExams.length,
+      exams: allExams
+    });
+  } catch (error) {
+    console.error('Error obteniendo exámenes de vacante:', error);
+    res.status(500).json({
+      error: 'Error al obtener exámenes',
+      details: error.message
+    });
+  }
+};
+
 // ASIGNAR EXÁMENES A VACANTE
 exports.assignExamsToVacancy = async (req, res) => {
   try {

@@ -385,12 +385,35 @@ exports.assignExamsToVacancy = async (req, res) => {
       [vacancyId]
     );
 
+    const savedCount = verifyResult.rows[0].count;
+
+    // Si no se guardó NADA, retornar error
+    if (savedCount === 0) {
+      console.error('❌ CRÍTICO: Ningún examen se guardó en la DB');
+      return res.status(500).json({
+        error: 'Ningún examen se guardó correctamente',
+        details: 'insertedCount=' + insertedCount + ', examIds=' + JSON.stringify(examIds)
+      });
+    }
+
+    // Si se guardaron menos exámenes de lo solicitado, advertir
+    if (insertedCount < examIds.length) {
+      console.warn(`⚠️  ADVERTENCIA: Solo se asignaron ${insertedCount}/${examIds.length} exámenes`);
+      return res.status(400).json({
+        error: `Solo se asignaron ${insertedCount} de ${examIds.length} exámenes`,
+        details: 'Algunos exámenes no pudieron asignarse. Revisa los IDs.',
+        insertedCount,
+        examsRequested: examIds.length,
+        savedInDB: savedCount
+      });
+    }
+
     res.json({
       message: 'Exámenes asignados exitosamente',
       vacancyId,
       examsAssigned: examIds.length,
       insertedCount,
-      verification: verifyResult.rows[0].count
+      verification: savedCount
     });
   } catch (error) {
     console.error('Error asignando exámenes:', error);

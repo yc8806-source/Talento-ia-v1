@@ -241,14 +241,16 @@ exports.assignExamsToVacancy = async (req, res) => {
     // Eliminar exámenes actuales
     await pool.query('DELETE FROM vacancy_exams WHERE vacancy_id = $1', [vacancyId]);
 
-    // Asignar nuevos exámenes
+    // Asignar nuevos exámenes (ignorar spelling exams)
     let insertedCount = 0;
+    let skippedCount = 0;
     for (let i = 0; i < examIds.length; i++) {
       const examId = examIds[i];
 
       // Ignorar si es un ID combinado "spelling:X" (exámenes de ortografía no soportados aún)
       if (typeof examId === 'string' && examId.startsWith('spelling:')) {
-        continue; // Ignorar exámenes de ortografía
+        skippedCount++;
+        continue;
       }
 
       // Extraer ID si tiene formato "exam:X", sino usar directamente
@@ -262,6 +264,13 @@ exports.assignExamsToVacancy = async (req, res) => {
         [vacancyId, actualExamId, i + 1]
       );
       insertedCount += insertResult.rowCount;
+    }
+
+    // Si solo seleccionó spelling exams, informar que no se puede asignar
+    if (insertedCount === 0 && skippedCount > 0) {
+      return res.status(400).json({
+        error: 'Los exámenes de ortografía aún no pueden ser asignados. Por favor selecciona exámenes regulares.'
+      });
     }
 
     // Verificar que se guardaron

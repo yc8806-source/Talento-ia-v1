@@ -241,36 +241,37 @@ exports.assignExamsToVacancy = async (req, res) => {
     // Eliminar exámenes actuales
     await pool.query('DELETE FROM vacancy_exams WHERE vacancy_id = $1', [vacancyId]);
 
-    // Asignar nuevos exámenes (ignorar spelling exams)
+    // Asignar nuevos exámenes (regular y spelling)
     let insertedCount = 0;
-    let skippedCount = 0;
     for (let i = 0; i < examIds.length; i++) {
       const examId = examIds[i];
 
-      // Ignorar si es un ID combinado "spelling:X" (exámenes de ortografía no soportados aún)
-      if (typeof examId === 'string' && examId.startsWith('spelling:')) {
-        skippedCount++;
-        continue;
+      if (typeof examId === 'string' && examId.includes(':')) {
+        const [examType, sourceId] = examId.split(':');
+
+        if (examType === 'spelling') {
+          // Insertar examen de ortografía
+          const insertResult = await pool.query(
+            'INSERT INTO vacancy_exams (vacancy_id, spelling_exam_id, exam_type, exam_order) VALUES ($1, $2, $3, $4)',
+            [vacancyId, sourceId, 'spelling', i + 1]
+          );
+          insertedCount += insertResult.rowCount;
+        } else if (examType === 'exam') {
+          // Insertar examen regular
+          const insertResult = await pool.query(
+            'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_type, exam_order) VALUES ($1, $2, $3, $4)',
+            [vacancyId, sourceId, 'regular', i + 1]
+          );
+          insertedCount += insertResult.rowCount;
+        }
+      } else {
+        // ID directo (retrocompatibilidad)
+        const insertResult = await pool.query(
+          'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_type, exam_order) VALUES ($1, $2, $3, $4)',
+          [vacancyId, examId, 'regular', i + 1]
+        );
+        insertedCount += insertResult.rowCount;
       }
-
-      // Extraer ID si tiene formato "exam:X", sino usar directamente
-      const actualExamId = typeof examId === 'string' && examId.startsWith('exam:')
-        ? examId.split(':')[1]
-        : examId;
-
-      // Insertar examen regular
-      const insertResult = await pool.query(
-        'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_order) VALUES ($1, $2, $3)',
-        [vacancyId, actualExamId, i + 1]
-      );
-      insertedCount += insertResult.rowCount;
-    }
-
-    // Si solo seleccionó spelling exams, informar que no se puede asignar
-    if (insertedCount === 0 && skippedCount > 0) {
-      return res.status(400).json({
-        error: 'Los exámenes de ortografía aún no pueden ser asignados. Por favor selecciona exámenes regulares.'
-      });
     }
 
     // Verificar que se guardaron

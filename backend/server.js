@@ -356,10 +356,10 @@ app.get('/api/debug/all-spelling-exams', async (req, res) => {
   }
 });
 
-// CLEANUP: Eliminar spelling exams duplicados (mantener solo el que tiene preguntas o el id=1)
+// CLEANUP: Eliminar spelling exams duplicados (mantener solo el id=1)
 app.get('/api/cleanup/remove-duplicate-spelling-exams', async (req, res) => {
   try {
-    console.log('🧹 CLEANUP: Removiendo spelling exams duplicados...');
+    console.log('🧹 CLEANUP: Removiendo spelling exams duplicados y sus resultados...');
 
     // Encontrar todos los spelling exams con el mismo nombre
     const duplicates = await pool.query(
@@ -371,7 +371,9 @@ app.get('/api/cleanup/remove-duplicate-spelling-exams', async (req, res) => {
 
     console.log(`Found ${duplicates.rows.length} groups of duplicate titles`);
 
-    let deletedCount = 0;
+    let deletedResultsCount = 0;
+    let deletedQuestionsCount = 0;
+    let deletedTestsCount = 0;
 
     // Para cada grupo de duplicados
     for (const group of duplicates.rows) {
@@ -379,28 +381,44 @@ app.get('/api/cleanup/remove-duplicate-spelling-exams', async (req, res) => {
       const keepId = ids[0]; // Mantener el primero (id más bajo)
       const deleteIds = ids.slice(1); // Eliminar los demás
 
-      console.log(`  Title: "${group.title}"`);
+      console.log(`\n  Title: "${group.title}"`);
       console.log(`    Keep: ${keepId}, Delete: ${deleteIds.join(', ')}`);
 
-      // Eliminar los duplicados
+      // Eliminar los duplicados Y SUS RESULTADOS
       for (const deleteId of deleteIds) {
-        await pool.query(
+        // 1. Eliminar resultados
+        const resultsDeleted = await pool.query(
+          `DELETE FROM spelling_grammar_results WHERE test_id = $1`,
+          [deleteId]
+        );
+        deletedResultsCount += resultsDeleted.rowCount;
+        console.log(`      Deleted ${resultsDeleted.rowCount} results for test ${deleteId}`);
+
+        // 2. Eliminar preguntas
+        const questionsDeleted = await pool.query(
           `DELETE FROM spelling_grammar_questions WHERE test_id = $1`,
           [deleteId]
         );
-        await pool.query(
+        deletedQuestionsCount += questionsDeleted.rowCount;
+        console.log(`      Deleted ${questionsDeleted.rowCount} questions for test ${deleteId}`);
+
+        // 3. Eliminar el test
+        const testDeleted = await pool.query(
           `DELETE FROM spelling_grammar_tests WHERE id = $1`,
           [deleteId]
         );
-        deletedCount++;
+        deletedTestsCount += testDeleted.rowCount;
+        console.log(`      Deleted test ${deleteId}`);
       }
     }
 
     res.json({
       success: true,
-      message: `Cleaned up successfully`,
+      message: `Cleaned up successfully - Removed all duplicates!`,
       duplicateGroupsFound: duplicates.rows.length,
-      testsDeleted: deletedCount,
+      resultsDeleted: deletedResultsCount,
+      questionsDeleted: deletedQuestionsCount,
+      testsDeleted: deletedTestsCount,
       details: duplicates.rows.map(row => ({
         title: row.title,
         totalCount: row.count,

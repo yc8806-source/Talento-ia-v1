@@ -119,27 +119,52 @@ exports.getVacancyById = async (req, res) => {
       });
     }
 
-    // Obtener exámenes de esta vacante
-    const examsResult = await pool.query(
-      `SELECT e.id, e.name, e.description, e.max_time_minutes
+    // Obtener exámenes regulares
+    const regularExamsResult = await pool.query(
+      `SELECT e.id, e.name, e.description, e.max_time_minutes, ve.exam_order
        FROM exams e
        INNER JOIN vacancy_exams ve ON e.id = ve.exam_id
-       WHERE ve.vacancy_id = $1
+       WHERE ve.vacancy_id = $1 AND ve.exam_type = 'regular'
        ORDER BY ve.exam_order`,
       [id]
     );
+
+    // Obtener exámenes de ortografía
+    const spellingExamsResult = await pool.query(
+      `SELECT sg.id, sg.title as name, sg.description,
+              CAST(CEIL(sg.duration_seconds::float / 60) AS INTEGER) as max_time_minutes,
+              ve.exam_order
+       FROM spelling_grammar_tests sg
+       INNER JOIN vacancy_exams ve ON sg.id = ve.spelling_exam_id
+       WHERE ve.vacancy_id = $1 AND ve.exam_type = 'spelling'
+       ORDER BY ve.exam_order`,
+      [id]
+    );
+
+    // Combinar ambos tipos
+    const allExams = [
+      ...regularExamsResult.rows.map(e => ({
+        id: e.id,
+        name: e.name,
+        description: e.description,
+        maxTimeMinutes: e.max_time_minutes,
+        examOrder: e.exam_order
+      })),
+      ...spellingExamsResult.rows.map(e => ({
+        id: e.id,
+        name: e.name,
+        description: e.description,
+        maxTimeMinutes: e.max_time_minutes,
+        examOrder: e.exam_order
+      }))
+    ].sort((a, b) => a.examOrder - b.examOrder);
 
     res.json({
       id: vacancy.id,
       title: vacancy.title,
       description: vacancy.description,
       status: vacancy.status,
-      exams: examsResult.rows.map(e => ({
-        id: e.id,
-        name: e.name,
-        description: e.description,
-        maxTimeMinutes: e.max_time_minutes
-      })),
+      exams: allExams,
       createdAt: vacancy.created_at
     });
   } catch (error) {

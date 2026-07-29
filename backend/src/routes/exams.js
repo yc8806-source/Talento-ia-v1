@@ -12,6 +12,7 @@ router.post('/:examId/questions', examController.addQuestionsToExam);
 
 // GET routes
 router.get('/', examController.getExams);
+router.get('/debug/spelling', examController.debugSpellingExams);
 router.get('/:id', examController.getExamById);
 
 // PUT routes

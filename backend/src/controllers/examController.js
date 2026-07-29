@@ -105,6 +105,34 @@ exports.getExams = async (req, res) => {
   }
 };
 
+// DEBUG: Verificar spelling exams en DB
+exports.debugSpellingExams = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, title, description, duration_seconds, created_at
+       FROM spelling_grammar_tests
+       ORDER BY created_at DESC`
+    );
+
+    res.json({
+      total: result.rows.length,
+      message: 'Spelling exams que existen en la DB:',
+      exams: result.rows.map(row => ({
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        durationSeconds: row.duration_seconds,
+        createdAt: row.created_at
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Error consultando spelling exams',
+      details: error.message
+    });
+  }
+};
+
 // OBTENER UN EXAMEN POR ID (con todas sus preguntas y opciones)
 exports.getExamById = async (req, res) => {
   try {

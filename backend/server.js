@@ -319,6 +319,42 @@ app.get('/api/debug-spelling-tests', async (req, res) => {
   }
 });
 
+// DEBUG: Comprehensive spelling exams debug
+app.get('/api/debug/all-spelling-exams', async (req, res) => {
+  try {
+    console.log('🔍 DEBUG: Fetching all spelling exams from DB');
+    const result = await pool.query(
+      `SELECT id, title, description, duration_seconds, test_type, language, created_at
+       FROM spelling_grammar_tests
+       ORDER BY created_at DESC`
+    );
+
+    console.log(`✅ Found ${result.rows.length} spelling exams in DB`);
+
+    res.json({
+      success: true,
+      total: result.rows.length,
+      message: 'Spelling exams que existen en la base de datos:',
+      exams: result.rows.map(row => ({
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        durationSeconds: row.duration_seconds,
+        testType: row.test_type,
+        language: row.language,
+        createdAt: row.created_at,
+        exampleId: `spelling:${row.id}`
+      }))
+    });
+  } catch (error) {
+    console.error('❌ ERROR in debug endpoint:', error);
+    res.status(500).json({
+      error: 'Error fetching spelling exams',
+      details: error.message
+    });
+  }
+});
+
 // DEBUG: Get test with questions - INLINE VERSION
 app.get('/api/debug-spelling-test/:testId', async (req, res) => {
   try {

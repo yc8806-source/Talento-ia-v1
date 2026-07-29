@@ -266,8 +266,14 @@ exports.assignExamsToVacancy = async (req, res) => {
     let { vacancyId } = req.params;
     let { examIds } = req.body;
 
+    console.log(`\n🔍 INICIANDO ASIGNACIÓN DE EXÁMENES`);
+    console.log(`📌 vacancyId: ${vacancyId}`);
+    console.log(`📌 examIds recibidos:`, examIds);
+    console.log(`📌 Tipo de examIds:`, Array.isArray(examIds) ? 'array' : typeof examIds);
+
     // Validar vacancyId
     if (!vacancyId) {
+      console.error('❌ ERROR: No se proporcionó vacancyId');
       return res.status(400).json({
         error: 'Se requiere vacancyId como parámetro'
       });
@@ -275,6 +281,7 @@ exports.assignExamsToVacancy = async (req, res) => {
 
     // Validar y procesar examIds
     if (!examIds) {
+      console.error('❌ ERROR: No se proporcionó examIds');
       return res.status(400).json({
         error: 'Se requiere examIds en el body'
       });
@@ -282,17 +289,23 @@ exports.assignExamsToVacancy = async (req, res) => {
 
     // Si examIds es objeto con claves numéricas (resultado de form-urlencoded), convertir a array
     if (typeof examIds === 'object' && !Array.isArray(examIds)) {
+      console.log('⚠️  examIds es objeto, convirtiendo a array...');
       const keys = Object.keys(examIds);
       if (keys.every(k => /^\d+$/.test(k))) {
         // Es un objeto con claves numéricas - convertir a array
         examIds = keys.map(k => parseInt(examIds[k], 10));
+        console.log('✅ Convertido a array de números:', examIds);
       } else {
         // Objeto regular - envolver en array
         examIds = [examIds];
+        console.log('✅ Envuelto en array:', examIds);
       }
     }
 
+    console.log(`✅ examIds final (${examIds.length} exámenes):`, examIds);
+
     if (examIds.length === 0) {
+      console.error('❌ ERROR: examIds está vacío');
       return res.status(400).json({
         error: 'Se requiere al menos un examen'
       });
@@ -315,42 +328,56 @@ exports.assignExamsToVacancy = async (req, res) => {
 
     // Asignar nuevos exámenes
     let insertedCount = 0;
+    console.log(`\n📋 PROCESANDO ${examIds.length} EXÁMENES:`);
+
     for (let i = 0; i < examIds.length; i++) {
       const examId = examIds[i];
+      console.log(`\n  Examen ${i + 1}/${examIds.length}: "${examId}"`);
 
       try {
         if (typeof examId === 'string' && examId.includes(':')) {
           const [examType, sourceId] = examId.split(':');
           const numericId = parseInt(sourceId, 10);
 
+          console.log(`    ├─ Tipo: ${examType}`);
+          console.log(`    ├─ ID numérico: ${numericId}`);
+
           if (examType === 'spelling') {
+            console.log(`    ├─ Insertando spelling_exam_id=${numericId} en vacancy_exams`);
             await pool.query(
               'INSERT INTO vacancy_exams (vacancy_id, spelling_exam_id, exam_type, exam_order) VALUES ($1, $2, $3, $4)',
               [vacancyId, numericId, 'spelling', i + 1]
             );
             insertedCount++;
-            console.log(`✅ Spelling exam ${numericId} asignado correctamente`);
+            console.log(`    └─ ✅ Spelling exam asignado correctamente`);
           } else if (examType === 'exam') {
+            console.log(`    ├─ Insertando exam_id=${numericId} en vacancy_exams`);
             await pool.query(
               'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_type, exam_order) VALUES ($1, $2, $3, $4)',
               [vacancyId, numericId, 'regular', i + 1]
             );
             insertedCount++;
-            console.log(`✅ Regular exam ${numericId} asignado correctamente`);
+            console.log(`    └─ ✅ Regular exam asignado correctamente`);
+          } else {
+            console.warn(`    └─ ⚠️  Tipo desconocido: ${examType}`);
           }
         } else {
           const numericId = parseInt(examId, 10);
+          console.log(`    ├─ Sin prefijo, tratando como exam_id=${numericId}`);
           await pool.query(
             'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_type, exam_order) VALUES ($1, $2, $3, $4)',
             [vacancyId, numericId, 'regular', i + 1]
           );
           insertedCount++;
-          console.log(`✅ Regular exam ${numericId} asignado correctamente`);
+          console.log(`    └─ ✅ Regular exam asignado correctamente`);
         }
       } catch (insertError) {
-        console.error(`❌ Error insertando examen ${examId}:`, insertError.message);
+        console.error(`    └─ ❌ ERROR: ${insertError.message}`);
+        console.error(`       Detalles: ${insertError.detail || insertError.code}`);
       }
     }
+
+    console.log(`\n📊 RESULTADO: ${insertedCount}/${examIds.length} exámenes asignados correctamente\n`);
 
     // Verificar que se guardaron
     const verifyResult = await pool.query(

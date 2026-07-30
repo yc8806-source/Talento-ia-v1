@@ -1245,10 +1245,11 @@ exports.getVacancyEvaluationByToken = async (req, res) => {
       `SELECT sg.id, sg.title as name, sg.description, 'spelling' as type,
               CAST(CEIL(sg.duration_seconds::float / 60) AS INTEGER) as max_time_minutes,
               'spelling' as exam_type, ve.exam_order,
-              (COUNT(sgr.id) > 0) as completed
+              (COUNT(sgr.id) > 0 OR COUNT(ea.id) > 0) as completed
        FROM spelling_grammar_tests sg
        INNER JOIN vacancy_exams ve ON sg.id = ve.spelling_exam_id
        LEFT JOIN spelling_grammar_results sgr ON sg.id = sgr.test_id AND sgr.candidate_id = $2
+       LEFT JOIN exam_answers ea ON sg.id = ea.exam_id AND ea.candidate_id = $2
        WHERE ve.vacancy_id = $1 AND ve.exam_type = 'spelling'
        GROUP BY sg.id, sg.title, sg.description, sg.duration_seconds, ve.exam_order
        ORDER BY ve.exam_order`,

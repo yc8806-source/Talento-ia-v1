@@ -216,16 +216,23 @@ app.get('/api/exams-public/:examId', async (req, res) => {
           if (q.options) {
             const parsed = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
             // Extract array from { options: [...] } or use directly if already array
-            optionsArray = parsed.options || parsed;
+            const optionsList = parsed.options || parsed || [];
+
+            // Convert to format expected by frontend: { id, text }
+            optionsArray = optionsList.map((opt, idx) => ({
+              id: idx,
+              text: opt
+            }));
           }
+
           return {
             id: q.id,
-            question_type: q.question_type,
-            question_text: q.question_text,
-            explanation: q.explanation,
+            title: q.question_text,
+            type: q.question_type,
             options: optionsArray,
             difficulty: q.difficulty,
-            order_number: q.order_number
+            order_number: q.order_number,
+            explanation: q.explanation
           };
         })
       });

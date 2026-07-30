@@ -145,6 +145,57 @@ app.get('/api/spelling-grammar-public/tests/:testId', async (req, res) => {
   }
 });
 
+// PUBLIC: Get any exam (regular or spelling) by ID - for candidates without auth
+app.get('/api/exams-public/:examId', async (req, res) => {
+  try {
+    const examId = parseInt(req.params.examId, 10);
+    console.log(`🔍 [PUBLIC] Getting exam ${examId}`);
+
+    // Try to get regular exam first
+    const regularExamResult = await pool.query(
+      `SELECT id, name, description, type, max_time_minutes as maxTimeMinutes, created_at
+       FROM exams WHERE id = $1`,
+      [examId]
+    );
+
+    if (regularExamResult.rows.length > 0) {
+      // Found regular exam - get its questions
+      const exam = regularExamResult.rows[0];
+      const questionsResult = await pool.query(
+        `SELECT id, title, type, competency_id, competency_name, correct_answer, points
+         FROM questions WHERE exam_id = $1`,
+        [examId]
+      );
+
+      return res.json({
+        id: exam.id,
+        name: exam.name,
+        description: exam.description,
+        type: exam.type,
+        maxTimeMinutes: exam.maxTimeMinutes,
+        questions: questionsResult.rows.map(q => ({
+          id: q.id,
+          title: q.title,
+          type: q.type,
+          competencyId: q.competency_id,
+          competencyName: q.competency_name,
+          correctAnswer: q.correct_answer,
+          points: q.points
+        }))
+      });
+    }
+
+    // Not found as regular exam - return 404
+    res.status(404).json({
+      error: 'Exam not found',
+      examId
+    });
+  } catch (error) {
+    console.error('❌ ERROR in public exam endpoint:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Candidate Tokens - GET (for token recovery)
 app.get('/api/candidates/:candidateId/tokens', async (req, res) => {
   try {

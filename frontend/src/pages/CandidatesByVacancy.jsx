@@ -126,21 +126,106 @@ export default function CandidatesByVacancy() {
     }
   };
 
-  const handleDownloadResultsPDF = async (candidate) => {
-    try {
-      const response = await api.get(`/candidates/${candidate.candidateVacancyId}/results/pdf`, {
-        responseType: 'blob'
-      });
+  const handleDownloadResultsPDF = () => {
+    if (!candidateResults || !selectedCandidate) return;
 
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Resultados_${candidate.firstName}_${candidate.lastName}_${Date.now()}.pdf`;
-      link.click();
-      window.URL.revokeObjectURL(url);
+    try {
+      // Generar contenido del PDF en HTML
+      let pdfContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Resultados</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { color: #333; text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
+            h2 { color: #666; margin-top: 20px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+            .info { margin: 20px 0; }
+            .info p { margin: 5px 0; }
+            .test-result { background: #f9f9f9; padding: 15px; margin: 10px 0; border-left: 4px solid #6f42c1; }
+            .test-result h3 { margin-top: 0; color: #333; }
+            .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 10px 0; }
+            .result-item { }
+            .result-label { color: #666; font-size: 0.9em; }
+            .result-value { font-weight: bold; font-size: 1.1em; color: #28a745; }
+            .footer { text-align: center; margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 0.8em; color: #999; }
+          </style>
+        </head>
+        <body>
+          <h1>REPORTE DE EVALUACIÓN</h1>
+          <div class="info">
+            <p><strong>Candidato:</strong> ${selectedCandidate.firstName} ${selectedCandidate.lastName}</p>
+            <p><strong>Email:</strong> ${selectedCandidate.email}</p>
+            <p><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-ES')}</p>
+          </div>
+      `;
+
+      // Agregar resultados de ortografía
+      if (candidateResults.spellingResults && candidateResults.spellingResults.length > 0) {
+        pdfContent += `<h2>Pruebas de Ortografía y Gramática</h2>`;
+        candidateResults.spellingResults.forEach(result => {
+          pdfContent += `
+            <div class="test-result">
+              <h3>${result.testName}</h3>
+              <div class="result-grid">
+                <div class="result-item">
+                  <div class="result-label">Preguntas Correctas:</div>
+                  <div class="result-value">${result.correctAnswers} / ${result.totalQuestions}</div>
+                </div>
+                <div class="result-item">
+                  <div class="result-label">Porcentaje:</div>
+                  <div class="result-value">${result.percentage}%</div>
+                </div>
+                <div class="result-item">
+                  <div class="result-label">Tiempo Utilizado:</div>
+                  <div>${Math.floor(result.timeSeconds / 60)}m ${result.timeSeconds % 60}s</div>
+                </div>
+                <div class="result-item">
+                  <div class="result-label">Completado:</div>
+                  <div>${new Date(result.completedAt).toLocaleString()}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      // Agregar resultados de otros exámenes
+      if (candidateResults.examResults && candidateResults.examResults.length > 0) {
+        pdfContent += `<h2>Otros Exámenes</h2>`;
+        candidateResults.examResults.forEach(result => {
+          pdfContent += `
+            <div class="test-result">
+              <h3>${result.examName}</h3>
+              <p><strong>Respuestas Completadas:</strong> ${result.answeredQuestions} preguntas</p>
+              <p><strong>Completado:</strong> ${new Date(result.completedAt).toLocaleString()}</p>
+            </div>
+          `;
+        });
+      }
+
+      pdfContent += `
+          <div class="footer">
+            <p>Este reporte fue generado automáticamente por el sistema de evaluaciones.</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Crear iframe para imprimir como PDF
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+      iframe.contentWindow.document.write(pdfContent);
+      iframe.contentWindow.document.close();
+
+      // Esperar a que cargue y luego imprimir
+      setTimeout(() => {
+        iframe.contentWindow.print();
+      }, 500);
     } catch (error) {
-      alert('Error descargando PDF: ' + (error.message || 'No se pudo generar el PDF'));
+      alert('Error generando PDF: ' + (error.message || 'No se pudo generar el PDF'));
     }
   };
 

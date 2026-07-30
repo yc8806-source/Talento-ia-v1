@@ -231,7 +231,7 @@ export default function CandidatesByVacancy() {
                   </td>
                   <td style={{ padding: '12px', textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                      {candidate.status === 'invited' && (
+                      {candidate.status !== 'apto' && candidate.status !== 'rechazado' && (
                         <>
                           <button
                             onClick={() => handleMarkStatus(candidate.candidateVacancyId, 'apto')}

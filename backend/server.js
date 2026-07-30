@@ -114,6 +114,16 @@ app.get('/api/spelling-grammar-public/tests/:testId', async (req, res) => {
 
     console.log(`✅ Found ${questionsResult.rows.length} questions for test ${testId}`);
 
+    // ⚠️ FIX: If test has no questions, return error (test data might be deleted)
+    if (questionsResult.rows.length === 0) {
+      console.error(`❌ CRITICAL: Test ${testId} exists but has NO questions!`);
+      return res.status(422).json({
+        error: 'Prueba incompleta',
+        details: `La prueba #${testId} existe pero no tiene preguntas. Contactar al administrador.`,
+        testId
+      });
+    }
+
     const response = {
       ...test,
       totalQuestions: questionsResult.rows.length,

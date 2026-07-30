@@ -848,6 +848,44 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
+// DEBUG: Ver qué respuestas se guardaron para un candidato
+app.get('/api/debug/exam-answers/:candidateId/:examId', async (req, res) => {
+  try {
+    const { candidateId, examId } = req.params;
+
+    const answers = await pool.query(
+      `SELECT id, candidate_id, exam_id, question_id, answer_value, time_spent_seconds, created_at
+       FROM exam_answers
+       WHERE candidate_id = $1 AND exam_id = $2
+       ORDER BY id`,
+      [candidateId, examId]
+    );
+
+    const spellingExam = await pool.query(
+      `SELECT id, title FROM spelling_grammar_tests WHERE id = $1`,
+      [examId]
+    );
+
+    const regularExam = await pool.query(
+      `SELECT id, name FROM exams WHERE id = $1`,
+      [examId]
+    );
+
+    res.json({
+      candidateId,
+      examId,
+      answersCount: answers.rows.length,
+      answers: answers.rows,
+      isSpellingExam: spellingExam.rows.length > 0,
+      spellingExamInfo: spellingExam.rows[0] || null,
+      isRegularExam: regularExam.rows.length > 0,
+      regularExamInfo: regularExam.rows[0] || null
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Version check
 app.get('/api/version', (req, res) => {
   res.json({

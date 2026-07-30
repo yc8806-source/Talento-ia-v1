@@ -1403,84 +1403,52 @@ exports.submitExamAnswersByToken = async (req, res) => {
     );
     const isSpellingExam = spellingExamCheck.rows.length > 0;
 
-    // Para spelling exams: guardar directamente en spelling_grammar_results
-    // Para regular exams: guardar en exam_answers
-    let totalScore = 0;
+    // ONLY SPELLING EXAMS are supported via this endpoint
+    if (!isSpellingExam) {
+      return res.status(400).json({
+        error: 'Este endpoint solo soporta spelling exams',
+        examId,
+        hint: 'Use /api/evaluations/{token}/exam-answers para exámenes regulares'
+      });
+    }
+
+    // SPELLING EXAM: guardar en spelling_grammar_results
     let savedCount = 0;
-    let totalTime = 0;
+    let totalTime = Object.values(answers).reduce((sum, a) => sum + (a.timeSpent || 0), 0);
+    savedCount = Object.keys(answers).length;
 
-    if (isSpellingExam) {
-      // SPELLING EXAM: acumular datos y guardar al final
-      totalTime = Object.values(answers).reduce((sum, a) => sum + (a.timeSpent || 0), 0);
-      savedCount = Object.keys(answers).length;
+    console.log(`📝 SPELLING EXAM SAVE: candidateId=${candidateId}, vacancyId=${candidateVacancy.id}, testId=${examId}, answers=${savedCount}`);
 
-      console.log(`📝 Saving spelling exam: candidateId=${candidateId}, vacancyId=${candidateVacancy.id}, testId=${examId}`);
+    try {
+      // Delete previous result
+      await pool.query(
+        'DELETE FROM spelling_grammar_results WHERE candidate_id = $1 AND test_id = $2',
+        [candidateId, examId]
+      );
 
-      try {
-        // Eliminar resultado anterior si existe
-        await pool.query(
-          'DELETE FROM spelling_grammar_results WHERE candidate_id = $1 AND test_id = $2',
-          [candidateId, examId]
-        );
+      // Insert new result
+      const insertRes = await pool.query(
+        `INSERT INTO spelling_grammar_results (candidate_id, candidate_vacancy_id, test_id, correct_answers, score, percentage, time_taken_seconds, answers, completed_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW()) RETURNING id`,
+        [
+          candidateId,
+          candidateVacancy.id,
+          examId,
+          savedCount,
+          0,
+          0,
+          totalTime,
+          JSON.stringify(answers)
+        ]
+      );
 
-        // Guardar resultado
-        const insertRes = await pool.query(
-          `INSERT INTO spelling_grammar_results (candidate_id, candidate_vacancy_id, test_id, correct_answers, score, percentage, time_taken_seconds, answers, completed_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW()) RETURNING id`,
-          [
-            candidateId,
-            candidateVacancy.id,
-            examId,
-            savedCount,
-            0,
-            0,
-            totalTime,
-            JSON.stringify(answers)
-          ]
-        );
-
-        console.log(`✅ Spelling result saved with ID: ${insertRes.rows[0]?.id}, candidate=${candidateId}`);
-      } catch (spellingError) {
-        console.error(`❌ Error saving spelling result:`, spellingError.message);
-        savedCount = 0;
-      }
-    } else {
-      // REGULAR EXAM: guardar en exam_answers
-      for (const [questionIndexStr, answerData] of Object.entries(answers)) {
-        const questionId = answerData.questionId || answerData.id;
-        const optionId = answerData.optionId || answerData.selected;
-        const timeSpent = answerData.timeSpent || 0;
-
-        if (!questionId || !optionId) continue;
-
-        // Obtener puntaje
-        const scoreResult = await pool.query(
-          'SELECT score FROM question_options WHERE id = $1 AND question_id = $2',
-          [optionId, questionId]
-        );
-
-        if (scoreResult.rows.length > 0) {
-          totalScore += parseFloat(scoreResult.rows[0].score) || 0;
-        }
-
-        try {
-          await pool.query(
-            'DELETE FROM exam_answers WHERE candidate_id = $1 AND exam_id = $2 AND question_id = $3',
-            [candidateId, examId, questionId]
-          );
-
-          const insertResult = await pool.query(
-            'INSERT INTO exam_answers (candidate_id, exam_id, question_id, answer_value, time_spent_seconds) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-            [candidateId, examId, questionId, String(optionId), timeSpent]
-          );
-
-          if (insertResult.rows.length > 0) {
-            savedCount++;
-          }
-        } catch (insertError) {
-          console.error(`❌ Error Q${questionId}:`, insertError.message);
-        }
-      }
+      console.log(`✅ SPELLING RESULT SAVED: resultId=${insertRes.rows[0]?.id}`);
+    } catch (spellingError) {
+      console.error(`❌ SPELLING SAVE ERROR:`, spellingError.message);
+      return res.status(500).json({
+        error: 'Error al guardar resultado',
+        details: spellingError.message
+      });
     }
 
     // Actualizar estado de candidate_vacancy a 'completed'

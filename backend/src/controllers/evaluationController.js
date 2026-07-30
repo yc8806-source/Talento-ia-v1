@@ -1414,6 +1414,8 @@ exports.submitExamAnswersByToken = async (req, res) => {
       totalTime = Object.values(answers).reduce((sum, a) => sum + (a.timeSpent || 0), 0);
       savedCount = Object.keys(answers).length;
 
+      console.log(`📝 Saving spelling exam: candidateId=${candidateId}, vacancyId=${candidateVacancy.id}, testId=${examId}`);
+
       try {
         // Eliminar resultado anterior si existe
         await pool.query(
@@ -1422,9 +1424,9 @@ exports.submitExamAnswersByToken = async (req, res) => {
         );
 
         // Guardar resultado
-        await pool.query(
+        const insertRes = await pool.query(
           `INSERT INTO spelling_grammar_results (candidate_id, candidate_vacancy_id, test_id, correct_answers, score, percentage, time_taken_seconds, answers, completed_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW()) RETURNING id`,
           [
             candidateId,
             candidateVacancy.id,
@@ -1437,10 +1439,10 @@ exports.submitExamAnswersByToken = async (req, res) => {
           ]
         );
 
-        console.log(`✅ Spelling exam saved: ${savedCount} answers for candidate ${candidateId}`);
+        console.log(`✅ Spelling result saved with ID: ${insertRes.rows[0]?.id}, candidate=${candidateId}`);
       } catch (spellingError) {
         console.error(`❌ Error saving spelling result:`, spellingError.message);
-        savedCount = 0; // Marcar como no guardado si hay error
+        savedCount = 0;
       }
     } else {
       // REGULAR EXAM: guardar en exam_answers

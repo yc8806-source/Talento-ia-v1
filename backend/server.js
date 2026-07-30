@@ -218,8 +218,19 @@ app.get('/api/exams-public/:examId', async (req, res) => {
             parsed = JSON.parse(parsed);
           }
 
-          // Handle both { options: [...] } and direct array formats
-          const optionsList = Array.isArray(parsed) ? parsed : (parsed.options || []);
+          // Handle multiple formats:
+          // 1. Direct array: ["opt1", "opt2"]
+          // 2. Object with options key: { options: ["opt1"] }
+          // 3. Object with a,b,c,d keys: { a: "opt1", b: "opt2" }
+          let optionsList = [];
+          if (Array.isArray(parsed)) {
+            optionsList = parsed;
+          } else if (parsed.options && Array.isArray(parsed.options)) {
+            optionsList = parsed.options;
+          } else {
+            // Object with a,b,c,d... keys
+            optionsList = Object.values(parsed);
+          }
 
           // Convert each option to {id, text} format
           options = optionsList.map((opt, idx) => ({

@@ -160,11 +160,51 @@ app.get('/api/exams-public/:examId', async (req, res) => {
 
     if (regularExamResult.rows.length > 0) {
       const exam = regularExamResult.rows[0];
+
+      // Use exam_questions join table to get questions (needed for TPL-80)
       const questionsResult = await pool.query(
-        `SELECT id, title, type, competency_id, competency_name, correct_answer, points
-         FROM questions WHERE exam_id = $1`,
+        `SELECT q.id, q.title, q.type, q.competency_id, q.competency_name, q.correct_answer, q.points, eq.question_order
+         FROM questions q
+         INNER JOIN exam_questions eq ON q.id = eq.question_id
+         WHERE eq.exam_id = $1
+         ORDER BY eq.question_order ASC`,
         [examId]
       );
+
+      // For TPL-80 exams, get the question options with scores
+      let questionsData = questionsResult.rows;
+
+      if (exam.name && exam.name.includes('TPL-80')) {
+        console.log(`🔄 Loading TPL-80 exam ${examId} with ${questionsData.length} questions`);
+
+        // Get question options for TPL-80
+        const optionsResult = await pool.query(
+          `SELECT id, question_id, option_text, score, option_order
+           FROM question_options
+           WHERE question_id = ANY($1::int[])
+           ORDER BY question_id, option_order ASC`,
+          [questionsData.map(q => q.id)]
+        );
+
+        // Group options by question_id
+        const optionsByQuestion = {};
+        optionsResult.rows.forEach(opt => {
+          if (!optionsByQuestion[opt.question_id]) {
+            optionsByQuestion[opt.question_id] = [];
+          }
+          optionsByQuestion[opt.question_id].push({
+            id: opt.id,
+            text: opt.option_text,
+            score: opt.score
+          });
+        });
+
+        // Add options to questions
+        questionsData = questionsData.map(q => ({
+          ...q,
+          options: optionsByQuestion[q.id] || []
+        }));
+      }
 
       return res.json({
         id: exam.id,
@@ -172,11 +212,11 @@ app.get('/api/exams-public/:examId', async (req, res) => {
         description: exam.description,
         type: exam.type,
         maxTimeMinutes: exam.maxTimeMinutes,
-        questions: questionsResult.rows.map(q => ({
+        questions: questionsData.map(q => ({
           id: q.id,
           title: q.title,
           type: q.type,
-          options: [], // Regular exams don't use this endpoint format
+          options: q.options || [], // Now includes options for TPL-80
           competencyId: q.competency_id,
           competencyName: q.competency_name,
           correctAnswer: q.correct_answer,

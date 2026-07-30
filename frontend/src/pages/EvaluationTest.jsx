@@ -123,8 +123,6 @@ function EvaluationTest() {
       console.log('ExamId:', examId);
       console.log('Token:', token);
 
-      setCompleted(true);
-
       // Preparar respuestas para enviar
       const answersToSend = {};
       Object.entries(answers).forEach(([indexStr, optionId]) => {
@@ -150,6 +148,8 @@ function EvaluationTest() {
       });
 
       console.log('✅ Response from server:', response.data);
+
+      setCompleted(true);
 
       alert(
         'Evaluación completada. Tu evaluación ha sido registrada y será revisada por nuestro equipo.'

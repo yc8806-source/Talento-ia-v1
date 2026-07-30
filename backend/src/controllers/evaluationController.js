@@ -1488,14 +1488,15 @@ exports.submitExamAnswersByToken = async (req, res) => {
     );
 
     res.status(201).json({
-      message: 'Respuestas guardadas exitosamente',
+      message: '✅ Respuestas guardadas exitosamente',
       candidateId,
       examId,
-      examType: isSpellingExam ? 'spelling' : 'regular',
+      examType: isSpellingExam ? '🎓 SPELLING' : 'regular',
       answersCount: Object.keys(answers).length,
       savedCount: savedCount,
       totalScore,
-      status: 'completed'
+      status: 'completed',
+      deployVersion: '2026-07-30-v2'
     });
   } catch (error) {
     console.error('Error guardando respuestas:', error);

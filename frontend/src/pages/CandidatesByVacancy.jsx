@@ -920,7 +920,7 @@ export default function CandidatesByVacancy() {
                           <div>
                             <p style={{ margin: 0, color: '#666' }}>Duración:</p>
                             <p style={{ margin: '5px 0 0 0', fontWeight: 'bold' }}>
-                              {Math.floor(result.durationSeconds / 60)}m {result.durationSeconds % 60}s
+                              {Math.floor(result.timeSeconds / 60)}m {result.timeSeconds % 60}s
                             </p>
                           </div>
                           <div>

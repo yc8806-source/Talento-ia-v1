@@ -1406,21 +1406,25 @@ exports.submitExamAnswersByToken = async (req, res) => {
       const optionId = answerData.optionId || answerData.selected;
       const timeSpent = answerData.timeSpent || 0;
 
-      if (!questionId || !optionId) {
-        console.warn(`Skipping answer: missing questionId (${questionId}) or optionId (${optionId})`);
+      if (!questionId) {
+        console.warn(`Skipping answer: missing questionId`);
         continue;
       }
 
-      // Obtener puntaje de la opción
-      const scoreResult = await pool.query(
-        'SELECT score FROM question_options WHERE id = $1 AND question_id = $2',
-        [optionId, questionId]
-      );
-
+      // Para spelling exams, optionId puede ser un índice (0-3). Para regular exams, es un option ID.
+      // Solo validar si es un examen regular
       let score = 0;
-      if (scoreResult.rows.length > 0) {
-        score = parseFloat(scoreResult.rows[0].score) || 0;
-        totalScore += score;
+      if (!isSpellingExam && optionId) {
+        // Obtener puntaje de la opción SOLO para exámenes regulares
+        const scoreResult = await pool.query(
+          'SELECT score FROM question_options WHERE id = $1 AND question_id = $2',
+          [optionId, questionId]
+        );
+
+        if (scoreResult.rows.length > 0) {
+          score = parseFloat(scoreResult.rows[0].score) || 0;
+          totalScore += score;
+        }
       }
 
       // Guardar respuesta - usar DELETE + INSERT para mayor confiabilidad
@@ -1437,6 +1441,7 @@ exports.submitExamAnswersByToken = async (req, res) => {
 
         if (insertResult.rows.length > 0) {
           savedCount++;
+          console.log(`✅ Saved answer for candidate ${candidateId}, exam ${examId}, question ${questionId}, option ${optionId}`);
         }
       } catch (insertError) {
         console.error(`Error inserting answer for question ${questionId}:`, insertError.message);

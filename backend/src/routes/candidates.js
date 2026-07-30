@@ -37,6 +37,9 @@ router.get('/vacancy/:vacancyId', candidateController.getCandidatesByVacancy);
 // Obtener resultados de pruebas de un candidato (protegido)
 router.get('/:candidateVacancyId/results', candidateController.getCandidateResults);
 
+// Descargar PDF con resultados (protegido)
+router.get('/:candidateVacancyId/results/pdf', candidateController.getCandidateResultsPDF);
+
 // Obtener historial de auditoría de un candidato (protegido)
 router.get('/:id/audit-history', candidateController.getCandidateAuditHistory);
 

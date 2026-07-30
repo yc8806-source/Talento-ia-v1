@@ -789,6 +789,100 @@ exports.getCandidateTokens = async (req, res) => {
   }
 };
 
+// DESCARGAR PDF CON RESULTADOS DE PRUEBAS
+exports.getCandidateResultsPDF = async (req, res) => {
+  try {
+    const { candidateVacancyId } = req.params;
+    const PDFDocument = require('pdfkit');
+    const doc = new PDFDocument();
+
+    // Headers para descargar como PDF
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="Resultados_${Date.now()}.pdf"`);
+
+    doc.pipe(res);
+
+    // Obtener datos del candidato
+    const cvResult = await pool.query(
+      `SELECT c.first_name, c.last_name, c.email, v.title as vacancy_title
+       FROM candidate_vacancies cv
+       JOIN candidates c ON cv.candidate_id = c.id
+       JOIN vacancies v ON cv.vacancy_id = v.id
+       WHERE cv.id = $1`,
+      [candidateVacancyId]
+    );
+
+    if (cvResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Evaluación no encontrada' });
+    }
+
+    const { first_name, last_name, email, vacancy_title } = cvResult.rows[0];
+    const candidateId = cvResult.rows[0]?.candidate_id;
+
+    // Título
+    doc.fontSize(24).font('Helvetica-Bold').text('REPORTE DE EVALUACIÓN', { align: 'center' });
+    doc.fontSize(10).font('Helvetica').text(`${new Date().toLocaleDateString('es-ES')}`, { align: 'center' });
+    doc.moveDown();
+
+    // Información del candidato
+    doc.fontSize(14).font('Helvetica-Bold').text('Candidato');
+    doc.fontSize(10).font('Helvetica').text(`Nombre: ${first_name} ${last_name}`);
+    doc.text(`Email: ${email}`);
+    doc.text(`Vacante: ${vacancy_title}`);
+    doc.moveDown();
+
+    // Resultados de pruebas
+    doc.fontSize(14).font('Helvetica-Bold').text('Resultados de Pruebas');
+    doc.moveDown(0.5);
+
+    // Spelling tests
+    const spellingResults = await pool.query(
+      `SELECT id, title, total_questions, correct_answers, percentage, time_taken_seconds, completed_at
+       FROM spelling_grammar_results sgr
+       JOIN spelling_grammar_tests sgt ON sgr.test_id = sgt.id
+       WHERE sgr.candidate_id = (SELECT candidate_id FROM candidate_vacancies WHERE id = $1)`,
+      [candidateVacancyId]
+    );
+
+    if (spellingResults.rows.length > 0) {
+      doc.fontSize(11).font('Helvetica-Bold').text('📝 Pruebas de Ortografía y Gramática:');
+      spellingResults.rows.forEach(result => {
+        doc.fontSize(9).font('Helvetica');
+        doc.text(`• ${result.title}`);
+        doc.text(`  Correctas: ${result.correct_answers}/${result.total_questions} (${result.percentage}%)`);
+        doc.text(`  Tiempo: ${Math.floor(result.time_taken_seconds / 60)}m ${result.time_taken_seconds % 60}s`);
+      });
+      doc.moveDown(0.5);
+    }
+
+    // Typing tests
+    const typingResults = await pool.query(
+      `SELECT wpm, accuracy, duration_seconds, completed_at
+       FROM typing_test_results
+       WHERE candidate_id = (SELECT candidate_id FROM candidate_vacancies WHERE id = $1)`,
+      [candidateVacancyId]
+    );
+
+    if (typingResults.rows.length > 0) {
+      doc.fontSize(11).font('Helvetica-Bold').text('⌨️ Test de Mecanografía:');
+      typingResults.rows.forEach(result => {
+        doc.fontSize(9).font('Helvetica');
+        doc.text(`• Velocidad: ${result.wpm} WPM`);
+        doc.text(`  Precisión: ${Math.round(result.accuracy * 100) / 100}%`);
+        doc.text(`  Duración: ${Math.floor(result.duration_seconds / 60)}m ${result.duration_seconds % 60}s`);
+      });
+    }
+
+    doc.end();
+  } catch (error) {
+    console.error('Error generando PDF:', error);
+    res.status(500).json({
+      error: 'Error al generar PDF',
+      details: error.message
+    });
+  }
+};
+
 // OBTENER RESULTADOS DE PRUEBAS COMPLETADAS POR UN CANDIDATO
 exports.getCandidateResults = async (req, res) => {
   try {
@@ -826,6 +920,15 @@ exports.getCandidateResults = async (req, res) => {
       [candidateId]
     );
 
+    // Obtener resultados de typing tests
+    const typingResults = await pool.query(
+      `SELECT id, wpm, accuracy, duration_seconds, completed_at
+       FROM typing_test_results
+       WHERE candidate_id = $1
+       ORDER BY completed_at DESC`,
+      [candidateId]
+    );
+
     res.json({
       candidateVacancyId,
       candidateId,
@@ -849,6 +952,14 @@ exports.getCandidateResults = async (req, res) => {
         answeredQuestions: row.answered_questions,
         completedAt: row.created_at,
         type: 'regular'
+      })),
+      typingResults: typingResults.rows.map(row => ({
+        id: row.id,
+        wpm: row.wpm,
+        accuracy: Math.round(row.accuracy * 100) / 100,
+        durationSeconds: row.duration_seconds,
+        completedAt: row.completed_at,
+        type: 'typing'
       }))
     });
   } catch (error) {

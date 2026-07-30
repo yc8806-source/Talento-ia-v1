@@ -126,6 +126,24 @@ export default function CandidatesByVacancy() {
     }
   };
 
+  const handleDownloadResultsPDF = async (candidate) => {
+    try {
+      const response = await api.get(`/candidates/${candidate.candidateVacancyId}/results/pdf`, {
+        responseType: 'blob'
+      });
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Resultados_${candidate.firstName}_${candidate.lastName}_${Date.now()}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      alert('Error descargando PDF: ' + (error.message || 'No se pudo generar el PDF'));
+    }
+  };
+
   if (loading) {
     return <div style={{ padding: '40px', textAlign: 'center' }}>Cargando...</div>;
   }
@@ -655,7 +673,7 @@ export default function CandidatesByVacancy() {
               <div style={{ textAlign: 'center', padding: '20px' }}>
                 <p>Cargando resultados...</p>
               </div>
-            ) : !candidateResults || (candidateResults.spellingResults.length === 0 && candidateResults.examResults.length === 0) ? (
+            ) : !candidateResults || (candidateResults.spellingResults.length === 0 && candidateResults.examResults.length === 0 && candidateResults.typingResults.length === 0) ? (
               <div style={{ backgroundColor: '#f0f0f0', padding: '15px', borderRadius: '4px', textAlign: 'center' }}>
                 <p>El candidato aún no ha completado ninguna prueba.</p>
               </div>
@@ -740,15 +758,80 @@ export default function CandidatesByVacancy() {
                     ))}
                   </div>
                 )}
+
+                {/* Resultados de Typing Test */}
+                {candidateResults.typingResults && candidateResults.typingResults.length > 0 && (
+                  <div style={{ marginBottom: '25px' }}>
+                    <h3 style={{ borderBottom: '2px solid #fd7e14', paddingBottom: '10px', color: '#fd7e14' }}>
+                      ⌨️ Test de Mecanografía
+                    </h3>
+                    {candidateResults.typingResults.map((result, idx) => (
+                      <div key={idx} style={{
+                        backgroundColor: '#fff8f3',
+                        padding: '15px',
+                        borderRadius: '8px',
+                        marginBottom: '12px',
+                        border: '1px solid #fd7e14'
+                      }}>
+                        <p style={{ margin: '0 0 10px 0', fontWeight: 'bold', fontSize: '1.05em' }}>
+                          Velocidad y Precisión de Mecanografía
+                        </p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.9em' }}>
+                          <div>
+                            <p style={{ margin: 0, color: '#666' }}>Velocidad (WPM):</p>
+                            <p style={{ margin: '5px 0 0 0', fontWeight: 'bold', fontSize: '1.1em', color: '#fd7e14' }}>
+                              {result.wpm}
+                            </p>
+                          </div>
+                          <div>
+                            <p style={{ margin: 0, color: '#666' }}>Precisión (%):</p>
+                            <p style={{ margin: '5px 0 0 0', fontWeight: 'bold', fontSize: '1.1em', color: '#28a745' }}>
+                              {result.accuracy}%
+                            </p>
+                          </div>
+                          <div>
+                            <p style={{ margin: 0, color: '#666' }}>Duración:</p>
+                            <p style={{ margin: '5px 0 0 0', fontWeight: 'bold' }}>
+                              {Math.floor(result.durationSeconds / 60)}m {result.durationSeconds % 60}s
+                            </p>
+                          </div>
+                          <div>
+                            <p style={{ margin: 0, color: '#666' }}>Completado:</p>
+                            <p style={{ margin: '5px 0 0 0', fontWeight: 'bold', fontSize: '0.85em' }}>
+                              {new Date(result.completedAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
-            <button
-              onClick={() => {
-                setShowResultsModal(false);
-                setSelectedCandidate(null);
-                setCandidateResults(null);
-              }}
+            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+              <button
+                onClick={() => handleDownloadResultsPDF(selectedCandidate)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '0.95em',
+                  fontWeight: 'bold'
+                }}
+              >
+                📥 Descargar PDF
+              </button>
+              <button
+                onClick={() => {
+                  setShowResultsModal(false);
+                  setSelectedCandidate(null);
+                  setCandidateResults(null);
+                }}
               style={{
                 width: '100%',
                 padding: '12px',

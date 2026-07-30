@@ -1418,7 +1418,16 @@ exports.submitExamAnswersByToken = async (req, res) => {
     let totalTime = Object.values(answers).reduce((sum, a) => sum + (a.timeSpent || 0), 0);
     savedCount = Object.keys(answers).length;
 
-    console.log(`📝 SPELLING EXAM SAVE: candidateId=${candidateId}, vacancyId=${candidateVacancy.id}, testId=${examId}, answers=${savedCount}`);
+    // Obtener total de preguntas del test para calcular porcentaje
+    const testInfoResult = await pool.query(
+      'SELECT total_questions FROM spelling_grammar_tests WHERE id = $1',
+      [examId]
+    );
+
+    const totalQuestions = testInfoResult.rows[0]?.total_questions || 50;
+    const percentage = Math.round((savedCount / totalQuestions) * 100);
+
+    console.log(`📝 SPELLING EXAM SAVE: candidateId=${candidateId}, vacancyId=${candidateVacancy.id}, testId=${examId}, answers=${savedCount}/${totalQuestions}, percentage=${percentage}%`);
 
     try {
       // Delete previous result
@@ -1437,7 +1446,7 @@ exports.submitExamAnswersByToken = async (req, res) => {
           examId,
           savedCount,
           0,
-          0,
+          percentage,
           totalTime,
           JSON.stringify(answers)
         ]

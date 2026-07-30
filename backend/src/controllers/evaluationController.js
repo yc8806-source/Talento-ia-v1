@@ -1403,55 +1403,81 @@ exports.submitExamAnswersByToken = async (req, res) => {
     );
     const isSpellingExam = spellingExamCheck.rows.length > 0;
 
-    // Guardar cada respuesta
+    // Para spelling exams: guardar directamente en spelling_grammar_results
+    // Para regular exams: guardar en exam_answers
     let totalScore = 0;
     let savedCount = 0;
+    let totalTime = 0;
 
-    for (const [questionIndexStr, answerData] of Object.entries(answers)) {
-      const questionIndex = parseInt(questionIndexStr, 10);
-      const questionId = answerData.questionId || answerData.id;
-      const optionId = answerData.optionId || answerData.selected;
-      const timeSpent = answerData.timeSpent || 0;
+    if (isSpellingExam) {
+      // SPELLING EXAM: acumular datos y guardar al final
+      totalTime = Object.values(answers).reduce((sum, a) => sum + (a.timeSpent || 0), 0);
+      savedCount = Object.keys(answers).length;
 
-      if (!questionId) {
-        console.warn(`Skipping answer: missing questionId`);
-        continue;
+      try {
+        // Eliminar resultado anterior si existe
+        await pool.query(
+          'DELETE FROM spelling_grammar_results WHERE candidate_id = $1 AND test_id = $2',
+          [candidateId, examId]
+        );
+
+        // Guardar resultado
+        await pool.query(
+          `INSERT INTO spelling_grammar_results (candidate_id, candidate_vacancy_id, test_id, correct_answers, score, percentage, time_taken_seconds, answers, completed_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+          [
+            candidateId,
+            candidateVacancy.id,
+            examId,
+            savedCount,
+            0,
+            0,
+            totalTime,
+            JSON.stringify(answers)
+          ]
+        );
+
+        console.log(`✅ Spelling exam saved: ${savedCount} answers for candidate ${candidateId}`);
+      } catch (spellingError) {
+        console.error(`❌ Error saving spelling result:`, spellingError.message);
+        savedCount = 0; // Marcar como no guardado si hay error
       }
+    } else {
+      // REGULAR EXAM: guardar en exam_answers
+      for (const [questionIndexStr, answerData] of Object.entries(answers)) {
+        const questionId = answerData.questionId || answerData.id;
+        const optionId = answerData.optionId || answerData.selected;
+        const timeSpent = answerData.timeSpent || 0;
 
-      // Para spelling exams, optionId puede ser un índice (0-3). Para regular exams, es un option ID.
-      // Solo validar si es un examen regular
-      let score = 0;
-      if (!isSpellingExam && optionId) {
-        // Obtener puntaje de la opción SOLO para exámenes regulares
+        if (!questionId || !optionId) continue;
+
+        // Obtener puntaje
         const scoreResult = await pool.query(
           'SELECT score FROM question_options WHERE id = $1 AND question_id = $2',
           [optionId, questionId]
         );
 
         if (scoreResult.rows.length > 0) {
-          score = parseFloat(scoreResult.rows[0].score) || 0;
-          totalScore += score;
+          totalScore += parseFloat(scoreResult.rows[0].score) || 0;
         }
-      }
 
-      // Guardar respuesta - usar DELETE + INSERT para mayor confiabilidad
-      try {
-        await pool.query(
-          'DELETE FROM exam_answers WHERE candidate_id = $1 AND exam_id = $2 AND question_id = $3',
-          [candidateId, examId, questionId]
-        );
+        try {
+          await pool.query(
+            'DELETE FROM exam_answers WHERE candidate_id = $1 AND exam_id = $2 AND question_id = $3',
+            [candidateId, examId, questionId]
+          );
 
-        const insertResult = await pool.query(
-          'INSERT INTO exam_answers (candidate_id, exam_id, question_id, answer_value, time_spent_seconds) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-          [candidateId, examId, questionId, String(optionId), timeSpent]
-        );
+          const insertResult = await pool.query(
+            'INSERT INTO exam_answers (candidate_id, exam_id, question_id, answer_value, time_spent_seconds) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+            [candidateId, examId, questionId, String(optionId), timeSpent]
+          );
 
-        if (insertResult.rows.length > 0) {
-          savedCount++;
-          console.log(`✅ Saved Q${questionId}: option ${optionId} for candidate ${candidateId}`);
+          if (insertResult.rows.length > 0) {
+            savedCount++;
+          }
+        } catch (insertError) {
+          console.error(`❌ Error Q${questionId}:`, insertError.message);
         }
-      } catch (insertError) {
-        console.error(`❌ Error Q${questionId}: ${insertError.message}. Params: candidate=${candidateId}, exam=${examId}, qid=${questionId}, opt=${optionId}`);
       }
     }
 
@@ -1465,6 +1491,7 @@ exports.submitExamAnswersByToken = async (req, res) => {
       message: 'Respuestas guardadas exitosamente',
       candidateId,
       examId,
+      examType: isSpellingExam ? 'spelling' : 'regular',
       answersCount: Object.keys(answers).length,
       savedCount: savedCount,
       totalScore,

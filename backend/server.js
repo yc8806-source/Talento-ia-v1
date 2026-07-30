@@ -185,7 +185,46 @@ app.get('/api/exams-public/:examId', async (req, res) => {
       });
     }
 
-    // Not found as regular exam - return 404
+    // Try to get spelling exam
+    console.log(`📖 Not found as regular exam, checking spelling_grammar_tests...`);
+    const spellingExamResult = await pool.query(
+      `SELECT id, title, description, duration_seconds, test_type, language
+       FROM spelling_grammar_tests WHERE id = $1`,
+      [examId]
+    );
+
+    if (spellingExamResult.rows.length > 0) {
+      // Found spelling exam - get its questions
+      const exam = spellingExamResult.rows[0];
+      const questionsResult = await pool.query(
+        `SELECT id, question_type, question_text, explanation, options, difficulty, order_number
+         FROM spelling_grammar_questions WHERE test_id = $1
+         ORDER BY order_number ASC`,
+        [examId]
+      );
+
+      console.log(`✅ Found spelling exam ${examId} with ${questionsResult.rows.length} questions`);
+
+      return res.json({
+        id: exam.id,
+        name: exam.title,
+        description: exam.description,
+        type: 'spelling',
+        maxTimeMinutes: Math.ceil(exam.duration_seconds / 60),
+        questions: questionsResult.rows.map(q => ({
+          id: q.id,
+          question_type: q.question_type,
+          question_text: q.question_text,
+          explanation: q.explanation,
+          options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
+          difficulty: q.difficulty,
+          order_number: q.order_number
+        }))
+      });
+    }
+
+    // Not found as either type - return 404
+    console.log(`❌ Exam ${examId} not found in either table`);
     res.status(404).json({
       error: 'Exam not found',
       examId

@@ -809,7 +809,7 @@ export default function CandidatesByVacancy() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+            <div style={{ borderTop: '1px solid #ddd', paddingTop: '20px', marginTop: '20px', display: 'flex', gap: '10px' }}>
               <button
                 onClick={() => handleDownloadResultsPDF(selectedCandidate)}
                 style={{
@@ -832,20 +832,20 @@ export default function CandidatesByVacancy() {
                   setSelectedCandidate(null);
                   setCandidateResults(null);
                 }}
-              style={{
-                width: '100%',
-                padding: '12px',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '0.95em',
-                marginTop: '20px'
-              }}
-            >
-              Cerrar
-            </button>
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '0.95em'
+                }}
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}

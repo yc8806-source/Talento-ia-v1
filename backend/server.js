@@ -159,7 +159,6 @@ app.get('/api/exams-public/:examId', async (req, res) => {
     );
 
     if (regularExamResult.rows.length > 0) {
-      // Found regular exam - get its questions
       const exam = regularExamResult.rows[0];
       const questionsResult = await pool.query(
         `SELECT id, title, type, competency_id, competency_name, correct_answer, points
@@ -177,6 +176,7 @@ app.get('/api/exams-public/:examId', async (req, res) => {
           id: q.id,
           title: q.title,
           type: q.type,
+          options: [], // Regular exams don't use this endpoint format
           competencyId: q.competency_id,
           competencyName: q.competency_name,
           correctAnswer: q.correct_answer,
@@ -193,59 +193,67 @@ app.get('/api/exams-public/:examId', async (req, res) => {
       [examId]
     );
 
-    if (spellingExamResult.rows.length > 0) {
-      // Found spelling exam - get its questions
-      const exam = spellingExamResult.rows[0];
-      const questionsResult = await pool.query(
-        `SELECT id, question_type, question_text, explanation, options, difficulty, order_number
-         FROM spelling_grammar_questions WHERE test_id = $1
-         ORDER BY order_number ASC`,
-        [examId]
-      );
-
-      console.log(`✅ Found spelling exam ${examId} with ${questionsResult.rows.length} questions`);
-
-      return res.json({
-        id: exam.id,
-        name: exam.title,
-        description: exam.description,
-        type: 'spelling',
-        maxTimeMinutes: Math.ceil(exam.duration_seconds / 60),
-        questions: questionsResult.rows.map(q => {
-          let optionsArray = [];
-          if (q.options) {
-            const parsed = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
-            // Extract array from { options: [...] } or use directly if already array
-            const optionsList = parsed.options || parsed || [];
-
-            // Convert to format expected by frontend: { id, text }
-            optionsArray = optionsList.map((opt, idx) => ({
-              id: idx,
-              text: opt
-            }));
-          }
-
-          return {
-            id: q.id,
-            title: q.question_text,
-            type: q.question_type,
-            options: optionsArray,
-            difficulty: q.difficulty,
-            order_number: q.order_number,
-            explanation: q.explanation
-          };
-        })
-      });
+    if (spellingExamResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Exam not found', examId });
     }
 
-    // Not found as either type - return 404
-    console.log(`❌ Exam ${examId} not found in either table`);
-    res.status(404).json({
-      error: 'Exam not found',
-      examId
+    const exam = spellingExamResult.rows[0];
+    const questionsResult = await pool.query(
+      `SELECT id, question_type, question_text, explanation, options, difficulty, order_number
+       FROM spelling_grammar_questions WHERE test_id = $1
+       ORDER BY order_number ASC`,
+      [examId]
+    );
+
+    console.log(`✅ Found spelling exam ${examId} with ${questionsResult.rows.length} questions`);
+
+    // Format questions for frontend
+    const formattedQuestions = questionsResult.rows.map(q => {
+      let options = [];
+
+      if (q.options) {
+        try {
+          let parsed = q.options;
+          if (typeof parsed === 'string') {
+            parsed = JSON.parse(parsed);
+          }
+
+          // Handle both { options: [...] } and direct array formats
+          const optionsList = Array.isArray(parsed) ? parsed : (parsed.options || []);
+
+          // Convert each option to {id, text} format
+          options = optionsList.map((opt, idx) => ({
+            id: idx,
+            text: typeof opt === 'string' ? opt : (opt.text || String(opt))
+          }));
+
+          console.log(`   Question ${q.id}: ${optionsList.length} options parsed`);
+        } catch (e) {
+          console.error(`   ❌ Error parsing options for question ${q.id}:`, e.message);
+        }
+      }
+
+      return {
+        id: q.id,
+        title: q.question_text,
+        type: q.question_type,
+        options: options, // MUST be array of {id, text}
+        difficulty: q.difficulty,
+        order_number: q.order_number,
+        explanation: q.explanation
+      };
+    });
+
+    res.json({
+      id: exam.id,
+      name: exam.title,
+      description: exam.description,
+      type: 'spelling',
+      maxTimeMinutes: Math.ceil(exam.duration_seconds / 60),
+      questions: formattedQuestions
     });
   } catch (error) {
-    console.error('❌ ERROR in public exam endpoint:', error.message);
+    console.error('❌ ERROR in public exam endpoint:', error.message, error.stack);
     res.status(500).json({ error: error.message });
   }
 });

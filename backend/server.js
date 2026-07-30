@@ -153,73 +153,65 @@ app.get('/api/exams-public/:examId', async (req, res) => {
 
     // Try to get regular exam first
     const regularExamResult = await pool.query(
-      `SELECT id, name, description, type, max_time_minutes as maxTimeMinutes, created_at
+      `SELECT id, name, type, COALESCE(description, '') as description, COALESCE(max_time_minutes, 60) as maxTimeMinutes
        FROM exams WHERE id = $1`,
       [examId]
     );
 
     if (regularExamResult.rows.length > 0) {
       const exam = regularExamResult.rows[0];
+      console.log(`✅ Found regular exam ${examId}: ${exam.name}`);
 
-      // Use exam_questions join table to get questions (needed for TPL-80)
-      const questionsResult = await pool.query(
-        `SELECT q.id, q.title, q.type, q.competency_id, q.points, eq.question_order
-         FROM questions q
-         INNER JOIN exam_questions eq ON q.id = eq.question_id
-         WHERE eq.exam_id = $1
-         ORDER BY eq.question_order ASC`,
-        [examId]
-      );
+      // Get questions with options for any exam type (regular, TPL-80, etc)
+      let questionsData = [];
 
-      // For TPL-80 exams, get the question options with scores
-      let questionsData = questionsResult.rows;
-
-      if (exam.name && exam.name.includes('TPL-80')) {
-        console.log(`🔄 Loading TPL-80 exam ${examId} with ${questionsData.length} questions`);
-
-        // Get question options for TPL-80
-        const optionsResult = await pool.query(
-          `SELECT id, question_id, option_text, score, option_order
-           FROM question_options
-           WHERE question_id = ANY($1::int[])
-           ORDER BY question_id, option_order ASC`,
-          [questionsData.map(q => q.id)]
+      try {
+        const questionsResult = await pool.query(
+          `SELECT q.id, q.title, COALESCE(q.type, 'multiple') as type
+           FROM questions q
+           WHERE q.exam_id = $1
+           ORDER BY q.id ASC`,
+          [examId]
         );
 
-        // Group options by question_id
-        const optionsByQuestion = {};
-        optionsResult.rows.forEach(opt => {
-          if (!optionsByQuestion[opt.question_id]) {
-            optionsByQuestion[opt.question_id] = [];
-          }
-          optionsByQuestion[opt.question_id].push({
-            id: opt.id,
-            text: opt.option_text,
-            score: opt.score
-          });
-        });
+        console.log(`📋 Found ${questionsResult.rows.length} questions`);
 
-        // Add options to questions
-        questionsData = questionsData.map(q => ({
-          ...q,
-          options: optionsByQuestion[q.id] || []
-        }));
+        // For each question, try to get options
+        for (const q of questionsResult.rows) {
+          let options = [];
+          try {
+            const optionsResult = await pool.query(
+              `SELECT id, option_text, score FROM question_options WHERE question_id = $1 ORDER BY id ASC`,
+              [q.id]
+            );
+            options = optionsResult.rows.map(opt => ({
+              id: opt.id,
+              text: opt.option_text,
+              score: opt.score
+            }));
+          } catch (optErr) {
+            console.log(`   No options found for question ${q.id}`);
+          }
+
+          questionsData.push({
+            id: q.id,
+            title: q.title,
+            type: q.type,
+            options: options
+          });
+        }
+      } catch (qErr) {
+        console.error(`Error getting questions: ${qErr.message}`);
+        questionsData = [];
       }
 
       return res.json({
         id: exam.id,
         name: exam.name,
         description: exam.description,
-        type: exam.type,
+        type: exam.type || 'regular',
         maxTimeMinutes: exam.maxTimeMinutes,
-        questions: questionsData.map(q => ({
-          id: q.id,
-          title: q.title,
-          type: q.type,
-          options: q.options || [], // Now includes options for TPL-80
-          competencyId: q.competency_id,
-          points: q.points
-        }))
+        questions: questionsData
       });
     }
 
@@ -232,6 +224,7 @@ app.get('/api/exams-public/:examId', async (req, res) => {
     );
 
     if (spellingExamResult.rows.length === 0) {
+      console.log(`❌ Exam ${examId} not found in any table`);
       return res.status(404).json({ error: 'Exam not found', examId });
     }
 

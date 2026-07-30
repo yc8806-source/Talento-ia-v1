@@ -205,9 +205,26 @@ export default function CandidatesByVacancy() {
         });
       }
 
+      // Agregar resultados de typing test
+      if (candidateResults.typingResults && candidateResults.typingResults.length > 0) {
+        pdfContent += `<h2>Test de Mecanografía</h2>`;
+        candidateResults.typingResults.forEach(result => {
+          pdfContent += `
+            <div class="test-result">
+              <h3>Prueba de Mecanografía</h3>
+              <p><strong>Velocidad (WPM):</strong> ${result.wpm}</p>
+              <p><strong>Precisión:</strong> ${result.accuracy}%</p>
+              <p><strong>Tiempo:</strong> ${result.timeSeconds} segundos</p>
+              <p><strong>Completado:</strong> ${new Date(result.completedAt).toLocaleString()}</p>
+            </div>
+          `;
+        });
+      }
+
       // Agregar exámenes pendientes
       const hasPendingExams = (candidateResults.pendingExams && candidateResults.pendingExams.length > 0) ||
-                             (candidateResults.pendingSpellingExams && candidateResults.pendingSpellingExams.length > 0);
+                             (candidateResults.pendingSpellingExams && candidateResults.pendingSpellingExams.length > 0) ||
+                             (candidateResults.pendingTypingTests && candidateResults.pendingTypingTests.length > 0);
 
       if (hasPendingExams) {
         pdfContent += `<h2>Pruebas Pendientes</h2>`;
@@ -220,6 +237,12 @@ export default function CandidatesByVacancy() {
 
         if (candidateResults.pendingExams && candidateResults.pendingExams.length > 0) {
           candidateResults.pendingExams.forEach(exam => {
+            pdfContent += `<p style="color: #ff9800; margin: 10px 0;">⏳ ${exam.examName}</p>`;
+          });
+        }
+
+        if (candidateResults.pendingTypingTests && candidateResults.pendingTypingTests.length > 0) {
+          candidateResults.pendingTypingTests.forEach(exam => {
             pdfContent += `<p style="color: #ff9800; margin: 10px 0;">⏳ ${exam.examName}</p>`;
           });
         }

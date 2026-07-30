@@ -845,12 +845,31 @@ exports.getCandidateResults = async (req, res) => {
       [vacancyId]
     );
 
+    // Obtener resultados de typing test
+    const typingResults = await pool.query(
+      `SELECT tr.id, tr.candidate_id, tr.typing_test_id, tr.wpm, tr.accuracy, tr.time_taken_seconds, tr.completed_at
+       FROM typing_results tr
+       WHERE tr.candidate_id = $1`,
+      [candidateId]
+    );
+
     // Determinar exámenes pendientes
     const completedExamIds = new Set(examResults.rows.map(r => r.exam_id));
     const completedSpellingIds = new Set(spellingResults.rows.map(r => r.test_id));
+    const completedTypingIds = new Set(typingResults.rows.map(r => r.typing_test_id));
 
     const pendingExams = assignedExams.rows.filter(e => !completedExamIds.has(e.exam_id));
     const pendingSpellingExams = assignedSpellingTests.rows.filter(e => !completedSpellingIds.has(e.exam_id));
+
+    // Determinar typing tests pendientes (exámenes asignados que son typing pero no completados)
+    const assignedTypingTests = await pool.query(
+      `SELECT DISTINCT ve.exam_id
+       FROM vacancy_exams ve
+       WHERE ve.vacancy_id = $1 AND ve.exam_id IN (SELECT id FROM typing_tests)`,
+      [vacancyId]
+    );
+
+    const pendingTypingTests = assignedTypingTests.rows.filter(e => !completedTypingIds.has(e.exam_id));
 
     res.json({
       candidateVacancyId,
@@ -876,7 +895,15 @@ exports.getCandidateResults = async (req, res) => {
         completedAt: row.created_at,
         type: 'regular'
       })),
-      typingResults: [],
+      typingResults: typingResults.rows.map(row => ({
+        id: row.id,
+        typingTestId: row.typing_test_id,
+        wpm: row.wpm,
+        accuracy: row.accuracy,
+        timeSeconds: row.time_taken_seconds,
+        completedAt: row.completed_at,
+        type: 'typing'
+      })),
       pendingExams: pendingExams.map(e => ({
         examId: e.exam_id,
         examName: e.name
@@ -884,6 +911,10 @@ exports.getCandidateResults = async (req, res) => {
       pendingSpellingExams: pendingSpellingExams.map(e => ({
         examId: e.exam_id,
         examName: e.title
+      })),
+      pendingTypingTests: pendingTypingTests.map(e => ({
+        examId: e.exam_id,
+        examName: 'Test de Mecanografía'
       }))
     });
   } catch (error) {

@@ -163,10 +163,9 @@ app.get('/api/exams-public/:examId', async (req, res) => {
 
       // Use exam_questions join table to get questions (needed for TPL-80)
       const questionsResult = await pool.query(
-        `SELECT q.id, q.title, q.type, q.competency_id, c.name as competency_name, q.correct_answer, q.points, eq.question_order
+        `SELECT q.id, q.title, q.type, q.competency_id, q.points, eq.question_order
          FROM questions q
          INNER JOIN exam_questions eq ON q.id = eq.question_id
-         LEFT JOIN competencies c ON q.competency_id = c.id
          WHERE eq.exam_id = $1
          ORDER BY eq.question_order ASC`,
         [examId]
@@ -219,8 +218,6 @@ app.get('/api/exams-public/:examId', async (req, res) => {
           type: q.type,
           options: q.options || [], // Now includes options for TPL-80
           competencyId: q.competency_id,
-          competencyName: q.competency_name,
-          correctAnswer: q.correct_answer,
           points: q.points
         }))
       });

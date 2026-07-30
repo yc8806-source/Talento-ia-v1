@@ -1443,15 +1443,15 @@ exports.submitExamAnswersByToken = async (req, res) => {
 
         const insertResult = await pool.query(
           'INSERT INTO exam_answers (candidate_id, exam_id, question_id, answer_value, time_spent_seconds) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-          [candidateId, examId, questionId, optionId, timeSpent]
+          [candidateId, examId, questionId, String(optionId), timeSpent]
         );
 
         if (insertResult.rows.length > 0) {
           savedCount++;
-          console.log(`✅ Saved answer for candidate ${candidateId}, exam ${examId}, question ${questionId}, option ${optionId}`);
+          console.log(`✅ Saved Q${questionId}: option ${optionId} for candidate ${candidateId}`);
         }
       } catch (insertError) {
-        console.error(`Error inserting answer for question ${questionId}:`, insertError.message);
+        console.error(`❌ Error Q${questionId}: ${insertError.message}. Params: candidate=${candidateId}, exam=${examId}, qid=${questionId}, opt=${optionId}`);
       }
     }
 

@@ -56,7 +56,8 @@ function EvaluationTest() {
         return;
       }
 
-      const response = await axios.get(`${API_URL}/exams/${examIdNum}`);
+      // Use public endpoint to avoid 401 auth errors
+      const response = await axios.get(`${API_URL}/exams-public/${examIdNum}`);
 
       if (response.data) {
         const examData = {

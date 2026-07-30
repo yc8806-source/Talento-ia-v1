@@ -1414,6 +1414,7 @@ exports.submitExamAnswersByToken = async (req, res) => {
 
     // SPELLING EXAM: guardar en spelling_grammar_results
     let savedCount = 0;
+    let totalScore = 0;
     let totalTime = Object.values(answers).reduce((sum, a) => sum + (a.timeSpent || 0), 0);
     savedCount = Object.keys(answers).length;
 

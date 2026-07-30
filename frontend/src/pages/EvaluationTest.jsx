@@ -118,6 +118,11 @@ function EvaluationTest() {
 
   const handleSubmit = async () => {
     try {
+      console.log('📤 Submitting exam answers...');
+      console.log('Answers state:', answers);
+      console.log('ExamId:', examId);
+      console.log('Token:', token);
+
       setCompleted(true);
 
       // Preparar respuestas para enviar
@@ -134,13 +139,17 @@ function EvaluationTest() {
         };
       });
 
+      console.log('📊 Data to send:', { examId: parseInt(examId, 10), answersCount: Object.keys(answersToSend).length, answers: answersToSend });
+
       // Enviar respuestas al backend
       const API_URL = 'https://talento-ia-backend.onrender.com/api';
 
-      await axios.post(`${API_URL}/evaluations/${token}/exam-answers`, {
+      const response = await axios.post(`${API_URL}/evaluations/${token}/exam-answers`, {
         examId: parseInt(examId, 10),
         answers: answersToSend
       });
+
+      console.log('✅ Response from server:', response.data);
 
       alert(
         'Evaluación completada. Tu evaluación ha sido registrada y será revisada por nuestro equipo.'

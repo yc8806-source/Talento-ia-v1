@@ -211,15 +211,23 @@ app.get('/api/exams-public/:examId', async (req, res) => {
         description: exam.description,
         type: 'spelling',
         maxTimeMinutes: Math.ceil(exam.duration_seconds / 60),
-        questions: questionsResult.rows.map(q => ({
-          id: q.id,
-          question_type: q.question_type,
-          question_text: q.question_text,
-          explanation: q.explanation,
-          options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
-          difficulty: q.difficulty,
-          order_number: q.order_number
-        }))
+        questions: questionsResult.rows.map(q => {
+          let optionsArray = [];
+          if (q.options) {
+            const parsed = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+            // Extract array from { options: [...] } or use directly if already array
+            optionsArray = parsed.options || parsed;
+          }
+          return {
+            id: q.id,
+            question_type: q.question_type,
+            question_text: q.question_text,
+            explanation: q.explanation,
+            options: optionsArray,
+            difficulty: q.difficulty,
+            order_number: q.order_number
+          };
+        })
       });
     }
 

@@ -205,6 +205,26 @@ export default function CandidatesByVacancy() {
         });
       }
 
+      // Agregar exámenes pendientes
+      const hasPendingExams = (candidateResults.pendingExams && candidateResults.pendingExams.length > 0) ||
+                             (candidateResults.pendingSpellingExams && candidateResults.pendingSpellingExams.length > 0);
+
+      if (hasPendingExams) {
+        pdfContent += `<h2>Pruebas Pendientes</h2>`;
+
+        if (candidateResults.pendingSpellingExams && candidateResults.pendingSpellingExams.length > 0) {
+          candidateResults.pendingSpellingExams.forEach(exam => {
+            pdfContent += `<p style="color: #ff9800; margin: 10px 0;">⏳ ${exam.examName}</p>`;
+          });
+        }
+
+        if (candidateResults.pendingExams && candidateResults.pendingExams.length > 0) {
+          candidateResults.pendingExams.forEach(exam => {
+            pdfContent += `<p style="color: #ff9800; margin: 10px 0;">⏳ ${exam.examName}</p>`;
+          });
+        }
+      }
+
       pdfContent += `
           <div class="footer">
             <p>Este reporte fue generado automáticamente por el sistema de evaluaciones.</p>

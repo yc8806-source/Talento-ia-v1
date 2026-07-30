@@ -827,6 +827,31 @@ exports.getCandidateResults = async (req, res) => {
       [candidateId]
     );
 
+    // Obtener todos los exámenes asignados a la vacante
+    const assignedExams = await pool.query(
+      `SELECT DISTINCT ve.exam_id, e.name
+       FROM vacancy_exams ve
+       JOIN exams e ON ve.exam_id = e.id
+       WHERE ve.vacancy_id = $1`,
+      [vacancyId]
+    );
+
+    // Obtener exámenes de ortografía asignados a la vacante
+    const assignedSpellingTests = await pool.query(
+      `SELECT DISTINCT ve.exam_id, sgt.title
+       FROM vacancy_exams ve
+       JOIN spelling_grammar_tests sgt ON ve.exam_id = sgt.id
+       WHERE ve.vacancy_id = $1 AND ve.exam_id IN (SELECT id FROM spelling_grammar_tests)`,
+      [vacancyId]
+    );
+
+    // Determinar exámenes pendientes
+    const completedExamIds = new Set(examResults.rows.map(r => r.exam_id));
+    const completedSpellingIds = new Set(spellingResults.rows.map(r => r.test_id));
+
+    const pendingExams = assignedExams.rows.filter(e => !completedExamIds.has(e.exam_id));
+    const pendingSpellingExams = assignedSpellingTests.rows.filter(e => !completedSpellingIds.has(e.exam_id));
+
     res.json({
       candidateVacancyId,
       candidateId,
@@ -851,7 +876,15 @@ exports.getCandidateResults = async (req, res) => {
         completedAt: row.created_at,
         type: 'regular'
       })),
-      typingResults: []
+      typingResults: [],
+      pendingExams: pendingExams.map(e => ({
+        examId: e.exam_id,
+        examName: e.name
+      })),
+      pendingSpellingExams: pendingSpellingExams.map(e => ({
+        examId: e.exam_id,
+        examName: e.title
+      }))
     });
   } catch (error) {
     console.error('Error obteniendo resultados:', error);

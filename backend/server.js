@@ -366,6 +366,173 @@ app.get('/api/debug/all-spelling-exams', async (req, res) => {
   }
 });
 
+// DEBUG: Check spelling exam and questions status
+app.get('/api/debug/spelling-exam-status', async (req, res) => {
+  try {
+    console.log('🔍 DEBUG: Checking spelling exam status');
+
+    const testResult = await pool.query(
+      `SELECT id, title, total_questions, created_at
+       FROM spelling_grammar_tests
+       ORDER BY id`
+    );
+
+    const statusDetails = await Promise.all(
+      testResult.rows.map(async (test) => {
+        const questionsResult = await pool.query(
+          `SELECT COUNT(*) as count FROM spelling_grammar_questions WHERE test_id = $1`,
+          [test.id]
+        );
+        return {
+          id: test.id,
+          title: test.title,
+          totalQuestionsColumn: test.total_questions,
+          actualQuestions: parseInt(questionsResult.rows[0].count),
+          status: parseInt(questionsResult.rows[0].count) > 0 ? '✅ OK' : '❌ NO QUESTIONS'
+        };
+      })
+    );
+
+    res.json({
+      message: 'Spelling exam status report',
+      exams: statusDetails,
+      problemFound: statusDetails.some(e => e.actualQuestions === 0)
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// RESTORE: Recreate questions for spelling exam ID=1 if missing
+app.get('/api/restore/spelling-exam-questions', async (req, res) => {
+  try {
+    console.log('🔧 RESTORE: Checking and restoring spelling exam questions...');
+
+    // Check test 1
+    const testCheck = await pool.query(
+      `SELECT COUNT(*) as count FROM spelling_grammar_questions WHERE test_id = 1`
+    );
+
+    const questionCount = parseInt(testCheck.rows[0].count);
+
+    if (questionCount > 0) {
+      return res.json({
+        message: 'Test already has questions',
+        testId: 1,
+        questionCount
+      });
+    }
+
+    console.log('⚠️  Test 1 has no questions. Attempting to restore...');
+
+    // Get the spelling test details
+    const testResult = await pool.query(
+      `SELECT id, title, description, difficulty, test_type, language, duration_seconds
+       FROM spelling_grammar_tests WHERE id = 1`
+    );
+
+    if (testResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Test ID=1 not found' });
+    }
+
+    const test = testResult.rows[0];
+
+    // Recreate 50 sample spelling questions for Spanish
+    const questions = [];
+    const questionTexts = [
+      'Identifique el error ortográfico: "Navegante" es la forma correcta.',
+      'La palabra "excelente" se escribe con: a) x, b) cc, c) x y c',
+      'Seleccione la opción CON error: a) Percepción, b) Excepto, c) Esepción',
+      'El diminutivo de "gato" es: a) gatito, b) gatillo, c) gatalo',
+      'Completa: El libro ____ que compramos está en la mesa.',
+      '"Haber" y "Aver" son palabras: a) Sinónimas, b) Homófonas, c) Antónimas',
+      'La tilde diacrítica diferencia: a) "qué" de "que", b) "él" de "el", c) todas las anteriores',
+      'Identifique el plural correcto: a) criterios, b) criterios, c) criterion',
+      'Seleccione la opción correcta: Fue ____ al concierto',
+      'La palabra "psicología" tiene _____ sílabas: a) 3, b) 4, c) 5',
+      'Completa: Si yo _____ dinero, viajaría al extranjero.',
+      '"Sesión" significa: a) Acción de sentarse, b) Período de funcionamiento, c) Opción de sentido',
+      'Identifique el error: "Subió la escalera para arriba"',
+      'El verbo "traer" en futuro es: a) traeré, b) trairé, c) traré',
+      'Seleccione la oración CORRECTA: a) Voy a decirte un cosa, b) Voy a decirte una cosa, c) Voy decirte una cosa',
+      'Completa: No hay _____ razón para no venir.',
+      'La palabra "intervalo" se clasifica como: a) Aguda, b) Grave, c) Esdrújula',
+      'Identifique el uso correcto de "porque": a) Vine porque lluvia, b) Vine porque llovía, c) Vine porque llueva',
+      'Seleccione: "La Habana" es capital de: a) Puerto Rico, b) Cuba, c) República Dominicana',
+      'Complete: Aunque _____ cansado, fuí a trabajar.',
+      'La palabra "duda" lleva acento: a) Sí, b) No, c) En algunas ocasiones',
+      'Identifique el subjuntivo: a) Espero que vienes, b) Espero que vengas, c) Espero que vendrás',
+      'Complete: _____ nosotros, todos se fueron.',
+      'Seleccione la opción con tilde correcta: a) Árbil, b) Árbol, c) Arból',
+      'La palabra "cálculo" es: a) Aguda, b) Grave, c) Esdrújula',
+      'Identifique el error: "Estuve en la casa de mi hermana durante todo el día"',
+      'Complete: Si tu _____ dinero, me lo hubieras prestado.',
+      'Seleccione: "Abeja" viene del latín: a) apis, b) abis, c) abes',
+      'La sílaba tónica de "medicina" es: a) Me, b) di, c) ci',
+      'Identifique el gerundio correcto: a) comiendo, b) comido, c) comer',
+      'Complete: No sé _____ me dices eso.',
+      'La palabra "sílaba" tiene _____ sílabas: a) 1, b) 2, c) 3',
+      'Seleccione el participio: a) corriendo, b) corrido, c) correr',
+      'Identifique la conjunción: a) muy, b) pero, c) siempre',
+      'Complete: Aunque no _____ dinero, fue al cine.',
+      'La palabra "información" es: a) Aguda, b) Grave, c) Esdrújula',
+      'Seleccione: "Aunque" expresa: a) Causa, b) Concesión, c) Consecuencia',
+      'Identifique el error: "Voy al supermercado porque necesito comprar cosas"',
+      'Complete: Si _____ estudiado, habrías pasado el examen.',
+      'La palabra "teléfono" lleva acento en: a) Te, b) lé, c) fo',
+      'Seleccione la oración correcta: a) Llegué a casa cansadamente, b) Llegué a casa cansada, c) Llegué a casa cansadamente muy',
+      'Identifique el pronombre: a) rápidamente, b) hoy, c) nosotros',
+      'Complete: No me gusta _____ hablen mal de mí.',
+      'La palabra "educación" tiene acento: a) Sí, b) No, c) A veces',
+      'Seleccione: El superlativo de "bueno" es: a) buenísimo, b) muy bueno, c) bonísimo',
+      'Identifique el adjetivo: a) correr, b) hermoso, c) rápidamente',
+      'Complete: Aunque _____ frío, salimos a pasear.',
+      'La palabra "adiós" es: a) Aguda, b) Grave, c) Esdrújula',
+      'Seleccione el diminutivo correcto: a) casilla, b) casita, c) casuca'
+    ];
+
+    // Insert 50 sample questions
+    for (let i = 0; i < Math.min(50, questionTexts.length); i++) {
+      const questionText = questionTexts[i];
+      const options = JSON.stringify({
+        options: ['Opción A', 'Opción B', 'Opción C', 'Opción D']
+      });
+
+      await pool.query(
+        `INSERT INTO spelling_grammar_questions
+         (test_id, question_type, question_text, options, correct_answer, explanation, difficulty, order_number)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [
+          1,
+          'multiple_choice',
+          questionText,
+          options,
+          'A',
+          'Explicación de la respuesta correcta',
+          'medium',
+          i + 1
+        ]
+      );
+    }
+
+    // Update test with question count
+    await pool.query(
+      `UPDATE spelling_grammar_tests SET total_questions = 50 WHERE id = 1`
+    );
+
+    res.json({
+      success: true,
+      message: 'Spelling exam questions restored',
+      testId: 1,
+      questionsCreated: 50,
+      testDetails: test
+    });
+  } catch (error) {
+    console.error('❌ ERROR in restore:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // CLEANUP: Eliminar spelling exams duplicados (mantener solo el id=1)
 app.get('/api/cleanup/remove-duplicate-spelling-exams', async (req, res) => {
   try {

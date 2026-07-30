@@ -34,9 +34,6 @@ router.get('/', candidateController.getCandidates);
 // Obtener candidatos de una vacante (protegido) - DEBE ser antes de /:id
 router.get('/vacancy/:vacancyId', candidateController.getCandidatesByVacancy);
 
-// Descargar PDF con resultados (DEBE ir antes de /results) (protegido)
-router.get('/:candidateVacancyId/results/pdf', candidateController.getCandidateResultsPDF);
-
 // Obtener resultados de pruebas de un candidato (protegido)
 router.get('/:candidateVacancyId/results', candidateController.getCandidateResults);
 

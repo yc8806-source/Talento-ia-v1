@@ -16,6 +16,9 @@ export default function CandidatesByVacancy() {
   const [candidateTokens, setCandidateTokens] = useState([]);
   const [loadingTokens, setLoadingTokens] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [showResultsModal, setShowResultsModal] = useState(false);
+  const [candidateResults, setCandidateResults] = useState(null);
+  const [loadingResults, setLoadingResults] = useState(false);
 
   const API_URL = typeof window !== 'undefined' && window.location.hostname === 'talento-ia-v1-frontend.onrender.com'
     ? 'https://talento-ia-backend.onrender.com/api'
@@ -106,6 +109,20 @@ export default function CandidatesByVacancy() {
       alert('Error: ' + (error.response?.data?.error || 'No se pudieron obtener los tokens'));
     } finally {
       setLoadingTokens(false);
+    }
+  };
+
+  const handleViewResults = async (candidate) => {
+    setLoadingResults(true);
+    try {
+      const response = await api.get(`/candidates/${candidate.candidateVacancyId}/results`);
+      setCandidateResults(response.data);
+      setSelectedCandidate(candidate);
+      setShowResultsModal(true);
+    } catch (error) {
+      alert('Error: ' + (error.response?.data?.error || 'No se pudieron obtener los resultados'));
+    } finally {
+      setLoadingResults(false);
     }
   };
 
@@ -277,6 +294,21 @@ export default function CandidatesByVacancy() {
                         title="Ver URL con token"
                       >
                         🔗 URL
+                      </button>
+                      <button
+                        onClick={() => handleViewResults(candidate)}
+                        style={{
+                          padding: '6px 12px',
+                          backgroundColor: '#6f42c1',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.85em'
+                        }}
+                        title="Ver resultados de pruebas"
+                      >
+                        📊 Resultados
                       </button>
                     </div>
                     {candidate.status === 'apto' && (
@@ -574,6 +606,148 @@ export default function CandidatesByVacancy() {
                 setShowTokensModal(false);
                 setSelectedCandidate(null);
                 setCandidateTokens([]);
+              }}
+              style={{
+                width: '100%',
+                padding: '12px',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '0.95em',
+                marginTop: '20px'
+              }}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Resultados */}
+      {showResultsModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '30px',
+            borderRadius: '8px',
+            maxWidth: '700px',
+            width: '90%',
+            maxHeight: '80vh',
+            overflowY: 'auto'
+          }}>
+            <h2 style={{ marginTop: 0 }}>Resultados de {selectedCandidate?.firstName} {selectedCandidate?.lastName}</h2>
+            <p style={{ color: '#666', marginBottom: '20px' }}>{selectedCandidate?.email}</p>
+
+            {loadingResults ? (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                <p>Cargando resultados...</p>
+              </div>
+            ) : !candidateResults || (candidateResults.spellingResults.length === 0 && candidateResults.examResults.length === 0) ? (
+              <div style={{ backgroundColor: '#f0f0f0', padding: '15px', borderRadius: '4px', textAlign: 'center' }}>
+                <p>El candidato aún no ha completado ninguna prueba.</p>
+              </div>
+            ) : (
+              <div>
+                {/* Resultados de Pruebas de Ortografía */}
+                {candidateResults.spellingResults.length > 0 && (
+                  <div style={{ marginBottom: '25px' }}>
+                    <h3 style={{ borderBottom: '2px solid #6f42c1', paddingBottom: '10px', color: '#6f42c1' }}>
+                      📝 Pruebas de Ortografía y Gramática
+                    </h3>
+                    {candidateResults.spellingResults.map((result, idx) => (
+                      <div key={idx} style={{
+                        backgroundColor: '#f8f9fa',
+                        padding: '15px',
+                        borderRadius: '8px',
+                        marginBottom: '12px',
+                        border: '1px solid #ddd'
+                      }}>
+                        <p style={{ margin: '0 0 10px 0', fontWeight: 'bold', fontSize: '1.05em' }}>{result.testName}</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.9em' }}>
+                          <div>
+                            <p style={{ margin: 0, color: '#666' }}>Preguntas Correctas:</p>
+                            <p style={{ margin: '5px 0 0 0', fontWeight: 'bold', fontSize: '1.1em', color: '#28a745' }}>
+                              {result.correctAnswers} / {result.totalQuestions}
+                            </p>
+                          </div>
+                          <div>
+                            <p style={{ margin: 0, color: '#666' }}>Porcentaje:</p>
+                            <p style={{ margin: '5px 0 0 0', fontWeight: 'bold', fontSize: '1.1em', color: '#0066cc' }}>
+                              {result.percentage}%
+                            </p>
+                          </div>
+                          <div>
+                            <p style={{ margin: 0, color: '#666' }}>Tiempo Utilizado:</p>
+                            <p style={{ margin: '5px 0 0 0', fontWeight: 'bold' }}>
+                              {Math.floor(result.timeSeconds / 60)}m {result.timeSeconds % 60}s
+                            </p>
+                          </div>
+                          <div>
+                            <p style={{ margin: 0, color: '#666' }}>Completado:</p>
+                            <p style={{ margin: '5px 0 0 0', fontWeight: 'bold', fontSize: '0.85em' }}>
+                              {new Date(result.completedAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Resultados de Exámenes Regulares */}
+                {candidateResults.examResults.length > 0 && (
+                  <div style={{ marginBottom: '25px' }}>
+                    <h3 style={{ borderBottom: '2px solid #17a2b8', paddingBottom: '10px', color: '#17a2b8' }}>
+                      ✅ Otros Exámenes
+                    </h3>
+                    {candidateResults.examResults.map((result, idx) => (
+                      <div key={idx} style={{
+                        backgroundColor: '#f0fff4',
+                        padding: '15px',
+                        borderRadius: '8px',
+                        marginBottom: '12px',
+                        border: '1px solid #17a2b8'
+                      }}>
+                        <p style={{ margin: '0 0 10px 0', fontWeight: 'bold', fontSize: '1.05em' }}>{result.examName}</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '0.9em' }}>
+                          <div>
+                            <p style={{ margin: 0, color: '#666' }}>Respuestas Completadas:</p>
+                            <p style={{ margin: '5px 0 0 0', fontWeight: 'bold', fontSize: '1.1em' }}>
+                              {result.answeredQuestions} preguntas
+                            </p>
+                          </div>
+                          <div>
+                            <p style={{ margin: 0, color: '#666' }}>Completado:</p>
+                            <p style={{ margin: '5px 0 0 0', fontWeight: 'bold', fontSize: '0.85em' }}>
+                              {new Date(result.completedAt).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              onClick={() => {
+                setShowResultsModal(false);
+                setSelectedCandidate(null);
+                setCandidateResults(null);
               }}
               style={{
                 width: '100%',

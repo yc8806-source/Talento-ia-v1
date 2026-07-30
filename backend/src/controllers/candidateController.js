@@ -788,3 +788,74 @@ exports.getCandidateTokens = async (req, res) => {
     });
   }
 };
+
+// OBTENER RESULTADOS DE PRUEBAS COMPLETADAS POR UN CANDIDATO
+exports.getCandidateResults = async (req, res) => {
+  try {
+    const { candidateVacancyId } = req.params;
+
+    const cvResult = await pool.query(
+      'SELECT candidate_id, vacancy_id FROM candidate_vacancies WHERE id = $1',
+      [candidateVacancyId]
+    );
+
+    if (cvResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Evaluación no encontrada'
+      });
+    }
+
+    const { candidate_id: candidateId, vacancy_id: vacancyId } = cvResult.rows[0];
+
+    // Obtener resultados de spelling & grammar
+    const spellingResults = await pool.query(
+      `SELECT sgr.id, sgr.test_id, sgt.title, sgt.total_questions, sgr.correct_answers, sgr.score, sgr.percentage, sgr.time_taken_seconds, sgr.completed_at
+       FROM spelling_grammar_results sgr
+       JOIN spelling_grammar_tests sgt ON sgr.test_id = sgt.id
+       WHERE sgr.candidate_id = $1`,
+      [candidateId]
+    );
+
+    // Obtener resultados de exámenes regulares
+    const examResults = await pool.query(
+      `SELECT ea.id, ea.exam_id, e.name, COUNT(ea.id) as answered_questions, ea.created_at
+       FROM exam_answers ea
+       JOIN exams e ON ea.exam_id = e.id
+       WHERE ea.candidate_id = $1
+       GROUP BY ea.id, ea.exam_id, e.name, ea.created_at`,
+      [candidateId]
+    );
+
+    res.json({
+      candidateVacancyId,
+      candidateId,
+      vacancyId,
+      spellingResults: spellingResults.rows.map(row => ({
+        id: row.id,
+        testId: row.test_id,
+        testName: row.title,
+        totalQuestions: row.total_questions,
+        correctAnswers: row.correct_answers,
+        score: row.score,
+        percentage: row.percentage,
+        timeSeconds: row.time_taken_seconds,
+        completedAt: row.completed_at,
+        type: 'spelling'
+      })),
+      examResults: examResults.rows.map(row => ({
+        id: row.id,
+        examId: row.exam_id,
+        examName: row.name,
+        answeredQuestions: row.answered_questions,
+        completedAt: row.created_at,
+        type: 'regular'
+      }))
+    });
+  } catch (error) {
+    console.error('Error obteniendo resultados:', error);
+    res.status(500).json({
+      error: 'Error al obtener resultados',
+      details: error.message
+    });
+  }
+};

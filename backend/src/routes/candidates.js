@@ -34,6 +34,9 @@ router.get('/', candidateController.getCandidates);
 // Obtener candidatos de una vacante (protegido) - DEBE ser antes de /:id
 router.get('/vacancy/:vacancyId', candidateController.getCandidatesByVacancy);
 
+// Obtener resultados de pruebas de un candidato (protegido)
+router.get('/:candidateVacancyId/results', candidateController.getCandidateResults);
+
 // Obtener historial de auditoría de un candidato (protegido)
 router.get('/:id/audit-history', candidateController.getCandidateAuditHistory);
 

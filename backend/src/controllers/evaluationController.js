@@ -1396,6 +1396,13 @@ exports.submitExamAnswersByToken = async (req, res) => {
     const candidateVacancy = cvResult.rows[0];
     const candidateId = candidateVacancy.candidate_id;
 
+    // Verificar si es un examen de spelling
+    const spellingExamCheck = await pool.query(
+      'SELECT id FROM spelling_grammar_tests WHERE id = $1',
+      [examId]
+    );
+    const isSpellingExam = spellingExamCheck.rows.length > 0;
+
     // Guardar cada respuesta
     let totalScore = 0;
     let savedCount = 0;

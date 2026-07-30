@@ -855,13 +855,19 @@ exports.getCandidateResultsPDF = async (req, res) => {
       doc.moveDown(0.5);
     }
 
-    // Typing tests
-    const typingResults = await pool.query(
-      `SELECT wpm, accuracy, duration_seconds, completed_at
-       FROM typing_test_results
-       WHERE candidate_id = (SELECT candidate_id FROM candidate_vacancies WHERE id = $1)`,
-      [candidateVacancyId]
-    );
+    // Typing tests (si la tabla existe)
+    let typingResults = { rows: [] };
+    try {
+      typingResults = await pool.query(
+        `SELECT wpm, accuracy, duration_seconds, completed_at
+         FROM typing_test_results
+         WHERE candidate_id = (SELECT candidate_id FROM candidate_vacancies WHERE id = $1)`,
+        [candidateVacancyId]
+      );
+    } catch (err) {
+      // Si la tabla no existe, simplemente usar array vacío
+      console.log('Tabla typing_test_results no existe en PDF, usando array vacío');
+    }
 
     if (typingResults.rows.length > 0) {
       doc.fontSize(11).font('Helvetica-Bold').text('⌨️ Test de Mecanografía:');
@@ -920,14 +926,20 @@ exports.getCandidateResults = async (req, res) => {
       [candidateId]
     );
 
-    // Obtener resultados de typing tests
-    const typingResults = await pool.query(
-      `SELECT id, wpm, accuracy, duration_seconds, completed_at
-       FROM typing_test_results
-       WHERE candidate_id = $1
-       ORDER BY completed_at DESC`,
-      [candidateId]
-    );
+    // Obtener resultados de typing tests (si la tabla existe)
+    let typingResults = { rows: [] };
+    try {
+      typingResults = await pool.query(
+        `SELECT id, wpm, accuracy, duration_seconds, completed_at
+         FROM typing_test_results
+         WHERE candidate_id = $1
+         ORDER BY completed_at DESC`,
+        [candidateId]
+      );
+    } catch (err) {
+      // Si la tabla no existe, simplemente retornar array vacío
+      console.log('Tabla typing_test_results no existe, usando array vacío');
+    }
 
     res.json({
       candidateVacancyId,

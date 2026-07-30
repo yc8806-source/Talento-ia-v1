@@ -442,6 +442,43 @@ app.get('/api/debug-spelling-tests', async (req, res) => {
   }
 });
 
+// DEBUG: Show EXACT structure of exam 1 in DB
+app.get('/api/debug/exam-1-raw', async (req, res) => {
+  try {
+    console.log('🔍 DEBUG: Fetching raw exam 1 structure from DB');
+
+    const testResult = await pool.query(
+      `SELECT id, title, description FROM spelling_grammar_tests WHERE id = 1`
+    );
+
+    if (testResult.rows.length === 0) {
+      return res.json({ error: 'Test 1 not found' });
+    }
+
+    const test = testResult.rows[0];
+
+    const questionsResult = await pool.query(
+      `SELECT id, question_type, question_text, options, difficulty FROM spelling_grammar_questions WHERE test_id = 1 LIMIT 1`
+    );
+
+    const question = questionsResult.rows[0] || {};
+
+    res.json({
+      message: 'Raw structure from database',
+      test: test,
+      sampleQuestion: {
+        ...question,
+        optionsRawValue: question.options,
+        optionsType: typeof question.options,
+        optionsIsString: typeof question.options === 'string',
+        sampleFirstCharacters: question.options ? String(question.options).substring(0, 100) : null
+      }
+    });
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
+
 // DEBUG: Comprehensive spelling exams debug with question count
 app.get('/api/debug/all-spelling-exams', async (req, res) => {
   try {

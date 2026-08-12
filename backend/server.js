@@ -228,7 +228,7 @@ app.get('/api/exams-public/:id', async (req, res) => {
 
     // Get exam data
     const examResult = await pool.query(
-      `SELECT id, name, description, type, max_time_minutes, min_score
+      `SELECT id, name, description, type, max_time_minutes
        FROM exams
        WHERE id = $1`,
       [examId]
@@ -285,7 +285,6 @@ app.get('/api/exams-public/:id', async (req, res) => {
       description: exam.description,
       type: exam.type,
       maxTimeMinutes: exam.max_time_minutes || 60,
-      minScore: exam.min_score,
       totalQuestions: questionsWithOptions.length,
       questions: questionsWithOptions
     });

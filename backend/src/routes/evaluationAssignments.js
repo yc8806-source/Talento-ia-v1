@@ -123,16 +123,12 @@ router.get('/results/:candidateId', verifyToken, async (req, res) => {
 
     const candidate = candidateResult.rows[0];
 
-    // Obtener todas las respuestas del candidato agrupadas por examen
+    // Obtener todos los exámenes que el candidato ha respondido
     const answersResult = await pool.query(
-      `SELECT DISTINCT e.id, e.name, e.description, e.max_time_minutes,
-              COUNT(ea.id) as answers_count
+      `SELECT DISTINCT e.id, e.name, e.description, e.max_time_minutes
        FROM exams e
-       LEFT JOIN exam_answers ea ON e.id = ea.exam_id AND ea.candidate_id = $1
-       WHERE ea.id IS NOT NULL OR e.id IN (
-         SELECT DISTINCT exam_id FROM exam_answers WHERE candidate_id = $1
-       )
-       GROUP BY e.id, e.name, e.description, e.max_time_minutes`,
+       INNER JOIN exam_answers ea ON e.id = ea.exam_id
+       WHERE ea.candidate_id = $1`,
       [candidateId]
     );
 

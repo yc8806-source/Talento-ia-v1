@@ -466,6 +466,7 @@ app.get('/api/test/mark-completed/:candidateVacancyId', async (req, res) => {
 app.get('/api/test/complete-results/45', async (req, res) => {
   try {
     const candidateId = 45;
+    const examId = 27; // TPL-80
     const results = { spelling: false, evaluation: false };
 
     // 1. First get or create spelling test
@@ -499,12 +500,16 @@ app.get('/api/test/complete-results/45', async (req, res) => {
         competencyData[comp.name] = { score: comp.score, maxScore: 100, percentage: comp.score };
       });
 
-      await pool.query(`
+      // Insert evaluation result for TPL-80 (exam_id 27)
+      const result = await pool.query(`
         INSERT INTO evaluation_results (candidate_id, exam_id, overall_score, competency_results, created_at)
-        VALUES ($1, 2, 81.4, $2::jsonb, NOW())
-        ON CONFLICT (candidate_id, exam_id) DO NOTHING
-      `, [candidateId, JSON.stringify(competencyData)]);
-      results.evaluation = true;
+        VALUES ($1, $2, 81.4, $3::jsonb, NOW())
+        RETURNING id
+      `, [candidateId, examId, JSON.stringify(competencyData)]);
+
+      if (result.rows.length > 0) {
+        results.evaluation = true;
+      }
     } catch (err) {
       console.log('Evaluation results skipped:', err.message);
     }

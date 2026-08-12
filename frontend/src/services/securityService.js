@@ -95,6 +95,10 @@ export const setUserData = (userData) => {
       role: userData.role,
     };
     localStorage.setItem('user', JSON.stringify(safeData));
+    // Guardar también role por separado para acceso rápido
+    if (userData.role) {
+      localStorage.setItem('role', userData.role);
+    }
   } catch (error) {
     console.error('Error almacenando datos de usuario:', error);
   }

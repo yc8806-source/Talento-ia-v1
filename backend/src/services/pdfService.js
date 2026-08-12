@@ -190,7 +190,7 @@ const generateEvaluationResultsPDF = (resultsData) => {
       const filename = `resultados_evaluacion_${resultsData.candidateId}_${Date.now()}.pdf`;
       const filepath = path.join(pdfDir, filename);
 
-      const doc = new PDFDocument({ margin: 40 });
+      const doc = new PDFDocument({ margin: 50, size: 'A4' });
       const buffers = [];
 
       doc.on('data', (chunk) => buffers.push(chunk));
@@ -205,86 +205,128 @@ const generateEvaluationResultsPDF = (resultsData) => {
       });
       doc.on('error', reject);
 
+      let yPos = 50;
+
       // Header
-      doc.fontSize(24).font('Helvetica-Bold').fillColor('#1A237E').text('Talent IA', { align: 'center' });
-      doc.fontSize(14).font('Helvetica').fillColor('#424242').text('Resultados de Evaluación', { align: 'center' });
-      doc.moveTo(50, 80).lineTo(550, 80).stroke('#1A237E');
+      doc.fontSize(16).font('Helvetica-Bold').fillColor('#1A237E').text('Talent IA', 50, yPos);
+      doc.fontSize(10).font('Helvetica').fillColor('#666').text('Reporte de Evaluaciones', 50, yPos + 20);
+      doc.moveTo(50, yPos + 40).lineTo(545, yPos + 40).stroke('#E0E0E0');
 
-      let yPos = 100;
+      yPos += 60;
 
-      // Candidate info
-      doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('Información del Candidato', 50, yPos);
-      yPos += 20;
+      // Candidate name as title
+      doc.fontSize(20).font('Helvetica-Bold').fillColor('#000').text(resultsData.candidateName, 50, yPos);
 
-      doc.fontSize(10).font('Helvetica').fillColor('#424242');
-      doc.text(`Nombre: ${resultsData.candidateName}`, 50, yPos);
-      yPos += 15;
-      doc.text(`Email: ${resultsData.email}`, 50, yPos);
-      yPos += 30;
+      // Email below name
+      doc.fontSize(10).font('Helvetica').fillColor('#0066cc').text(resultsData.email, 50, yPos + 25);
 
-      // Results
+      yPos += 50;
+
+      // Evaluation results
       if (resultsData.evaluationResults && Array.isArray(resultsData.evaluationResults)) {
         resultsData.evaluationResults.forEach((result, idx) => {
-          if (yPos > 650) {
+          if (yPos > 700) {
             doc.addPage();
             yPos = 50;
           }
 
-          // Result title
-          doc.fontSize(11).font('Helvetica-Bold').fillColor('#0066ff').text(result.name || 'Resultado', 50, yPos);
-          yPos += 15;
+          if (result.type === 'evaluation' && result.data) {
+            // Title
+            doc.fontSize(14).font('Helvetica-Bold').fillColor('#1A237E').text(result.name || 'Evaluación', 50, yPos);
+            yPos += 20;
 
-          // Description
-          if (result.description) {
-            doc.fontSize(9).font('Helvetica').fillColor('#666');
-            doc.text(result.description, 50, yPos, { width: 500 });
-            yPos += 30;
-          }
+            // Description
+            if (result.description) {
+              doc.fontSize(9).font('Helvetica').fillColor('#666');
+              doc.text(result.description, 50, yPos, { width: 445, align: 'left' });
+              yPos += 40;
+            }
 
-          // Data display based on type
-          doc.fontSize(10).font('Helvetica').fillColor('#333');
+            // Competencies
+            const entries = Object.entries(result.data);
+            if (entries.length > 0) {
+              entries.forEach(([competency, values]) => {
+                if (yPos > 700) {
+                  doc.addPage();
+                  yPos = 50;
+                }
 
-          if (result.type === 'typing' && result.data) {
-            doc.text(`WPM: ${result.data.wpm || 0}`, 60, yPos);
+                const pct = values && values.percentage ? parseFloat(values.percentage) : 0;
+                const level = getLevelLabel(pct);
+                const levelColor = getLevelColor(pct);
+
+                // Competency name and level
+                doc.fontSize(11).font('Helvetica-Bold').fillColor('#000').text(competency, 50, yPos);
+                doc.fontSize(9).font('Helvetica').fillColor('#666').text(level, 350, yPos);
+                doc.fontSize(10).font('Helvetica-Bold').fillColor(levelColor).text(`${pct.toFixed(1)}%`, 480, yPos);
+
+                yPos += 18;
+
+                // Progress bar background
+                doc.rect(50, yPos, 445, 8).fill('#E0E0E0');
+
+                // Progress bar fill
+                const barWidth = (pct / 100) * 445;
+                doc.rect(50, yPos, barWidth, 8).fill(levelColor);
+
+                yPos += 20;
+              });
+            }
+
+            yPos += 20;
+          } else if (result.type === 'typing' && result.data) {
+            // Typing test results
+            doc.fontSize(14).font('Helvetica-Bold').fillColor('#1A237E').text(result.name || 'Prueba de Mecanografía', 50, yPos);
+            yPos += 20;
+
+            if (result.description) {
+              doc.fontSize(9).font('Helvetica').fillColor('#666');
+              doc.text(result.description, 50, yPos, { width: 445 });
+              yPos += 30;
+            }
+
+            // Metrics
+            doc.fontSize(9).font('Helvetica').fillColor('#333');
+            doc.text(`Palabras por Minuto (WPM): ${result.data.wpm || 0}`, 60, yPos);
             yPos += 12;
             doc.text(`Net WPM: ${result.data.netWPM || 0}`, 60, yPos);
             yPos += 12;
             doc.text(`Precisión: ${result.data.accuracy || 0}%`, 60, yPos);
             yPos += 12;
             doc.text(`Errores: ${result.data.totalErrors || 0}`, 60, yPos);
-            yPos += 12;
+            yPos += 20;
           } else if (result.type === 'spelling' && result.data) {
+            // Spelling test results
+            doc.fontSize(14).font('Helvetica-Bold').fillColor('#1A237E').text(result.name || 'Prueba de Ortografía', 50, yPos);
+            yPos += 20;
+
+            if (result.description) {
+              doc.fontSize(9).font('Helvetica').fillColor('#666');
+              doc.text(result.description, 50, yPos, { width: 445 });
+              yPos += 30;
+            }
+
+            // Metrics
+            doc.fontSize(9).font('Helvetica').fillColor('#333');
             doc.text(`Respuestas Correctas: ${result.data.correctAnswers || 0}`, 60, yPos);
             yPos += 12;
             doc.text(`Precisión: ${result.data.accuracy || 0}%`, 60, yPos);
             yPos += 12;
-            doc.text(`Puntuación: ${result.data.score || 0} pts`, 60, yPos);
-            yPos += 12;
-          } else if (result.type === 'evaluation' && result.data) {
-            const entries = Object.entries(result.data);
-            if (entries.length > 0) {
-              entries.forEach(([competency, values]) => {
-                const pct = values && values.percentage ? parseFloat(values.percentage).toFixed(1) : '0';
-                doc.text(`${competency}: ${pct}%`, 60, yPos);
-                yPos += 12;
-              });
-            }
+            doc.text(`Puntuación: ${result.data.score || 0} puntos`, 60, yPos);
+            yPos += 20;
           }
-
-          yPos += 15;
         });
       }
 
       // Footer
-      yPos = 750;
       doc.fontSize(8).font('Helvetica').fillColor('#999');
       const now = new Date();
       const dateStr = now.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
       doc.text(
-        `Generado el ${dateStr} | Talent IA - Sistema de Evaluación de Talentos v1.0`,
+        `Generado el ${dateStr} | Talent IA - Sistema de Evaluación de Talentos`,
         50,
-        yPos,
-        { align: 'center' }
+        760,
+        { align: 'center', width: 445 }
       );
 
       doc.end();
@@ -293,6 +335,20 @@ const generateEvaluationResultsPDF = (resultsData) => {
     }
   });
 };
+
+function getLevelLabel(percentage) {
+  if (percentage >= 80) return 'Muy Alto';
+  if (percentage >= 60) return 'Alto';
+  if (percentage >= 40) return 'Medio';
+  return 'Bajo';
+}
+
+function getLevelColor(percentage) {
+  if (percentage >= 80) return '#1B5E20';
+  if (percentage >= 60) return '#2E7D32';
+  if (percentage >= 40) return '#F57F17';
+  return '#D84315';
+}
 
 module.exports = {
   generateResultsPDF,

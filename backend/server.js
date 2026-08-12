@@ -227,18 +227,28 @@ app.get('/api/exams-public/:id', async (req, res) => {
     }
 
     // Get exam data
-    const result = await pool.query(
-      `SELECT id, name, description, type, max_time_minutes, questions
+    const examResult = await pool.query(
+      `SELECT id, name, description, type, max_time_minutes
        FROM exams
        WHERE id = $1`,
       [examId]
     );
 
-    if (result.rows.length === 0) {
+    if (examResult.rows.length === 0) {
       return res.status(404).json({ error: 'Examen no encontrado' });
     }
 
-    const exam = result.rows[0];
+    const exam = examResult.rows[0];
+
+    // Get questions for this exam
+    const questionsResult = await pool.query(
+      `SELECT q.id, q.title, q.type, q.description
+       FROM questions q
+       INNER JOIN exam_questions eq ON q.id = eq.question_id
+       WHERE eq.exam_id = $1
+       ORDER BY eq.order ASC`,
+      [examId]
+    );
 
     res.json({
       id: exam.id,
@@ -246,7 +256,7 @@ app.get('/api/exams-public/:id', async (req, res) => {
       description: exam.description,
       maxTimeMinutes: exam.max_time_minutes || 60,
       type: exam.type,
-      questions: exam.questions || []
+      questions: questionsResult.rows || []
     });
   } catch (error) {
     console.error('Error fetching public exam:', error);

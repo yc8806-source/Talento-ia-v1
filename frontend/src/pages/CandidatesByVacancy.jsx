@@ -301,7 +301,7 @@ export default function CandidatesByVacancy() {
                       {candidate.status === 'completed' && (
                         <>
                           <button
-                            onClick={() => navigate(`/evaluation-results/${candidate.candidateVacancyId}`)}
+                            onClick={() => navigate(`/evaluation-results/${candidate.candidateId}`)}
                             style={{
                               padding: '6px 12px',
                               backgroundColor: '#6f42c1',

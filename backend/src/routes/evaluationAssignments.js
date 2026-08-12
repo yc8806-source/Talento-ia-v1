@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const EvaluationAssignmentService = require('../services/evaluationAssignmentService');
+const ExamScoreService = require('../services/examScoreService');
 const { verifyToken } = require('../middleware/authMiddleware');
+const pool = require('../config/database');
 
 /**
  * ADMIN: Asignar evaluaciones a candidato
@@ -107,7 +109,6 @@ router.post('/mark-complete', async (req, res) => {
 router.get('/results/:candidateId', verifyToken, async (req, res) => {
   try {
     const { candidateId } = req.params;
-    const pool = require('../config/database');
 
     // Obtener datos del candidato
     const candidateResult = await pool.query(
@@ -123,56 +124,29 @@ router.get('/results/:candidateId', verifyToken, async (req, res) => {
 
     const candidate = candidateResult.rows[0];
 
-    // Obtener exámenes respondidos por el candidato
-    const examsResult = await pool.query(
-      `SELECT DISTINCT ea.exam_id
-       FROM exam_answers ea
-       WHERE ea.candidate_id = $1`,
+    // Obtener puntuaciones guardadas de exámenes completados
+    const scoresResult = await pool.query(
+      `SELECT es.*, e.name, e.description
+       FROM exam_scores es
+       JOIN exams e ON es.exam_id = e.id
+       WHERE es.candidate_id = $1
+       ORDER BY es.completed_at DESC`,
       [candidateId]
     );
 
-    // Para cada examen, obtener detalles
-    const evaluationResults = [];
-    for (const row of examsResult.rows) {
-      const examId = row.exam_id;
-
-      // Obtener información del examen
-      const examData = await pool.query(
-        `SELECT id, name, description FROM exams WHERE id = $1`,
-        [examId]
-      );
-
-      if (examData.rows.length === 0) continue;
-
-      const exam = examData.rows[0];
-
-      // Obtener respuestas del candidato para este examen
-      const answersDetail = await pool.query(
-        `SELECT ea.id, ea.answer_value, ea.time_spent_seconds, eq.id as question_id
-         FROM exam_answers ea
-         JOIN exam_questions eq ON ea.question_id = eq.id
-         WHERE ea.candidate_id = $1 AND ea.exam_id = $2`,
-        [candidateId, examId]
-      );
-
-      // Calcular puntuación (comparar respuestas)
-      // Por ahora, mostrar solo cantidad de respuestas
-      // Una puntuación real requeriría acceso a las respuestas correctas
-      const answersSubmitted = answersDetail.rows.length;
-      const totalQuestions = answersDetail.rows.length;
-
-      evaluationResults.push({
-        evaluationId: examId,
-        evaluation: {
-          id: exam.id,
-          name: exam.name,
-          description: exam.description,
-        },
-        answersSubmitted: answersSubmitted,
-        totalQuestions: totalQuestions,
-        answers: answersDetail.rows,
-      });
-    }
+    // Construir resultados a partir de puntuaciones guardadas
+    const evaluationResults = scoresResult.rows.map(score => ({
+      evaluationId: score.exam_id,
+      evaluation: {
+        id: score.exam_id,
+        name: score.name,
+        description: score.description,
+      },
+      answersSubmitted: score.total_score,
+      totalQuestions: score.max_score,
+      percentage: score.percentage,
+      answers: [],
+    }));
 
     res.json({
       candidateId,
@@ -188,6 +162,60 @@ router.get('/results/:candidateId', verifyToken, async (req, res) => {
       error: 'Error al obtener resultados',
       details: error.message,
     });
+  }
+});
+
+/**
+ * INTERNAL: Inicializar tabla de puntuaciones de exámenes
+ */
+router.post('/init-scores-table', async (req, res) => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS exam_scores (
+        id SERIAL PRIMARY KEY,
+        candidate_id INTEGER NOT NULL,
+        exam_id INTEGER NOT NULL,
+        total_score INTEGER NOT NULL DEFAULT 0,
+        max_score INTEGER NOT NULL DEFAULT 0,
+        percentage DECIMAL(5, 2) NOT NULL DEFAULT 0,
+        completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(candidate_id, exam_id),
+        FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+        FOREIGN KEY (exam_id) REFERENCES exams(id) ON DELETE CASCADE
+      )
+    `);
+
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_exam_scores_candidate ON exam_scores(candidate_id)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_exam_scores_exam ON exam_scores(exam_id)');
+
+    res.json({ message: 'exam_scores table initialized successfully' });
+  } catch (error) {
+    console.error('Error initializing scores table:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * ADMIN: Calcular y guardar puntuación de un examen completado
+ */
+router.post('/calculate-score/:candidateId/:examId', verifyToken, async (req, res) => {
+  try {
+    const { candidateId, examId } = req.params;
+
+    const score = await ExamScoreService.calculateAndSaveScore(parseInt(candidateId), parseInt(examId));
+
+    if (!score) {
+      return res.status(404).json({ error: 'No se pudo calcular la puntuación' });
+    }
+
+    res.json({
+      message: 'Puntuación guardada exitosamente',
+      score,
+    });
+  } catch (error) {
+    console.error('Error calculating score:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

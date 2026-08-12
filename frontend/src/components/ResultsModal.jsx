@@ -123,6 +123,13 @@ export default function ResultsModal({ candidateId, onClose }) {
 
         {/* Results Summary */}
         {results.evaluationResults.map((evalResult, idx) => {
+          const percentage = evalResult.percentage || 0;
+          const getScoreColor = (pct) => {
+            if (pct >= 80) return '#28a745'; // Verde
+            if (pct >= 60) return '#ffc107'; // Amarillo
+            return '#dc3545'; // Rojo
+          };
+
           return (
             <div key={idx} style={{
               marginBottom: '20px',
@@ -145,20 +152,26 @@ export default function ResultsModal({ candidateId, onClose }) {
                 backgroundColor: 'white',
                 borderRadius: '4px',
                 display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
+                gridTemplateColumns: '1fr 1fr 1fr',
                 gap: '10px'
               }}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#28a745' }}>
+                  <div style={{ fontSize: '28px', fontWeight: 'bold', color: getScoreColor(percentage) }}>
                     {evalResult.answersSubmitted}/{evalResult.totalQuestions}
                   </div>
-                  <div style={{ fontSize: '0.9em', color: '#666' }}>Respuestas Completadas</div>
+                  <div style={{ fontSize: '0.9em', color: '#666' }}>Respuestas Correctas</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '28px', fontWeight: 'bold', color: getScoreColor(percentage) }}>
+                    {percentage.toFixed(1)}%
+                  </div>
+                  <div style={{ fontSize: '0.9em', color: '#666' }}>Puntuación</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#0066ff' }}>
-                    ✅ Completado
+                    ✅
                   </div>
-                  <div style={{ fontSize: '0.9em', color: '#666' }}>Estado</div>
+                  <div style={{ fontSize: '0.9em', color: '#666' }}>Completado</div>
                 </div>
               </div>
             </div>

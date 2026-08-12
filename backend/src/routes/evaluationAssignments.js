@@ -123,44 +123,43 @@ router.get('/results/:candidateId', verifyToken, async (req, res) => {
 
     const candidate = candidateResult.rows[0];
 
-    // Obtener respuestas del candidato
-    const answersResult = await pool.query(
-      `SELECT DISTINCT ea.evaluation_id
-       FROM evaluation_answers ea
-       WHERE ea.candidate_id = $1
-       GROUP BY ea.evaluation_id`,
+    // Obtener exámenes respondidos por el candidato
+    const examsResult = await pool.query(
+      `SELECT DISTINCT ea.exam_id
+       FROM exam_answers ea
+       WHERE ea.candidate_id = $1`,
       [candidateId]
     );
 
-    // Para cada evaluación, obtener detalles
+    // Para cada examen, obtener detalles
     const evaluationResults = [];
-    for (const row of answersResult.rows) {
-      const evalId = row.evaluation_id;
+    for (const row of examsResult.rows) {
+      const examId = row.exam_id;
 
-      // Obtener información de la evaluación
-      const evalData = await pool.query(
-        `SELECT id, name, description FROM evaluations WHERE id = $1`,
-        [evalId]
+      // Obtener información del examen
+      const examData = await pool.query(
+        `SELECT id, name, description FROM exams WHERE id = $1`,
+        [examId]
       );
 
-      if (evalData.rows.length === 0) continue;
+      if (examData.rows.length === 0) continue;
 
-      const evaluation = evalData.rows[0];
+      const exam = examData.rows[0];
 
-      // Obtener respuestas del candidato para esta evaluación
+      // Obtener respuestas del candidato para este examen
       const answersDetail = await pool.query(
-        `SELECT ea.id, ea.question_id, ea.score_obtained
-         FROM evaluation_answers ea
-         WHERE ea.candidate_id = $1 AND ea.evaluation_id = $2`,
-        [candidateId, evalId]
+        `SELECT id, answer_value, time_spent_seconds
+         FROM exam_answers
+         WHERE candidate_id = $1 AND exam_id = $2`,
+        [candidateId, examId]
       );
 
       evaluationResults.push({
-        evaluationId: evalId,
+        evaluationId: examId,
         evaluation: {
-          id: evaluation.id,
-          name: evaluation.name,
-          description: evaluation.description,
+          id: exam.id,
+          name: exam.name,
+          description: exam.description,
         },
         answersSubmitted: answersDetail.rows.length,
         totalQuestions: answersDetail.rows.length,

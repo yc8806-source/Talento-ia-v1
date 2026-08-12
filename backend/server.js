@@ -420,6 +420,132 @@ app.get('/api/version', (req, res) => {
   });
 });
 
+// DEBUG ENDPOINT: Check table structures
+app.get('/api/debug/table-structures', async (req, res) => {
+  try {
+    const tables = ['typing_results', 'spelling_grammar_results', 'evaluation_results', 'typing_tests', 'spelling_grammar_tests'];
+    const structures = {};
+
+    for (const tableName of tables) {
+      try {
+        const result = await pool.query(`
+          SELECT column_name, data_type
+          FROM information_schema.columns
+          WHERE table_name = $1
+          ORDER BY ordinal_position
+        `, [tableName]);
+
+        if (result.rows.length === 0) {
+          structures[tableName] = ['TABLE NOT FOUND'];
+        } else {
+          structures[tableName] = result.rows.map(r => `${r.column_name} (${r.data_type})`);
+        }
+      } catch (err) {
+        structures[tableName] = [`ERROR: ${err.message}`];
+      }
+    }
+
+    res.json(structures);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// TEST ENDPOINT: Mark candidate vacancy as completed
+app.get('/api/test/mark-completed/:candidateVacancyId', async (req, res) => {
+  try {
+    const { candidateVacancyId } = req.params;
+    await pool.query('UPDATE candidate_vacancies SET status = $1 WHERE id = $2', ['completed', parseInt(candidateVacancyId)]);
+    res.json({ success: true, message: 'Marked as completed', candidateVacancyId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// TEST ENDPOINT: Create test data for results modal
+app.get('/api/test/create-test-results', async (req, res) => {
+  try {
+    // Get first candidate-vacancy pair from "Asesores de televentas" vacancy (id 28)
+    const cvResult = await pool.query(`
+      SELECT cv.id, cv.candidate_id, c.first_name, c.last_name
+      FROM candidate_vacancies cv
+      JOIN candidates c ON cv.candidate_id = c.id
+      WHERE cv.vacancy_id = 28
+      LIMIT 1
+    `);
+
+    if (cvResult.rows.length === 0) {
+      return res.status(404).json({ error: 'No candidate_vacancies found' });
+    }
+
+    const { id: candidateVacancyId, candidate_id: candidateId, first_name, last_name } = cvResult.rows[0];
+    const results = { typing: false, spelling: false, evaluation: false };
+
+    // Insert typing results
+    try {
+      await pool.query(`
+        INSERT INTO typing_results (candidate_id, typing_test_id, wpm, net_wpm, accuracy, total_errors, completed_at)
+        VALUES ($1, 1, 85, 82, 94.5, 8, NOW())
+        ON CONFLICT DO NOTHING
+      `, [candidateId]);
+      results.typing = true;
+    } catch (err) {
+      console.log('Typing results skipped:', err.message);
+    }
+
+    // Insert spelling results - use only the columns that should exist
+    try {
+      await pool.query(`
+        INSERT INTO spelling_grammar_results (candidate_id, test_id, total_questions, correct_answers, score, accuracy, completed_at)
+        VALUES ($1, 1, 13, 12, 95, 92.3, NOW())
+        ON CONFLICT DO NOTHING
+      `, [candidateId]);
+      results.spelling = true;
+    } catch (err) {
+      console.log('Spelling results skipped:', err.message);
+    }
+
+    // Insert evaluation results (competencies)
+    try {
+      const competencies = [
+        { id: 1, name: 'Responsabilidad', score: 77 },
+        { id: 2, name: 'Comunicación', score: 85 },
+        { id: 3, name: 'Liderazgo', score: 72 }
+      ];
+
+      for (const comp of competencies) {
+        await pool.query(`
+          INSERT INTO evaluation_results (candidate_vacancy_id, competency_id, total_score, max_possible_score)
+          VALUES ($1, $2, $3, 100)
+          ON CONFLICT DO NOTHING
+        `, [candidateVacancyId, comp.id, comp.score]);
+      }
+      results.evaluation = true;
+    } catch (err) {
+      console.log('Evaluation results skipped:', err.message);
+    }
+
+    // Update candidate_vacancy status to completed
+    await pool.query(`
+      UPDATE candidate_vacancies SET status = 'completed' WHERE id = $1
+    `, [candidateVacancyId]);
+
+    res.json({
+      success: true,
+      message: 'Test results created',
+      candidate: { id: candidateId, name: `${first_name} ${last_name}` },
+      candidateVacancyId,
+      resultsCreated: results
+    });
+  } catch (error) {
+    console.error('Error creating test results:', error);
+    res.status(500).json({
+      error: 'Error creating test results',
+      details: error.message
+    });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 const http = require('http');
 const { initSocket } = require('./src/websocket/notificationSocket');

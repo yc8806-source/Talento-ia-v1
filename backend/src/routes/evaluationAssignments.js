@@ -123,65 +123,116 @@ router.get('/results/:candidateId', verifyToken, async (req, res) => {
     }
 
     const candidate = candidateResult.rows[0];
+    const evaluationResults = [];
 
-    // Obtener exámenes respondidos por el candidato
-    const examsWithAnswersResult = await pool.query(
-      `SELECT DISTINCT e.id, e.name, e.description
-       FROM exams e
-       INNER JOIN exam_answers ea ON e.id = ea.exam_id
-       WHERE ea.candidate_id = $1`,
-      [candidateId]
-    );
-
-    const examsWithAnswers = examsWithAnswersResult.rows;
-
-    // Calcular puntuaciones para exámenes que aún no tienen puntuación guardada
-    for (const exam of examsWithAnswers) {
-      const scoreExists = await pool.query(
-        'SELECT id FROM exam_scores WHERE candidate_id = $1 AND exam_id = $2',
-        [candidateId, exam.id]
+    // 1. Obtener resultados de Typing Tests
+    try {
+      const typingResults = await pool.query(
+        `SELECT tr.id, tt.title, tt.description, tr.wpm, tr.net_wpm, tr.accuracy,
+                tr.total_errors, tr.completed_at
+         FROM typing_results tr
+         JOIN typing_tests tt ON tr.typing_test_id = tt.id
+         WHERE tr.candidate_id = $1
+         ORDER BY tr.completed_at DESC`,
+        [candidateId]
       );
 
-      if (scoreExists.rows.length === 0) {
-        // Calcular y guardar puntuación
-        try {
-          await ExamScoreService.calculateAndSaveScore(candidateId, exam.id);
-        } catch (err) {
-          console.error(`Error calculating score for exam ${exam.id}:`, err);
-        }
-      }
+      typingResults.rows.forEach(result => {
+        evaluationResults.push({
+          type: 'typing',
+          name: result.title || 'Prueba de Mecanografía',
+          description: result.description,
+          completedAt: result.completed_at,
+          data: {
+            wpm: result.wpm,
+            netWPM: result.net_wpm,
+            accuracy: parseFloat(result.accuracy) || 0,
+            totalErrors: result.total_errors,
+          }
+        });
+      });
+    } catch (err) {
+      console.log('No typing results found:', err.message);
     }
 
-    // Obtener puntuaciones guardadas
-    const scoresResult = await pool.query(
-      `SELECT es.*, e.name, e.description
-       FROM exam_scores es
-       JOIN exams e ON es.exam_id = e.id
-       WHERE es.candidate_id = $1
-       ORDER BY es.completed_at DESC`,
-      [candidateId]
-    );
+    // 2. Obtener resultados de Spelling & Grammar Tests
+    try {
+      const spellingResults = await pool.query(
+        `SELECT sgr.id, sgt.title, sgt.description, sgr.score, sgr.percentage,
+                sgr.correct_answers, sgr.completed_at
+         FROM spelling_grammar_results sgr
+         JOIN spelling_grammar_tests sgt ON sgr.test_id = sgt.id
+         WHERE sgr.candidate_id = $1
+         ORDER BY sgr.completed_at DESC`,
+        [candidateId]
+      );
 
-    // Construir resultados a partir de puntuaciones guardadas
-    const evaluationResults = scoresResult.rows.map(score => ({
-      evaluationId: score.exam_id,
-      evaluation: {
-        id: score.exam_id,
-        name: score.name,
-        description: score.description,
-      },
-      answersSubmitted: score.total_score,
-      totalQuestions: score.max_score,
-      percentage: score.percentage,
-      answers: [],
-    }));
+      spellingResults.rows.forEach(result => {
+        evaluationResults.push({
+          type: 'spelling',
+          name: result.title || 'Prueba de Ortografía',
+          description: result.description,
+          completedAt: result.completed_at,
+          data: {
+            score: parseFloat(result.score) || 0,
+            accuracy: parseFloat(result.percentage) || 0,
+            correctAnswers: result.correct_answers,
+          }
+        });
+      });
+    } catch (err) {
+      console.log('No spelling results found:', err.message);
+    }
+
+    // 3. Obtener resultados de Evaluations (exam-based, with competency_results in JSONB)
+    try {
+      const evaluationResults_query = await pool.query(
+        `SELECT er.id, er.overall_score, er.competency_results, er.created_at, e.name, e.description
+         FROM evaluation_results er
+         LEFT JOIN exams e ON er.exam_id = e.id
+         WHERE er.candidate_id = $1
+         ORDER BY er.created_at DESC`,
+        [candidateId]
+      );
+
+      evaluationResults_query.rows.forEach(result => {
+        // Parse competency_results JSONB if it exists
+        const competencies = {};
+        if (result.competency_results && typeof result.competency_results === 'object') {
+          Object.entries(result.competency_results).forEach(([key, value]) => {
+            competencies[key] = {
+              score: value.score || 0,
+              maxScore: value.maxScore || 100,
+              percentage: parseFloat(value.percentage) || 0
+            };
+          });
+        }
+
+        evaluationResults.push({
+          type: 'evaluation',
+          name: result.name || 'Evaluación de Competencias',
+          description: result.description,
+          completedAt: result.created_at,
+          data: competencies
+        });
+      });
+    } catch (err) {
+      console.log('No evaluation results found:', err.message);
+    }
+
+    // Ordenar por fecha completada
+    evaluationResults.sort((a, b) => {
+      const dateA = new Date(a.completedAt || 0);
+      const dateB = new Date(b.completedAt || 0);
+      return dateB - dateA;
+    });
 
     res.json({
       candidateId,
       candidateName: `${candidate.first_name} ${candidate.last_name}`,
       email: candidate.email,
       assignedAt: new Date().toISOString(),
-      completedAt: evaluationResults.length > 0 ? new Date().toISOString() : null,
+      completedAt: evaluationResults.length > 0 ? evaluationResults[0].completedAt : null,
       evaluationResults,
     });
   } catch (error) {

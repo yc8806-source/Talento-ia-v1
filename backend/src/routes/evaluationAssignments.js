@@ -4,6 +4,7 @@ const EvaluationAssignmentService = require('../services/evaluationAssignmentSer
 const ExamScoreService = require('../services/examScoreService');
 const { verifyToken } = require('../middleware/authMiddleware');
 const pool = require('../config/database');
+const { generateEvaluationResultsPDF } = require('../services/pdfService');
 
 /**
  * ADMIN: Asignar evaluaciones a candidato
@@ -318,6 +319,148 @@ router.get('/candidate/:candidateId', verifyToken, async (req, res) => {
     console.error('Error obteniendo asignaciones:', error);
     res.status(500).json({
       error: 'Error al obtener asignaciones',
+      details: error.message,
+    });
+  }
+});
+
+/**
+ * ADMIN: Descargar resultados como PDF
+ */
+router.get('/results-pdf/:candidateId', verifyToken, async (req, res) => {
+  try {
+    const { candidateId } = req.params;
+
+    // Obtener datos del candidato
+    const candidateResult = await pool.query(
+      'SELECT id, first_name, last_name, email FROM candidates WHERE id = $1',
+      [candidateId]
+    );
+
+    if (candidateResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Candidato no encontrado' });
+    }
+
+    const candidate = candidateResult.rows[0];
+    const evaluationResults = [];
+
+    // Obtener typing results
+    try {
+      const typingResults = await pool.query(
+        `SELECT tr.id, tt.title, tt.description, tr.wpm, tr.net_wpm, tr.accuracy,
+                tr.total_errors, tr.completed_at
+         FROM typing_results tr
+         JOIN typing_tests tt ON tr.typing_test_id = tt.id
+         WHERE tr.candidate_id = $1
+         ORDER BY tr.completed_at DESC`,
+        [candidateId]
+      );
+
+      typingResults.rows.forEach(result => {
+        evaluationResults.push({
+          type: 'typing',
+          name: result.title || 'Prueba de Mecanografía',
+          description: result.description,
+          completedAt: result.completed_at,
+          data: {
+            wpm: result.wpm,
+            netWPM: result.net_wpm,
+            accuracy: parseFloat(result.accuracy) || 0,
+            totalErrors: result.total_errors,
+          }
+        });
+      });
+    } catch (err) {
+      console.log('No typing results:', err.message);
+    }
+
+    // Obtener spelling results
+    try {
+      const spellingResults = await pool.query(
+        `SELECT sgr.id, sgt.title, sgt.description, sgr.score, sgr.percentage,
+                sgr.correct_answers, sgr.completed_at
+         FROM spelling_grammar_results sgr
+         JOIN spelling_grammar_tests sgt ON sgr.test_id = sgt.id
+         WHERE sgr.candidate_id = $1
+         ORDER BY sgr.completed_at DESC`,
+        [candidateId]
+      );
+
+      spellingResults.rows.forEach(result => {
+        evaluationResults.push({
+          type: 'spelling',
+          name: result.title || 'Prueba de Ortografía',
+          description: result.description,
+          completedAt: result.completed_at,
+          data: {
+            score: parseFloat(result.score) || 0,
+            accuracy: parseFloat(result.percentage) || 0,
+            correctAnswers: result.correct_answers,
+          }
+        });
+      });
+    } catch (err) {
+      console.log('No spelling results:', err.message);
+    }
+
+    // Obtener evaluation results
+    try {
+      const evaluationIds = await pool.query(
+        `SELECT DISTINCT cv.id as vacancy_id
+         FROM candidate_vacancies cv
+         WHERE cv.candidate_id = $1`,
+        [candidateId]
+      );
+
+      for (const evalRow of evaluationIds.rows) {
+        const competencyResults = await pool.query(
+          `SELECT c.name, er.total_score, er.max_possible_score,
+                  (er.total_score::float / er.max_possible_score * 100) as percentage
+           FROM evaluation_results er
+           JOIN competencies c ON er.competency_id = c.id
+           WHERE er.candidate_id = $1
+           LIMIT 5`,
+          [candidateId]
+        );
+
+        if (competencyResults.rows.length > 0) {
+          const competencies = {};
+          competencyResults.rows.forEach(row => {
+            competencies[row.name] = {
+              score: row.total_score,
+              maxScore: row.max_possible_score,
+              percentage: parseFloat(row.percentage) || 0
+            };
+          });
+
+          evaluationResults.push({
+            type: 'evaluation',
+            name: 'TEST DE PERSONALIDAD LABORAL (TPL-80)',
+            description: 'Evaluación de 10 competencias laborales con escala Likert (1-5)',
+            completedAt: new Date().toISOString(),
+            data: competencies
+          });
+          break;
+        }
+      }
+    } catch (err) {
+      console.log('No evaluation results:', err.message);
+    }
+
+    // Generar PDF
+    const pdfResult = await generateEvaluationResultsPDF({
+      candidateId,
+      candidateName: `${candidate.first_name} ${candidate.last_name}`,
+      email: candidate.email,
+      evaluationResults
+    });
+
+    // Enviar PDF
+    res.download(pdfResult.filepath);
+  } catch (error) {
+    console.error('Error generando PDF:', error);
+    res.status(500).json({
+      error: 'Error al generar PDF',
       details: error.message,
     });
   }

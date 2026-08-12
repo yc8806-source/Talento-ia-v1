@@ -25,6 +25,32 @@ export default function ResultsModal({ candidateId, onClose }) {
     }
   };
 
+  const handleDownloadPDF = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const apiUrl = 'https://talento-ia-backend.onrender.com/api';
+      const response = await axios.get(
+        `${apiUrl}/assignments/results-pdf/${candidateId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: 'blob'
+        }
+      );
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `resultados_${results.candidateName.replace(/\s+/g, '_')}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error descargando PDF:', error);
+      alert('Error al descargar el PDF');
+    }
+  };
+
   const renderTypingResults = (data) => {
     return (
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
@@ -263,8 +289,22 @@ export default function ResultsModal({ candidateId, onClose }) {
           </div>
         ))}
 
-        {/* Close Button */}
-        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+        {/* Action Buttons */}
+        <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+          <button
+            onClick={handleDownloadPDF}
+            style={{
+              padding: '10px 30px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '1em'
+            }}
+          >
+            📥 Descargar PDF
+          </button>
           <button onClick={onClose} style={{
             padding: '10px 30px',
             backgroundColor: '#007bff',

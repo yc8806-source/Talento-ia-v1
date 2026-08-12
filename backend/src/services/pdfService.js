@@ -179,6 +179,102 @@ const generateResultsPDF = (candidateData, evaluationData) => {
   });
 };
 
+const generateEvaluationResultsPDF = (resultsData) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const pdfDir = path.join(__dirname, '../../pdfs');
+      if (!fs.existsSync(pdfDir)) {
+        fs.mkdirSync(pdfDir, { recursive: true });
+      }
+
+      const doc = new PDFDocument({ margin: 40 });
+      const filename = `resultados_evaluacion_${resultsData.candidateId}_${Date.now()}.pdf`;
+      const filepath = path.join(pdfDir, filename);
+
+      const stream = fs.createWriteStream(filepath);
+      doc.pipe(stream);
+
+      // Header
+      doc.fontSize(24).font('Helvetica-Bold').fillColor('#1A237E').text('Talent IA', { align: 'center' });
+      doc.fontSize(14).font('Helvetica').fillColor('#424242').text('Resultados de Evaluación', { align: 'center' });
+      doc.moveTo(50, 80).lineTo(550, 80).stroke('#1A237E');
+
+      let yPos = 100;
+
+      // Candidate info
+      doc.fontSize(12).font('Helvetica-Bold').fillColor('#000').text('Información del Candidato', 50, yPos);
+      yPos += 20;
+
+      doc.fontSize(10).font('Helvetica').fillColor('#424242');
+      doc.text(`Nombre: ${resultsData.candidateName}`, 50, yPos);
+      yPos += 15;
+      doc.text(`Email: ${resultsData.email}`, 50, yPos);
+      yPos += 25;
+
+      // Results
+      resultsData.evaluationResults.forEach((result, idx) => {
+        if (yPos > 700) {
+          doc.addPage();
+          yPos = 50;
+        }
+
+        // Result title
+        doc.fontSize(11).font('Helvetica-Bold').fillColor('#0066ff').text(result.name, 50, yPos);
+        yPos += 15;
+
+        // Description
+        doc.fontSize(9).font('Helvetica').fillColor('#666').text(result.description || '', 50, yPos);
+        yPos += 12;
+
+        // Data display based on type
+        if (result.type === 'typing') {
+          doc.fontSize(9).fillColor('#333');
+          doc.text(`WPM: ${result.data.wpm} | Net WPM: ${result.data.netWPM} | Precisión: ${result.data.accuracy}% | Errores: ${result.data.totalErrors}`, 50, yPos);
+        } else if (result.type === 'spelling') {
+          doc.fontSize(9).fillColor('#333');
+          doc.text(`Respuestas Correctas: ${result.data.correctAnswers} | Precisión: ${result.data.accuracy}% | Puntuación: ${result.data.score} pts`, 50, yPos);
+        } else if (result.type === 'evaluation') {
+          doc.fontSize(9).fillColor('#333');
+          Object.entries(result.data).forEach(([competency, values]) => {
+            doc.text(`${competency}: ${values.percentage}%`, 70, yPos);
+            yPos += 12;
+          });
+          yPos -= 12;
+        }
+
+        yPos += 25;
+      });
+
+      // Footer
+      yPos = 750;
+      doc.fontSize(8).font('Helvetica').fillColor('#999');
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+      doc.text(
+        `Generado el ${dateStr} | Talent IA - Sistema de Evaluación de Talentos v1.0`,
+        50,
+        yPos,
+        { align: 'center' }
+      );
+
+      doc.end();
+
+      stream.on('finish', () => {
+        resolve({
+          filename,
+          filepath,
+          url: `/api/reports/pdf/${filename}`,
+        });
+      });
+
+      stream.on('error', reject);
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
 module.exports = {
   generateResultsPDF,
+  generateEvaluationResultsPDF,
 };

@@ -462,6 +462,59 @@ app.get('/api/test/mark-completed/:candidateVacancyId', async (req, res) => {
   }
 });
 
+// TEST ENDPOINT: Create all test results for candidate 45 (Juan Perez)
+app.get('/api/test/complete-results/45', async (req, res) => {
+  try {
+    const candidateId = 45;
+    const results = { spelling: false, evaluation: false };
+
+    // 1. First get or create spelling test
+    try {
+      const testCheck = await pool.query('SELECT id FROM spelling_grammar_tests LIMIT 1');
+      if (testCheck.rows.length > 0) {
+        const testId = testCheck.rows[0].id;
+        await pool.query(`
+          INSERT INTO spelling_grammar_results (candidate_id, test_id, score, percentage, correct_answers, time_taken_seconds, completed_at)
+          VALUES ($1, $2, 85, 89.5, 17, 1200, NOW())
+          ON CONFLICT DO NOTHING
+        `, [candidateId, testId]);
+        results.spelling = true;
+      }
+    } catch (err) {
+      console.log('Spelling results skipped:', err.message);
+    }
+
+    // 2. Evaluation results (TPL-80 with competencies)
+    try {
+      const competencies = [
+        { name: 'Responsabilidad', score: 77 },
+        { name: 'Orientación al Logro', score: 82 },
+        { name: 'Trabajo Bajo Presión', score: 75 },
+        { name: 'Adaptabilidad', score: 88 },
+        { name: 'Trabajo en Equipo', score: 85 }
+      ];
+
+      const competencyData = {};
+      competencies.forEach(comp => {
+        competencyData[comp.name] = { score: comp.score, maxScore: 100, percentage: comp.score };
+      });
+
+      await pool.query(`
+        INSERT INTO evaluation_results (candidate_id, exam_id, overall_score, competency_results, created_at)
+        VALUES ($1, 2, 81.4, $2::jsonb, NOW())
+        ON CONFLICT (candidate_id, exam_id) DO NOTHING
+      `, [candidateId, JSON.stringify(competencyData)]);
+      results.evaluation = true;
+    } catch (err) {
+      console.log('Evaluation results skipped:', err.message);
+    }
+
+    res.json({ success: true, message: 'Added test results for candidate 45', results });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // TEST ENDPOINT: Create test data for results modal
 app.get('/api/test/create-test-results', async (req, res) => {
   try {

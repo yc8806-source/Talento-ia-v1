@@ -226,9 +226,9 @@ app.get('/api/exams-public/:id', async (req, res) => {
       return res.status(400).json({ error: 'ID de examen inválido' });
     }
 
-    // Simply return the exam with questions if available
+    // Get exam data
     const result = await pool.query(
-      `SELECT id, name, "maxTimeMinutes", type, questions
+      `SELECT id, name, description, type, max_time_minutes, questions
        FROM exams
        WHERE id = $1`,
       [examId]
@@ -243,7 +243,8 @@ app.get('/api/exams-public/:id', async (req, res) => {
     res.json({
       id: exam.id,
       name: exam.name,
-      maxTimeMinutes: exam.maxTimeMinutes || 60,
+      description: exam.description,
+      maxTimeMinutes: exam.max_time_minutes || 60,
       type: exam.type,
       questions: exam.questions || []
     });

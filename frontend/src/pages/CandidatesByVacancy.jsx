@@ -91,6 +91,23 @@ export default function CandidatesByVacancy() {
     }
   };
 
+  const handleDownloadPDF = async (candidateVacancyId) => {
+    try {
+      const response = await axios.get(`${API_URL}/evaluations/${candidateVacancyId}/pdf-download`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `resultados_${candidateVacancyId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentChild.removeChild(link);
+    } catch (error) {
+      alert('Error al descargar PDF: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
   if (loading) {
     return <div style={{ padding: '40px', textAlign: 'center' }}>Cargando...</div>;
   }
@@ -228,70 +245,124 @@ export default function CandidatesByVacancy() {
                     </span>
                   </td>
                   <td style={{ padding: '12px', textAlign: 'center' }}>
-                    {candidate.status === 'invited' && (
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                        <button
-                          onClick={() => handleMarkStatus(candidate.candidateVacancyId, 'apto')}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#28a745',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '0.85em'
-                          }}
-                        >
-                          ✅ Apto
-                        </button>
-                        <button
-                          onClick={() => handleMarkStatus(candidate.candidateVacancyId, 'rechazado')}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#dc3545',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '0.85em'
-                          }}
-                        >
-                          ❌ Rechazar
-                        </button>
-                      </div>
-                    )}
-                    {candidate.status === 'apto' && (
-                      <button
-                        onClick={() => handleMarkStatus(candidate.candidateVacancyId, 'invited')}
-                        style={{
-                          padding: '6px 12px',
-                          backgroundColor: '#ffc107',
-                          color: '#333',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '0.85em'
-                        }}
-                      >
-                        Desmarcar
-                      </button>
-                    )}
-                    {candidate.status === 'rechazado' && (
-                      <button
-                        onClick={() => handleMarkStatus(candidate.candidateVacancyId, 'invited')}
-                        style={{
-                          padding: '6px 12px',
-                          backgroundColor: '#ffc107',
-                          color: '#333',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '0.85em'
-                        }}
-                      >
-                        Reconsiderar
-                      </button>
-                    )}
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                      {(candidate.status === 'invited' || candidate.status === 'completed') && (
+                        <>
+                          {candidate.status !== 'apto' && candidate.status !== 'rechazado' && (
+                            <>
+                              <button
+                                onClick={() => handleMarkStatus(candidate.candidateVacancyId, 'apto')}
+                                style={{
+                                  padding: '6px 12px',
+                                  backgroundColor: '#28a745',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '0.85em'
+                                }}
+                              >
+                                ✅ Apto
+                              </button>
+                              <button
+                                onClick={() => handleMarkStatus(candidate.candidateVacancyId, 'rechazado')}
+                                style={{
+                                  padding: '6px 12px',
+                                  backgroundColor: '#dc3545',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '0.85em'
+                                }}
+                              >
+                                ❌ Rechazar
+                              </button>
+                            </>
+                          )}
+                          {candidate.status === 'completed' && (
+                            <button
+                              onClick={() => handleDownloadPDF(candidate.candidateVacancyId)}
+                              style={{
+                                padding: '6px 12px',
+                                backgroundColor: '#007bff',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '0.85em'
+                              }}
+                            >
+                              📄 PDF
+                            </button>
+                          )}
+                        </>
+                      )}
+                      {candidate.status === 'apto' && (
+                        <>
+                          <button
+                            onClick={() => handleMarkStatus(candidate.candidateVacancyId, 'invited')}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#ffc107',
+                              color: '#333',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '0.85em'
+                            }}
+                          >
+                            Desmarcar
+                          </button>
+                          <button
+                            onClick={() => handleDownloadPDF(candidate.candidateVacancyId)}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#007bff',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '0.85em'
+                            }}
+                          >
+                            📄 PDF
+                          </button>
+                        </>
+                      )}
+                      {candidate.status === 'rechazado' && (
+                        <>
+                          <button
+                            onClick={() => handleMarkStatus(candidate.candidateVacancyId, 'invited')}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#ffc107',
+                              color: '#333',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '0.85em'
+                            }}
+                          >
+                            Reconsiderar
+                          </button>
+                          <button
+                            onClick={() => handleDownloadPDF(candidate.candidateVacancyId)}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#007bff',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '0.85em'
+                            }}
+                          >
+                            📄 PDF
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))

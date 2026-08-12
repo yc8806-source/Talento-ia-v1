@@ -250,8 +250,10 @@ export default function CandidatesByVacancy() {
                         <>
                           <button
                             onClick={() => {
-                              const evalLink = `${window.location.origin}/evaluacion?token=${candidate.token}`;
-                              window.open(evalLink, '_blank');
+                              const evalLink = `${window.location.origin}/evaluacion?token=${candidate.candidateVacancyId}`;
+                              const textToCopy = `${window.location.origin}/evaluacion?token=${candidate.candidateVacancyId}`;
+                              navigator.clipboard.writeText(textToCopy);
+                              alert('URL copiada al portapapeles:\n' + textToCopy);
                             }}
                             style={{
                               padding: '6px 12px',
@@ -262,7 +264,7 @@ export default function CandidatesByVacancy() {
                               cursor: 'pointer',
                               fontSize: '0.85em'
                             }}
-                            title="Copiar y compartir URL"
+                            title="Copiar URL para compartir"
                           >
                             🔗 URL
                           </button>
@@ -298,6 +300,20 @@ export default function CandidatesByVacancy() {
                       )}
                       {candidate.status === 'completed' && (
                         <>
+                          <button
+                            onClick={() => navigate(`/evaluation-results/${candidate.candidateVacancyId}`)}
+                            style={{
+                              padding: '6px 12px',
+                              backgroundColor: '#6f42c1',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '0.85em'
+                            }}
+                          >
+                            📊 Resultados
+                          </button>
                           <button
                             onClick={() => handleMarkStatus(candidate.candidateVacancyId, 'apto')}
                             style={{

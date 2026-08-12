@@ -187,16 +187,23 @@ const generateEvaluationResultsPDF = (resultsData) => {
         fs.mkdirSync(pdfDir, { recursive: true });
       }
 
-      const doc = new PDFDocument({ margin: 40, bufferPages: true });
       const filename = `resultados_evaluacion_${resultsData.candidateId}_${Date.now()}.pdf`;
       const filepath = path.join(pdfDir, filename);
 
-      const stream = fs.createWriteStream(filepath);
+      const doc = new PDFDocument({ margin: 40 });
+      const buffers = [];
 
-      stream.on('error', reject);
+      doc.on('data', (chunk) => buffers.push(chunk));
+      doc.on('end', () => {
+        const pdfBuffer = Buffer.concat(buffers);
+        fs.writeFileSync(filepath, pdfBuffer);
+        resolve({
+          filename,
+          filepath,
+          url: `/api/reports/pdf/${filename}`,
+        });
+      });
       doc.on('error', reject);
-
-      doc.pipe(stream);
 
       // Header
       doc.fontSize(24).font('Helvetica-Bold').fillColor('#1A237E').text('Talent IA', { align: 'center' });
@@ -254,17 +261,13 @@ const generateEvaluationResultsPDF = (resultsData) => {
             doc.text(`Puntuación: ${result.data.score || 0} pts`, 60, yPos);
             yPos += 12;
           } else if (result.type === 'evaluation' && result.data) {
-            try {
-              const entries = Object.entries(result.data);
-              if (entries.length > 0) {
-                entries.forEach(([competency, values]) => {
-                  const pct = values && values.percentage ? parseFloat(values.percentage).toFixed(1) : '0';
-                  doc.text(`${competency}: ${pct}%`, 60, yPos);
-                  yPos += 12;
-                });
-              }
-            } catch (e) {
-              console.error('Error rendering competencies:', e.message);
+            const entries = Object.entries(result.data);
+            if (entries.length > 0) {
+              entries.forEach(([competency, values]) => {
+                const pct = values && values.percentage ? parseFloat(values.percentage).toFixed(1) : '0';
+                doc.text(`${competency}: ${pct}%`, 60, yPos);
+                yPos += 12;
+              });
             }
           }
 
@@ -285,14 +288,6 @@ const generateEvaluationResultsPDF = (resultsData) => {
       );
 
       doc.end();
-
-      stream.on('finish', () => {
-        resolve({
-          filename,
-          filepath,
-          url: `/api/reports/pdf/${filename}`,
-        });
-      });
     } catch (error) {
       reject(error);
     }

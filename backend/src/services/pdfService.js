@@ -247,10 +247,15 @@ const generateEvaluationResultsPDF = (resultsData) => {
           doc.text(`Puntuación: ${result.data.score} pts`, 60, yPos);
           yPos += 12;
         } else if (result.type === 'evaluation') {
-          Object.entries(result.data).forEach(([competency, values]) => {
-            doc.text(`${competency}: ${values.percentage.toFixed(1)}%`, 60, yPos);
-            yPos += 12;
-          });
+          // Renderizar competencias del TPL-80
+          if (result.data && typeof result.data === 'object') {
+            const competencyList = Object.entries(result.data);
+            competencyList.forEach(([competency, values]) => {
+              const percentage = typeof values.percentage === 'number' ? values.percentage.toFixed(1) : '0';
+              doc.text(`${competency}: ${percentage}%`, 60, yPos);
+              yPos += 12;
+            });
+          }
         }
 
         yPos += 15;

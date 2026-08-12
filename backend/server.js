@@ -370,6 +370,42 @@ app.post('/api/admin/seed', async (req, res) => {
   }
 });
 
+// Submit Evaluation Endpoint
+app.post('/api/evaluations/:evaluationId/submit', async (req, res) => {
+  try {
+    const { evaluationId } = req.params;
+
+    if (!evaluationId) {
+      return res.status(400).json({ error: 'Evaluation ID requerido' });
+    }
+
+    // Marcar evaluación como completada
+    const result = await pool.query(
+      `UPDATE evaluations
+       SET status = 'completed', completed_at = NOW()
+       WHERE id = $1
+       RETURNING id, status, completed_at`,
+      [evaluationId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Evaluación no encontrada' });
+    }
+
+    res.json({
+      status: 'success',
+      message: 'Evaluación completada exitosamente',
+      evaluation: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error submitting evaluation:', error);
+    res.status(500).json({
+      error: 'Error al completar evaluación',
+      details: error.message
+    });
+  }
+});
+
 // Version check
 app.get('/api/version', (req, res) => {
   res.json({

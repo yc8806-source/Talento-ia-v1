@@ -85,7 +85,7 @@ function App() {
           <Route path="/admin" element={userRole === 'admin' ? <Admin /> : <Navigate to="/dashboard" />} />
           <Route path="/admin/exams" element={userRole === 'admin' ? <AdminExams /> : <Navigate to="/dashboard" />} />
           <Route path="/admin/resultados" element={userRole === 'admin' ? <AdminEvaluationResults /> : <Navigate to="/dashboard" />} />
-          <Route path="/evaluation-results/:candidateVacancyId" element={userRole === 'admin' ? <AdminEvaluationResults /> : <Navigate to="/dashboard" />} />
+          <Route path="/evaluation-results/:candidateId" element={userRole === 'admin' ? <AdminEvaluationResults /> : <Navigate to="/dashboard" />} />
         </Route>
 
         <Route path="/" element={<Navigate to={isLoggedIn ? "/dashboard" : "/login"} />} />

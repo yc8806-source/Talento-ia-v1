@@ -217,7 +217,7 @@ app.get('/api/admin/diagnostics', async (req, res) => {
   res.json(diagnostics);
 });
 
-// Public Exams Endpoint (no auth required)
+// Public Exams Endpoint (no auth required) - Fixed for TPL-80 and all exams
 app.get('/api/exams-public/:id', async (req, res) => {
   try {
     const examId = parseInt(req.params.id, 10);
@@ -240,15 +240,24 @@ app.get('/api/exams-public/:id', async (req, res) => {
 
     const exam = examResult.rows[0];
 
-    // Get questions for this exam
+    // Get questions for this exam - use correct column name 'question_order'
     const questionsResult = await pool.query(
-      `SELECT q.id, q.title, q.type, q.description
+      `SELECT q.id, q.title, q.type, q.description, q.options
        FROM questions q
        INNER JOIN exam_questions eq ON q.id = eq.question_id
        WHERE eq.exam_id = $1
-       ORDER BY eq.order ASC`,
+       ORDER BY COALESCE(eq.question_order, 0) ASC, eq.id ASC`,
       [examId]
     );
+
+    // Format response
+    const formattedQuestions = questionsResult.rows.map(q => ({
+      id: q.id,
+      title: q.title || q.description,
+      type: q.type,
+      description: q.description,
+      options: q.options || []
+    }));
 
     res.json({
       id: exam.id,
@@ -256,7 +265,7 @@ app.get('/api/exams-public/:id', async (req, res) => {
       description: exam.description,
       maxTimeMinutes: exam.max_time_minutes || 60,
       type: exam.type,
-      questions: questionsResult.rows || []
+      questions: formattedQuestions
     });
   } catch (error) {
     console.error('Error fetching public exam:', error);

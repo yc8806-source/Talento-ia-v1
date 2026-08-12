@@ -151,6 +151,79 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
+// Admin Seeding Endpoint - DEVELOPMENT ONLY
+app.post('/api/admin/seed', async (req, res) => {
+  try {
+    // Security check - solo en development o con secret key
+    const seedKey = req.headers['x-seed-key'];
+    if (process.env.NODE_ENV === 'production' && seedKey !== process.env.SEED_KEY) {
+      return res.status(403).json({ error: 'Seeding no permitido en producción sin clave' });
+    }
+
+    console.log('🌱 Iniciando seeding de BD...');
+
+    // Crear usuario admin de prueba
+    const bcryptjs = require('bcryptjs');
+    const salt = await bcryptjs.genSalt(10);
+    const hashedPassword = await bcryptjs.hash('Admin123!', salt);
+
+    // Verificar si el usuario ya existe
+    const existingAdmin = await pool.query(
+      'SELECT id FROM "Users" WHERE email = $1',
+      ['admin@talent-ia.com']
+    );
+
+    let adminUserId;
+    if (existingAdmin.rows.length === 0) {
+      const adminResult = await pool.query(
+        `INSERT INTO "Users" (email, password, name, role, "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, NOW(), NOW())
+         RETURNING id`,
+        ['admin@talent-ia.com', hashedPassword, 'Admin Test', 'admin']
+      );
+      adminUserId = adminResult.rows[0].id;
+      console.log('✅ Usuario admin creado');
+    } else {
+      adminUserId = existingAdmin.rows[0].id;
+      console.log('✅ Usuario admin ya existe');
+    }
+
+    // Crear usuario RRHH de prueba
+    const existingRRHH = await pool.query(
+      'SELECT id FROM "Users" WHERE email = $1',
+      ['rrhh@talent-ia.com']
+    );
+
+    if (existingRRHH.rows.length === 0) {
+      const rrhhResult = await pool.query(
+        `INSERT INTO "Users" (email, password, name, role, "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, NOW(), NOW())
+         RETURNING id`,
+        ['rrhh@talent-ia.com', await bcryptjs.hash('RrHh123!', salt), 'RRHH Test', 'rrhh_analyst']
+      );
+      console.log('✅ Usuario RRHH creado');
+    } else {
+      console.log('✅ Usuario RRHH ya existe');
+    }
+
+    res.json({
+      status: 'OK',
+      message: 'Seeding completado',
+      adminEmail: 'admin@talent-ia.com',
+      rrhhEmail: 'rrhh@talent-ia.com',
+      adminPassword: 'Admin123!',
+      rrhhPassword: 'RrHh123!'
+    });
+  } catch (error) {
+    console.error('Error en seeding:', error);
+    res.status(500).json({
+      status: 'ERROR',
+      message: error.message,
+      details: error.detail || 'Error durante el seeding'
+    });
+  }
+});
+
 // Version check
 app.get('/api/version', (req, res) => {
   res.json({

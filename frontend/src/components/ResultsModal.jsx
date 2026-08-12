@@ -123,7 +123,7 @@ export default function ResultsModal({ candidateId, onClose }) {
 
         {/* Results Summary */}
         {results.evaluationResults.map((evalResult, idx) => {
-          const percentage = evalResult.percentage || 0;
+          const percentage = evalResult.percentage ? parseFloat(evalResult.percentage) : 0;
           const getScoreColor = (pct) => {
             if (pct >= 80) return '#28a745'; // Verde
             if (pct >= 60) return '#ffc107'; // Amarillo
@@ -139,10 +139,10 @@ export default function ResultsModal({ candidateId, onClose }) {
               border: '1px solid #ddd'
             }}>
               <h3 style={{ margin: '0 0 10px 0', color: '#0066ff' }}>
-                {evalResult.evaluation.name}
+                {evalResult.evaluation?.name || 'Examen'}
               </h3>
               <p style={{ margin: '5px 0', color: '#666', fontSize: '0.9em' }}>
-                {evalResult.evaluation.description}
+                {evalResult.evaluation?.description || ''}
               </p>
 
               {/* Score Display */}
@@ -163,7 +163,7 @@ export default function ResultsModal({ candidateId, onClose }) {
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '28px', fontWeight: 'bold', color: getScoreColor(percentage) }}>
-                    {percentage.toFixed(1)}%
+                    {typeof percentage === 'number' ? percentage.toFixed(1) : '0'}%
                   </div>
                   <div style={{ fontSize: '0.9em', color: '#666' }}>Puntuación</div>
                 </div>

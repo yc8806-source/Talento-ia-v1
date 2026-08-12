@@ -124,7 +124,35 @@ router.get('/results/:candidateId', verifyToken, async (req, res) => {
 
     const candidate = candidateResult.rows[0];
 
-    // Obtener puntuaciones guardadas de exámenes completados
+    // Obtener exámenes respondidos por el candidato
+    const examsWithAnswersResult = await pool.query(
+      `SELECT DISTINCT e.id, e.name, e.description
+       FROM exams e
+       INNER JOIN exam_answers ea ON e.id = ea.exam_id
+       WHERE ea.candidate_id = $1`,
+      [candidateId]
+    );
+
+    const examsWithAnswers = examsWithAnswersResult.rows;
+
+    // Calcular puntuaciones para exámenes que aún no tienen puntuación guardada
+    for (const exam of examsWithAnswers) {
+      const scoreExists = await pool.query(
+        'SELECT id FROM exam_scores WHERE candidate_id = $1 AND exam_id = $2',
+        [candidateId, exam.id]
+      );
+
+      if (scoreExists.rows.length === 0) {
+        // Calcular y guardar puntuación
+        try {
+          await ExamScoreService.calculateAndSaveScore(candidateId, exam.id);
+        } catch (err) {
+          console.error(`Error calculating score for exam ${exam.id}:`, err);
+        }
+      }
+    }
+
+    // Obtener puntuaciones guardadas
     const scoresResult = await pool.query(
       `SELECT es.*, e.name, e.description
        FROM exam_scores es

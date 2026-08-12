@@ -1,6 +1,5 @@
 const { Pool } = require('pg');
 
-// Las variables de entorno ya fueron cargadas en server.js
 const dbUrl = process.env.DATABASE_URL || process.env.RAILWAY_DATABASE_URL;
 
 if (!dbUrl) {
@@ -12,7 +11,7 @@ const connectionConfig = {
   connectionString: dbUrl,
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
+  connectionTimeoutMillis: 5000,
 };
 
 // Usar SSL solo si no es localhost
@@ -27,34 +26,49 @@ console.log('   Database:', dbUrl.substring(0, 50) + '...');
 
 const pool = new Pool(connectionConfig);
 
-// Reintentar conexión automáticamente
-let connectionAttempts = 0;
-const maxRetries = 3;
+let isConnected = false;
+let connectionError = null;
 
 pool.on('error', (err) => {
-  connectionAttempts++;
-  console.error(`❌ Error en BD (intento ${connectionAttempts}/${maxRetries}):`, err.message);
-
-  if (connectionAttempts >= maxRetries) {
-    console.error('❌ Max retries alcanzado. Verifica DATABASE_URL en Render dashboard.');
-  }
+  isConnected = false;
+  connectionError = err;
+  console.error(`❌ Error en BD:`, err.message);
 });
 
 pool.on('connect', () => {
-  connectionAttempts = 0;
+  isConnected = true;
+  connectionError = null;
   console.log('✅ Conectado a PostgreSQL');
 });
 
-// Test de conexión inmediata
+// Test de conexión con timeout agresivo
+let connectionTested = false;
 (async () => {
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Connection timeout')), 8000)
+  );
+
   try {
-    const client = await pool.connect();
-    console.log('✅ Test de conexión exitoso');
-    client.release();
+    const testPromise = (async () => {
+      const client = await pool.connect();
+      console.log('✅ Test de conexión exitoso');
+      client.release();
+      isConnected = true;
+    })();
+
+    await Promise.race([testPromise, timeout]);
+    connectionTested = true;
   } catch (err) {
     console.error('⚠️ Test de conexión FALLÓ:', err.message);
-    console.error('📝 Verifica que DATABASE_URL sea correcto en Render Environment Variables');
+    console.error('📝 Motivo: Railway puede estar caído o DATABASE_URL es incorrecto');
+    console.error('📝 Verifica: Render Environment Variables → DATABASE_URL');
+    connectionTested = true;
+    isConnected = false;
   }
 })();
+
+// Exportar pool con información de estado
+pool.isConnected = () => isConnected;
+pool.getConnectionError = () => connectionError;
 
 module.exports = pool;

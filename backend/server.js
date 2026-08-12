@@ -145,10 +145,25 @@ app.get('/api/test-db', async (req, res) => {
     res.status(500).json({
       status: 'ERROR',
       message: error.message,
+      code: error.code,
       databaseUrl: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'NOT SET',
       railwayDatabaseUrl: process.env.RAILWAY_DATABASE_URL ? process.env.RAILWAY_DATABASE_URL.substring(0, 50) + '...' : 'NOT SET'
     });
   }
+});
+
+// Diagnostics endpoint
+app.get('/api/admin/diagnostics', (req, res) => {
+  res.json({
+    environment: process.env.NODE_ENV,
+    databaseUrl: process.env.DATABASE_URL ? 'SET' : 'NOT SET',
+    railwayDatabaseUrl: process.env.RAILWAY_DATABASE_URL ? 'SET' : 'NOT SET',
+    frontendUrl: process.env.FRONTEND_URL || 'NOT SET',
+    poolConnected: pool.isConnected ? pool.isConnected() : 'UNKNOWN',
+    connectionError: pool.getConnectionError ? (pool.getConnectionError()?.message || 'NONE') : 'UNKNOWN',
+    timestamp: new Date().toISOString(),
+    advice: 'Si pool no está conectado, Railway puede estar caído. Verifica https://status.railway.app/'
+  });
 });
 
 // Admin Seeding Endpoint - DEVELOPMENT ONLY

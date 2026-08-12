@@ -325,6 +325,72 @@ router.get('/candidate/:candidateId', verifyToken, async (req, res) => {
 });
 
 /**
+ * DEBUG: Ver qué datos se pasan al PDF
+ */
+router.get('/debug-pdf/:candidateId', verifyToken, async (req, res) => {
+  try {
+    const { candidateId } = req.params;
+
+    // Obtener datos del candidato
+    const candidateResult = await pool.query(
+      'SELECT id, first_name, last_name, email FROM candidates WHERE id = $1',
+      [candidateId]
+    );
+
+    if (candidateResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Candidato no encontrado' });
+    }
+
+    const candidate = candidateResult.rows[0];
+    const evaluationResults = [];
+
+    // Obtener evaluation results
+    const evaluationResults_query = await pool.query(
+      `SELECT er.id, er.overall_score, er.competency_results, er.created_at, e.name, e.description
+       FROM evaluation_results er
+       LEFT JOIN exams e ON er.exam_id = e.id
+       WHERE er.candidate_id = $1
+       ORDER BY er.created_at DESC`,
+      [candidateId]
+    );
+
+    evaluationResults_query.rows.forEach(result => {
+      const competencies = {};
+      if (result.competency_results && typeof result.competency_results === 'object') {
+        Object.entries(result.competency_results).forEach(([key, value]) => {
+          competencies[key] = {
+            score: value.score || 0,
+            maxScore: value.maxScore || 100,
+            percentage: parseFloat(value.percentage) || 0
+          };
+        });
+      }
+
+      evaluationResults.push({
+        type: 'evaluation',
+        name: result.name || 'Evaluación de Competencias',
+        description: result.description,
+        completedAt: result.created_at,
+        data: competencies
+      });
+    });
+
+    res.json({
+      candidateId,
+      candidateName: `${candidate.first_name} ${candidate.last_name}`,
+      email: candidate.email,
+      evaluationResults
+    });
+  } catch (error) {
+    console.error('Error en debug-pdf:', error);
+    res.status(500).json({
+      error: 'Error',
+      details: error.message,
+    });
+  }
+});
+
+/**
  * ADMIN: Descargar resultados como PDF
  */
 router.get('/results-pdf/:candidateId', verifyToken, async (req, res) => {
@@ -437,6 +503,9 @@ router.get('/results-pdf/:candidateId', verifyToken, async (req, res) => {
     } catch (err) {
       console.log('No evaluation results found:', err.message);
     }
+
+    // Log datos para debugging
+    console.log('📋 PDF Data - Evaluation Results:', JSON.stringify(evaluationResults, null, 2));
 
     // Generar PDF
     const pdfResult = await generateEvaluationResultsPDF({

@@ -51,20 +51,19 @@ class ExamScoreService {
         }
       }
 
-      // Obtener puntuación máxima posible del examen
-      const maxScoreResult = await pool.query(
-        `SELECT COALESCE(SUM(MAX(qo.score)), 0) as max_score
-         FROM exam_questions eq
-         JOIN question_options qo ON qo.question_id = eq.question_id
-         WHERE eq.exam_id = $1
-         GROUP BY eq.question_id`,
-        [examId]
-      );
-
-      // Calcular max_score como la suma de los scores máximos por pregunta
+      // Obtener puntuación máxima posible: max score de cada pregunta
       let maxScore = 0;
-      if (maxScoreResult.rows.length > 0) {
-        maxScore = questions.length > 0 ? maxScoreResult.rows.length : 0;
+      for (const question of questions) {
+        const maxScoreResult = await pool.query(
+          `SELECT MAX(COALESCE(score, 0)) as max_score
+           FROM question_options
+           WHERE question_id = $1`,
+          [question.question_id]
+        );
+
+        if (maxScoreResult.rows.length > 0 && maxScoreResult.rows[0].max_score) {
+          maxScore += parseFloat(maxScoreResult.rows[0].max_score) || 0;
+        }
       }
 
       // Si maxScore es 0, usar cantidad de preguntas como proxy

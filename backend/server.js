@@ -462,6 +462,26 @@ app.get('/api/test/mark-completed/:candidateVacancyId', async (req, res) => {
   }
 });
 
+// TEST ENDPOINT: Clean duplicate spelling results
+app.get('/api/test/clean-duplicates', async (req, res) => {
+  try {
+    // Delete duplicate spelling_grammar_results for candidate 45 (keep only the latest)
+    await pool.query(`
+      DELETE FROM spelling_grammar_results
+      WHERE candidate_id = 45
+      AND id NOT IN (
+        SELECT id FROM spelling_grammar_results
+        WHERE candidate_id = 45
+        ORDER BY completed_at DESC
+        LIMIT 1
+      )
+    `);
+    res.json({ success: true, message: 'Duplicates cleaned' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // TEST ENDPOINT: Create all test results for candidate 45 (Juan Perez)
 app.get('/api/test/complete-results/45', async (req, res) => {
   try {

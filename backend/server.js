@@ -220,9 +220,17 @@ app.get('/api/admin/diagnostics', async (req, res) => {
 // Public Exams Endpoint (no auth required)
 app.get('/api/exams-public/:id', async (req, res) => {
   try {
-    const examId = req.params.id;
+    const examId = parseInt(req.params.id, 10);
+
+    if (isNaN(examId)) {
+      return res.status(400).json({ error: 'ID de examen inválido' });
+    }
+
+    // Simply return the exam with questions if available
     const result = await pool.query(
-      'SELECT id, name, "maxTimeMinutes", type FROM exams WHERE id = $1',
+      `SELECT id, name, "maxTimeMinutes", type, questions
+       FROM exams
+       WHERE id = $1`,
       [examId]
     );
 
@@ -232,25 +240,19 @@ app.get('/api/exams-public/:id', async (req, res) => {
 
     const exam = result.rows[0];
 
-    // Get questions for this exam
-    const questionsResult = await pool.query(
-      `SELECT q.* FROM questions q
-       JOIN exam_questions eq ON q.id = eq.question_id
-       WHERE eq.exam_id = $1
-       ORDER BY eq.order ASC`,
-      [examId]
-    );
-
     res.json({
       id: exam.id,
       name: exam.name,
       maxTimeMinutes: exam.maxTimeMinutes || 60,
       type: exam.type,
-      questions: questionsResult.rows
+      questions: exam.questions || []
     });
   } catch (error) {
-    console.error('Error fetching exam:', error);
-    res.status(500).json({ error: 'Error al cargar el examen' });
+    console.error('Error fetching public exam:', error);
+    res.status(500).json({
+      error: 'Error al cargar el examen',
+      details: error.message
+    });
   }
 });
 

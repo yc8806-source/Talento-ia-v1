@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import ResultsModal from '../components/ResultsModal';
 
 export default function CandidatesByVacancy() {
   const { vacancyId } = useParams();
@@ -12,6 +13,8 @@ export default function CandidatesByVacancy() {
   const [availableCandidates, setAvailableCandidates] = useState([]);
   const [selectedCandidateId, setSelectedCandidateId] = useState(null);
   const [invitingToken, setInvitingToken] = useState(null);
+  const [showResultsModal, setShowResultsModal] = useState(false);
+  const [resultsModalCandidateId, setResultsModalCandidateId] = useState(null);
 
   const API_URL = typeof window !== 'undefined' && window.location.hostname === 'talento-ia-v1-frontend.onrender.com'
     ? 'https://talento-ia-backend.onrender.com/api'
@@ -301,7 +304,10 @@ export default function CandidatesByVacancy() {
                       {candidate.status === 'completed' && (
                         <>
                           <button
-                            onClick={() => navigate(`/evaluation-results/${candidate.candidateId}`)}
+                            onClick={() => {
+                              setResultsModalCandidateId(candidate.candidateId);
+                              setShowResultsModal(true);
+                            }}
                             style={{
                               padding: '6px 12px',
                               backgroundColor: '#6f42c1',
@@ -613,6 +619,17 @@ export default function CandidatesByVacancy() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Modal de Resultados */}
+      {showResultsModal && resultsModalCandidateId && (
+        <ResultsModal
+          candidateId={resultsModalCandidateId}
+          onClose={() => {
+            setShowResultsModal(false);
+            setResultsModalCandidateId(null);
+          }}
+        />
       )}
     </div>
   );

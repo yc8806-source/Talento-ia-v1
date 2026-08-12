@@ -102,21 +102,77 @@ router.post('/mark-complete', async (req, res) => {
 });
 
 /**
- * ADMIN: Obtener resultados de evaluaciones asignadas a candidato
+ * ADMIN: Obtener resultados de evaluaciones de un candidato
  */
 router.get('/results/:candidateId', verifyToken, async (req, res) => {
   try {
     const { candidateId } = req.params;
+    const pool = require('../config/database');
 
-    const results = await EvaluationAssignmentService.getAssignmentResults(candidateId);
+    // Obtener datos del candidato
+    const candidateResult = await pool.query(
+      'SELECT id, first_name, last_name, email FROM candidates WHERE id = $1',
+      [candidateId]
+    );
 
-    if (!results) {
+    if (candidateResult.rows.length === 0) {
       return res.status(404).json({
-        error: 'No hay asignaciones para este candidato',
+        error: 'Candidato no encontrado',
       });
     }
 
-    res.json(results);
+    const candidate = candidateResult.rows[0];
+
+    // Obtener todas las respuestas del candidato agrupadas por examen
+    const answersResult = await pool.query(
+      `SELECT DISTINCT e.id, e.name, e.description, e.max_time_minutes,
+              COUNT(ea.id) as answers_count
+       FROM exams e
+       LEFT JOIN exam_answers ea ON e.id = ea.exam_id AND ea.candidate_id = $1
+       WHERE ea.id IS NOT NULL OR e.id IN (
+         SELECT DISTINCT exam_id FROM exam_answers WHERE candidate_id = $1
+       )
+       GROUP BY e.id, e.name, e.description, e.max_time_minutes`,
+      [candidateId]
+    );
+
+    // Para cada examen, obtener las respuestas del candidato
+    const evaluationResults = [];
+    for (const exam of answersResult.rows) {
+      const answersDetail = await pool.query(
+        `SELECT ea.id, ea.answer_text, ea.is_correct, ea.question_id
+         FROM exam_answers ea
+         WHERE ea.candidate_id = $1 AND ea.exam_id = $2`,
+        [candidateId, exam.id]
+      );
+
+      const totalQuestions = await pool.query(
+        'SELECT COUNT(*) as count FROM exam_questions WHERE exam_id = $1',
+        [exam.id]
+      );
+
+      evaluationResults.push({
+        evaluationId: exam.id,
+        evaluation: {
+          id: exam.id,
+          name: exam.name,
+          description: exam.description,
+          max_time_minutes: exam.max_time_minutes,
+        },
+        answersSubmitted: answersDetail.rows.length,
+        totalQuestions: parseInt(totalQuestions.rows[0].count),
+        answers: answersDetail.rows,
+      });
+    }
+
+    res.json({
+      candidateId,
+      candidateName: `${candidate.first_name} ${candidate.last_name}`,
+      email: candidate.email,
+      assignedAt: new Date().toISOString(),
+      completedAt: evaluationResults.length > 0 ? new Date().toISOString() : null,
+      evaluationResults,
+    });
   } catch (error) {
     console.error('Error obteniendo resultados:', error);
     res.status(500).json({

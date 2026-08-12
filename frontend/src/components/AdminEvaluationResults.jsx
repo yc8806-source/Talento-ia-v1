@@ -11,24 +11,33 @@ const AdminEvaluationResults = () => {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        const token = localStorage.getItem('access_token');
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+        const token = localStorage.getItem('token');
+        const apiUrl = 'https://talento-ia-backend.onrender.com/api';
         const response = await fetch(
           `${apiUrl}/assignments/results/${candidateId}`,
           {
             headers: { 'Authorization': `Bearer ${token}` }
           }
         );
+        if (!response.ok) {
+          console.error('Error:', response.status, response.statusText);
+          setResults(null);
+          setLoading(false);
+          return;
+        }
         const data = await response.json();
         setResults(data);
       } catch (error) {
         console.error('Error cargando resultados:', error);
+        setResults(null);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchResults();
+    if (candidateId) {
+      fetchResults();
+    }
   }, [candidateId]);
 
   if (loading) {

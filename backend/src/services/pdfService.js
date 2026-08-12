@@ -209,11 +209,11 @@ const generateEvaluationResultsPDF = (resultsData) => {
       doc.text(`Nombre: ${resultsData.candidateName}`, 50, yPos);
       yPos += 15;
       doc.text(`Email: ${resultsData.email}`, 50, yPos);
-      yPos += 25;
+      yPos += 30;
 
       // Results
       resultsData.evaluationResults.forEach((result, idx) => {
-        if (yPos > 700) {
+        if (yPos > 650) {
           doc.addPage();
           yPos = 50;
         }
@@ -223,26 +223,37 @@ const generateEvaluationResultsPDF = (resultsData) => {
         yPos += 15;
 
         // Description
-        doc.fontSize(9).font('Helvetica').fillColor('#666').text(result.description || '', 50, yPos);
-        yPos += 12;
+        doc.fontSize(9).font('Helvetica').fillColor('#666');
+        doc.text(result.description || '', 50, yPos, { width: 500 });
+        yPos += 30;
 
         // Data display based on type
+        doc.fontSize(10).font('Helvetica').fillColor('#333');
+
         if (result.type === 'typing') {
-          doc.fontSize(9).fillColor('#333');
-          doc.text(`WPM: ${result.data.wpm} | Net WPM: ${result.data.netWPM} | Precisión: ${result.data.accuracy}% | Errores: ${result.data.totalErrors}`, 50, yPos);
+          doc.text(`WPM: ${result.data.wpm}`, 60, yPos);
+          yPos += 12;
+          doc.text(`Net WPM: ${result.data.netWPM}`, 60, yPos);
+          yPos += 12;
+          doc.text(`Precisión: ${result.data.accuracy}%`, 60, yPos);
+          yPos += 12;
+          doc.text(`Errores: ${result.data.totalErrors}`, 60, yPos);
+          yPos += 12;
         } else if (result.type === 'spelling') {
-          doc.fontSize(9).fillColor('#333');
-          doc.text(`Respuestas Correctas: ${result.data.correctAnswers} | Precisión: ${result.data.accuracy}% | Puntuación: ${result.data.score} pts`, 50, yPos);
+          doc.text(`Respuestas Correctas: ${result.data.correctAnswers}`, 60, yPos);
+          yPos += 12;
+          doc.text(`Precisión: ${result.data.accuracy}%`, 60, yPos);
+          yPos += 12;
+          doc.text(`Puntuación: ${result.data.score} pts`, 60, yPos);
+          yPos += 12;
         } else if (result.type === 'evaluation') {
-          doc.fontSize(9).fillColor('#333');
           Object.entries(result.data).forEach(([competency, values]) => {
-            doc.text(`${competency}: ${values.percentage}%`, 70, yPos);
+            doc.text(`${competency}: ${values.percentage.toFixed(1)}%`, 60, yPos);
             yPos += 12;
           });
-          yPos -= 12;
         }
 
-        yPos += 25;
+        yPos += 15;
       });
 
       // Footer

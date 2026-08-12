@@ -405,46 +405,37 @@ router.get('/results-pdf/:candidateId', verifyToken, async (req, res) => {
 
     // Obtener evaluation results
     try {
-      const evaluationIds = await pool.query(
-        `SELECT DISTINCT cv.id as vacancy_id
-         FROM candidate_vacancies cv
-         WHERE cv.candidate_id = $1`,
+      const evaluationResults_query = await pool.query(
+        `SELECT er.id, er.overall_score, er.competency_results, er.created_at, e.name, e.description
+         FROM evaluation_results er
+         LEFT JOIN exams e ON er.exam_id = e.id
+         WHERE er.candidate_id = $1
+         ORDER BY er.created_at DESC`,
         [candidateId]
       );
 
-      for (const evalRow of evaluationIds.rows) {
-        const competencyResults = await pool.query(
-          `SELECT c.name, er.total_score, er.max_possible_score,
-                  (er.total_score::float / er.max_possible_score * 100) as percentage
-           FROM evaluation_results er
-           JOIN competencies c ON er.competency_id = c.id
-           WHERE er.candidate_id = $1
-           LIMIT 5`,
-          [candidateId]
-        );
-
-        if (competencyResults.rows.length > 0) {
-          const competencies = {};
-          competencyResults.rows.forEach(row => {
-            competencies[row.name] = {
-              score: row.total_score,
-              maxScore: row.max_possible_score,
-              percentage: parseFloat(row.percentage) || 0
+      evaluationResults_query.rows.forEach(result => {
+        const competencies = {};
+        if (result.competency_results && typeof result.competency_results === 'object') {
+          Object.entries(result.competency_results).forEach(([key, value]) => {
+            competencies[key] = {
+              score: value.score || 0,
+              maxScore: value.maxScore || 100,
+              percentage: parseFloat(value.percentage) || 0
             };
           });
-
-          evaluationResults.push({
-            type: 'evaluation',
-            name: 'TEST DE PERSONALIDAD LABORAL (TPL-80)',
-            description: 'Evaluación de 10 competencias laborales con escala Likert (1-5)',
-            completedAt: new Date().toISOString(),
-            data: competencies
-          });
-          break;
         }
-      }
+
+        evaluationResults.push({
+          type: 'evaluation',
+          name: result.name || 'Evaluación de Competencias',
+          description: result.description,
+          completedAt: result.created_at,
+          data: competencies
+        });
+      });
     } catch (err) {
-      console.log('No evaluation results:', err.message);
+      console.log('No evaluation results found:', err.message);
     }
 
     // Generar PDF

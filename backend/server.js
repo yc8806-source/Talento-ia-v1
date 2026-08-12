@@ -217,7 +217,7 @@ app.get('/api/admin/diagnostics', async (req, res) => {
   res.json(diagnostics);
 });
 
-// Public Exams Endpoint (no auth required) - Fixed for TPL-80 and all exams
+// Public Exams Endpoint (no auth required) - Correctly fetches exam with questions and options
 app.get('/api/exams-public/:id', async (req, res) => {
   try {
     const examId = parseInt(req.params.id, 10);
@@ -228,7 +228,7 @@ app.get('/api/exams-public/:id', async (req, res) => {
 
     // Get exam data
     const examResult = await pool.query(
-      `SELECT id, name, description, type, max_time_minutes
+      `SELECT id, name, description, type, max_time_minutes, min_score
        FROM exams
        WHERE id = $1`,
       [examId]
@@ -240,32 +240,54 @@ app.get('/api/exams-public/:id', async (req, res) => {
 
     const exam = examResult.rows[0];
 
-    // Get questions for this exam - use correct column name 'question_order'
+    // Get questions for this exam
     const questionsResult = await pool.query(
-      `SELECT q.id, q.title, q.type, q.description, q.options
+      `SELECT q.id, q.title, q.type, q.description, q.competency_id, q.is_inverse, eq.question_order
        FROM questions q
        INNER JOIN exam_questions eq ON q.id = eq.question_id
        WHERE eq.exam_id = $1
-       ORDER BY COALESCE(eq.question_order, 0) ASC, eq.id ASC`,
+       ORDER BY eq.question_order ASC`,
       [examId]
     );
 
-    // Format response
-    const formattedQuestions = questionsResult.rows.map(q => ({
-      id: q.id,
-      title: q.title || q.description,
-      type: q.type,
-      description: q.description,
-      options: q.options || []
-    }));
+    // Get options for each question
+    const questionsWithOptions = await Promise.all(
+      questionsResult.rows.map(async (question) => {
+        const optionsResult = await pool.query(
+          `SELECT id, text, score, option_order
+           FROM question_options
+           WHERE question_id = $1
+           ORDER BY option_order ASC`,
+          [question.id]
+        );
+
+        return {
+          id: question.id,
+          title: question.title,
+          type: question.type,
+          description: question.description,
+          competencyId: question.competency_id,
+          isInverse: question.is_inverse,
+          order: question.question_order,
+          options: optionsResult.rows.map(o => ({
+            id: o.id,
+            text: o.text,
+            score: parseFloat(o.score) || 0,
+            order: o.option_order
+          }))
+        };
+      })
+    );
 
     res.json({
       id: exam.id,
       name: exam.name,
       description: exam.description,
-      maxTimeMinutes: exam.max_time_minutes || 60,
       type: exam.type,
-      questions: formattedQuestions
+      maxTimeMinutes: exam.max_time_minutes || 60,
+      minScore: exam.min_score,
+      totalQuestions: questionsWithOptions.length,
+      questions: questionsWithOptions
     });
   } catch (error) {
     console.error('Error fetching public exam:', error);

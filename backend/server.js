@@ -152,18 +152,69 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
-// Diagnostics endpoint
-app.get('/api/admin/diagnostics', (req, res) => {
-  res.json({
-    environment: process.env.NODE_ENV,
-    databaseUrl: process.env.DATABASE_URL ? 'SET' : 'NOT SET',
-    railwayDatabaseUrl: process.env.RAILWAY_DATABASE_URL ? 'SET' : 'NOT SET',
-    frontendUrl: process.env.FRONTEND_URL || 'NOT SET',
-    poolConnected: pool.isConnected ? pool.isConnected() : 'UNKNOWN',
-    connectionError: pool.getConnectionError ? (pool.getConnectionError()?.message || 'NONE') : 'UNKNOWN',
+// DETAILED Diagnostics endpoint
+app.get('/api/admin/diagnostics', async (req, res) => {
+  const diagnostics = {
     timestamp: new Date().toISOString(),
-    advice: 'Si pool no está conectado, Railway puede estar caído. Verifica https://status.railway.app/'
-  });
+    environment: process.env.NODE_ENV,
+    nodeVersion: process.version,
+  };
+
+  // Check env vars
+  diagnostics.envVars = {
+    DATABASE_URL: process.env.DATABASE_URL ? `postgresql://...${process.env.DATABASE_URL.substring(process.env.DATABASE_URL.length - 30)}` : 'NOT SET',
+    RAILWAY_DATABASE_URL: process.env.RAILWAY_DATABASE_URL ? `postgresql://...` : 'NOT SET',
+    FRONTEND_URL: process.env.FRONTEND_URL || 'NOT SET',
+    NODE_ENV: process.env.NODE_ENV,
+    JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'NOT SET',
+  };
+
+  // Check pool status
+  diagnostics.pool = {
+    connected: pool.isConnected ? pool.isConnected() : 'UNKNOWN',
+    error: pool.getConnectionError ? (pool.getConnectionError()?.message || 'NONE') : 'UNKNOWN',
+  };
+
+  // Try connection test
+  try {
+    const testResult = await pool.query('SELECT NOW()');
+    diagnostics.connectionTest = {
+      status: 'SUCCESS',
+      timestamp: testResult.rows[0].now,
+    };
+  } catch (err) {
+    diagnostics.connectionTest = {
+      status: 'FAILED',
+      error: err.message,
+      code: err.code,
+      detail: err.detail,
+    };
+  }
+
+  // Parse DB URL for debugging
+  if (process.env.DATABASE_URL) {
+    try {
+      const url = new URL(process.env.DATABASE_URL);
+      diagnostics.dbUrlParsed = {
+        protocol: url.protocol,
+        hostname: url.hostname,
+        port: url.port,
+        database: url.pathname.replace('/', ''),
+        username: url.username,
+      };
+    } catch (e) {
+      diagnostics.dbUrlParsed = { error: 'Invalid URL format' };
+    }
+  }
+
+  diagnostics.recommendations = [
+    '1. Verify DATABASE_URL in Render Environment Variables',
+    '2. Check if Railway is online at https://status.railway.app/',
+    '3. Try creating a new PostgreSQL database in Render instead',
+    '4. Or use Railway Dashboard to verify credentials are correct',
+  ];
+
+  res.json(diagnostics);
 });
 
 // Admin Seeding Endpoint - DEVELOPMENT ONLY

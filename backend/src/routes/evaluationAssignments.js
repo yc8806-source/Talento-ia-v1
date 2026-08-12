@@ -123,40 +123,47 @@ router.get('/results/:candidateId', verifyToken, async (req, res) => {
 
     const candidate = candidateResult.rows[0];
 
-    // Obtener todos los exámenes que el candidato ha respondido
+    // Obtener respuestas del candidato
     const answersResult = await pool.query(
-      `SELECT DISTINCT e.id, e.name, e.description, e.max_time_minutes
-       FROM exams e
-       INNER JOIN exam_answers ea ON e.id = ea.exam_id
-       WHERE ea.candidate_id = $1`,
+      `SELECT DISTINCT ea.evaluation_id
+       FROM evaluation_answers ea
+       WHERE ea.candidate_id = $1
+       GROUP BY ea.evaluation_id`,
       [candidateId]
     );
 
-    // Para cada examen, obtener las respuestas del candidato
+    // Para cada evaluación, obtener detalles
     const evaluationResults = [];
-    for (const exam of answersResult.rows) {
-      const answersDetail = await pool.query(
-        `SELECT ea.id, ea.answer_text, ea.is_correct, ea.question_id
-         FROM exam_answers ea
-         WHERE ea.candidate_id = $1 AND ea.exam_id = $2`,
-        [candidateId, exam.id]
+    for (const row of answersResult.rows) {
+      const evalId = row.evaluation_id;
+
+      // Obtener información de la evaluación
+      const evalData = await pool.query(
+        `SELECT id, name, description FROM evaluations WHERE id = $1`,
+        [evalId]
       );
 
-      const totalQuestions = await pool.query(
-        'SELECT COUNT(*) as count FROM exam_questions WHERE exam_id = $1',
-        [exam.id]
+      if (evalData.rows.length === 0) continue;
+
+      const evaluation = evalData.rows[0];
+
+      // Obtener respuestas del candidato para esta evaluación
+      const answersDetail = await pool.query(
+        `SELECT ea.id, ea.question_id, ea.score_obtained
+         FROM evaluation_answers ea
+         WHERE ea.candidate_id = $1 AND ea.evaluation_id = $2`,
+        [candidateId, evalId]
       );
 
       evaluationResults.push({
-        evaluationId: exam.id,
+        evaluationId: evalId,
         evaluation: {
-          id: exam.id,
-          name: exam.name,
-          description: exam.description,
-          max_time_minutes: exam.max_time_minutes,
+          id: evaluation.id,
+          name: evaluation.name,
+          description: evaluation.description,
         },
         answersSubmitted: answersDetail.rows.length,
-        totalQuestions: parseInt(totalQuestions.rows[0].count),
+        totalQuestions: answersDetail.rows.length,
         answers: answersDetail.rows,
       });
     }

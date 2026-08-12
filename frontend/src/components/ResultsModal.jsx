@@ -123,11 +123,6 @@ export default function ResultsModal({ candidateId, onClose }) {
 
         {/* Results Summary */}
         {results.evaluationResults.map((evalResult, idx) => {
-          const answersCorrect = evalResult.answers.filter(a => a.is_correct).length;
-          const percentage = evalResult.answersSubmitted > 0
-            ? Math.round((answersCorrect / evalResult.answersSubmitted) * 100)
-            : 0;
-
           return (
             <div key={idx} style={{
               marginBottom: '20px',
@@ -150,26 +145,20 @@ export default function ResultsModal({ candidateId, onClose }) {
                 backgroundColor: 'white',
                 borderRadius: '4px',
                 display: 'grid',
-                gridTemplateColumns: '1fr 1fr 1fr',
+                gridTemplateColumns: '1fr 1fr',
                 gap: '10px'
               }}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#28a745' }}>
-                    {answersCorrect}/{evalResult.answersSubmitted}
-                  </div>
-                  <div style={{ fontSize: '0.9em', color: '#666' }}>Respuestas Correctas</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#0066ff' }}>
-                    {percentage}%
-                  </div>
-                  <div style={{ fontSize: '0.9em', color: '#666' }}>Porcentaje</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#666' }}>
+                  <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#28a745' }}>
                     {evalResult.answersSubmitted}/{evalResult.totalQuestions}
                   </div>
-                  <div style={{ fontSize: '0.9em', color: '#666' }}>Respondidas</div>
+                  <div style={{ fontSize: '0.9em', color: '#666' }}>Respuestas Completadas</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#0066ff' }}>
+                    ✅ Completado
+                  </div>
+                  <div style={{ fontSize: '0.9em', color: '#666' }}>Estado</div>
                 </div>
               </div>
             </div>

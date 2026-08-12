@@ -148,7 +148,7 @@ router.get('/results/:candidateId', verifyToken, async (req, res) => {
 
       // Obtener respuestas del candidato para este examen
       const answersDetail = await pool.query(
-        `SELECT id, answer_value, time_spent_seconds, is_correct
+        `SELECT id, answer_value, time_spent_seconds
          FROM exam_answers
          WHERE candidate_id = $1 AND exam_id = $2`,
         [candidateId, examId]

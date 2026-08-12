@@ -187,11 +187,15 @@ const generateEvaluationResultsPDF = (resultsData) => {
         fs.mkdirSync(pdfDir, { recursive: true });
       }
 
-      const doc = new PDFDocument({ margin: 40 });
+      const doc = new PDFDocument({ margin: 40, bufferPages: true });
       const filename = `resultados_evaluacion_${resultsData.candidateId}_${Date.now()}.pdf`;
       const filepath = path.join(pdfDir, filename);
 
       const stream = fs.createWriteStream(filepath);
+
+      stream.on('error', reject);
+      doc.on('error', reject);
+
       doc.pipe(stream);
 
       // Header
@@ -212,54 +216,61 @@ const generateEvaluationResultsPDF = (resultsData) => {
       yPos += 30;
 
       // Results
-      resultsData.evaluationResults.forEach((result, idx) => {
-        if (yPos > 650) {
-          doc.addPage();
-          yPos = 50;
-        }
-
-        // Result title
-        doc.fontSize(11).font('Helvetica-Bold').fillColor('#0066ff').text(result.name, 50, yPos);
-        yPos += 15;
-
-        // Description
-        doc.fontSize(9).font('Helvetica').fillColor('#666');
-        doc.text(result.description || '', 50, yPos, { width: 500 });
-        yPos += 30;
-
-        // Data display based on type
-        doc.fontSize(10).font('Helvetica').fillColor('#333');
-
-        if (result.type === 'typing') {
-          doc.text(`WPM: ${result.data.wpm}`, 60, yPos);
-          yPos += 12;
-          doc.text(`Net WPM: ${result.data.netWPM}`, 60, yPos);
-          yPos += 12;
-          doc.text(`Precisión: ${result.data.accuracy}%`, 60, yPos);
-          yPos += 12;
-          doc.text(`Errores: ${result.data.totalErrors}`, 60, yPos);
-          yPos += 12;
-        } else if (result.type === 'spelling') {
-          doc.text(`Respuestas Correctas: ${result.data.correctAnswers}`, 60, yPos);
-          yPos += 12;
-          doc.text(`Precisión: ${result.data.accuracy}%`, 60, yPos);
-          yPos += 12;
-          doc.text(`Puntuación: ${result.data.score} pts`, 60, yPos);
-          yPos += 12;
-        } else if (result.type === 'evaluation') {
-          // Renderizar competencias del TPL-80
-          if (result.data && typeof result.data === 'object') {
-            const competencyList = Object.entries(result.data);
-            competencyList.forEach(([competency, values]) => {
-              const percentage = typeof values.percentage === 'number' ? values.percentage.toFixed(1) : '0';
-              doc.text(`${competency}: ${percentage}%`, 60, yPos);
-              yPos += 12;
-            });
+      if (resultsData.evaluationResults && Array.isArray(resultsData.evaluationResults)) {
+        resultsData.evaluationResults.forEach((result, idx) => {
+          if (yPos > 650) {
+            doc.addPage();
+            yPos = 50;
           }
-        }
 
-        yPos += 15;
-      });
+          // Result title
+          doc.fontSize(11).font('Helvetica-Bold').fillColor('#0066ff').text(result.name || 'Resultado', 50, yPos);
+          yPos += 15;
+
+          // Description
+          if (result.description) {
+            doc.fontSize(9).font('Helvetica').fillColor('#666');
+            doc.text(result.description, 50, yPos, { width: 500 });
+            yPos += 30;
+          }
+
+          // Data display based on type
+          doc.fontSize(10).font('Helvetica').fillColor('#333');
+
+          if (result.type === 'typing' && result.data) {
+            doc.text(`WPM: ${result.data.wpm || 0}`, 60, yPos);
+            yPos += 12;
+            doc.text(`Net WPM: ${result.data.netWPM || 0}`, 60, yPos);
+            yPos += 12;
+            doc.text(`Precisión: ${result.data.accuracy || 0}%`, 60, yPos);
+            yPos += 12;
+            doc.text(`Errores: ${result.data.totalErrors || 0}`, 60, yPos);
+            yPos += 12;
+          } else if (result.type === 'spelling' && result.data) {
+            doc.text(`Respuestas Correctas: ${result.data.correctAnswers || 0}`, 60, yPos);
+            yPos += 12;
+            doc.text(`Precisión: ${result.data.accuracy || 0}%`, 60, yPos);
+            yPos += 12;
+            doc.text(`Puntuación: ${result.data.score || 0} pts`, 60, yPos);
+            yPos += 12;
+          } else if (result.type === 'evaluation' && result.data) {
+            try {
+              const entries = Object.entries(result.data);
+              if (entries.length > 0) {
+                entries.forEach(([competency, values]) => {
+                  const pct = values && values.percentage ? parseFloat(values.percentage).toFixed(1) : '0';
+                  doc.text(`${competency}: ${pct}%`, 60, yPos);
+                  yPos += 12;
+                });
+              }
+            } catch (e) {
+              console.error('Error rendering competencies:', e.message);
+            }
+          }
+
+          yPos += 15;
+        });
+      }
 
       // Footer
       yPos = 750;
@@ -282,8 +293,6 @@ const generateEvaluationResultsPDF = (resultsData) => {
           url: `/api/reports/pdf/${filename}`,
         });
       });
-
-      stream.on('error', reject);
     } catch (error) {
       reject(error);
     }

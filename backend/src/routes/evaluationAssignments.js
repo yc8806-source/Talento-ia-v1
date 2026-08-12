@@ -148,11 +148,18 @@ router.get('/results/:candidateId', verifyToken, async (req, res) => {
 
       // Obtener respuestas del candidato para este examen
       const answersDetail = await pool.query(
-        `SELECT id, answer_value, time_spent_seconds
-         FROM exam_answers
-         WHERE candidate_id = $1 AND exam_id = $2`,
+        `SELECT ea.id, ea.answer_value, ea.time_spent_seconds, eq.id as question_id
+         FROM exam_answers ea
+         JOIN exam_questions eq ON ea.question_id = eq.id
+         WHERE ea.candidate_id = $1 AND ea.exam_id = $2`,
         [candidateId, examId]
       );
+
+      // Calcular puntuación (comparar respuestas)
+      // Por ahora, mostrar solo cantidad de respuestas
+      // Una puntuación real requeriría acceso a las respuestas correctas
+      const answersSubmitted = answersDetail.rows.length;
+      const totalQuestions = answersDetail.rows.length;
 
       evaluationResults.push({
         evaluationId: examId,
@@ -161,8 +168,8 @@ router.get('/results/:candidateId', verifyToken, async (req, res) => {
           name: exam.name,
           description: exam.description,
         },
-        answersSubmitted: answersDetail.rows.length,
-        totalQuestions: answersDetail.rows.length,
+        answersSubmitted: answersSubmitted,
+        totalQuestions: totalQuestions,
         answers: answersDetail.rows,
       });
     }

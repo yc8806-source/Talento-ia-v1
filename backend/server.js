@@ -428,8 +428,34 @@ const server = http.createServer(app);
 const io = initSocket(server);
 global.io = io;
 
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`🚀 Talent IA Backend corriendo en puerto ${PORT}`);
   console.log(`✅ RAILWAY_DATABASE_URL: ${process.env.RAILWAY_DATABASE_URL ? 'SET' : 'NOT SET'}`);
   console.log(`✅ DATABASE_URL: ${process.env.DATABASE_URL ? 'SET' : 'NOT SET'}`);
+
+  // Initialize exam_scores table if not exists
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS exam_scores (
+        id SERIAL PRIMARY KEY,
+        candidate_id INTEGER NOT NULL,
+        exam_id INTEGER NOT NULL,
+        total_score INTEGER NOT NULL DEFAULT 0,
+        max_score INTEGER NOT NULL DEFAULT 0,
+        percentage DECIMAL(5, 2) NOT NULL DEFAULT 0,
+        completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(candidate_id, exam_id),
+        FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+        FOREIGN KEY (exam_id) REFERENCES exams(id) ON DELETE CASCADE
+      )
+    `);
+
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_exam_scores_candidate ON exam_scores(candidate_id)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_exam_scores_exam ON exam_scores(exam_id)');
+
+    console.log('✅ exam_scores table initialized');
+  } catch (error) {
+    console.error('⚠️ Error initializing exam_scores table:', error.message);
+  }
 });

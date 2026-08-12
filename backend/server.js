@@ -217,6 +217,43 @@ app.get('/api/admin/diagnostics', async (req, res) => {
   res.json(diagnostics);
 });
 
+// Public Exams Endpoint (no auth required)
+app.get('/api/exams-public/:id', async (req, res) => {
+  try {
+    const examId = req.params.id;
+    const result = await pool.query(
+      'SELECT id, name, "maxTimeMinutes", type FROM exams WHERE id = $1',
+      [examId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Examen no encontrado' });
+    }
+
+    const exam = result.rows[0];
+
+    // Get questions for this exam
+    const questionsResult = await pool.query(
+      `SELECT q.* FROM questions q
+       JOIN exam_questions eq ON q.id = eq.question_id
+       WHERE eq.exam_id = $1
+       ORDER BY eq.order ASC`,
+      [examId]
+    );
+
+    res.json({
+      id: exam.id,
+      name: exam.name,
+      maxTimeMinutes: exam.maxTimeMinutes || 60,
+      type: exam.type,
+      questions: questionsResult.rows
+    });
+  } catch (error) {
+    console.error('Error fetching exam:', error);
+    res.status(500).json({ error: 'Error al cargar el examen' });
+  }
+});
+
 // Admin Seeding Endpoint - DEVELOPMENT ONLY
 app.post('/api/admin/seed', async (req, res) => {
   try {

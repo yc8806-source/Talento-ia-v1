@@ -121,7 +121,13 @@ exports.cleanupTestData = async (req, res) => {
     ];
 
     for (const query of cleanup) {
-      await pool.query(query, query.includes('role') ? ['admin'] : []);
+      try {
+        await pool.query(query, query.includes('role') ? ['admin'] : []);
+      } catch (err) {
+        if (!err.message.includes('does not exist')) {
+          throw err;
+        }
+      }
     }
 
     const candidatesCount = await pool.query('SELECT COUNT(*) as count FROM candidates');
@@ -132,13 +138,15 @@ exports.cleanupTestData = async (req, res) => {
     res.json({
       message: 'Limpieza de datos de prueba completada exitosamente ✅',
       data: {
-        candidatesRemaining: candidatesCount.rows[0].count,
-        usersRemaining: usersCount.rows[0].count,
+        candidatesRemaining: parseInt(candidatesCount.rows[0].count),
+        usersRemaining: parseInt(usersCount.rows[0].count),
         timestamp: new Date()
       }
     });
   } catch (error) {
-    await pool.query('ROLLBACK');
+    try {
+      await pool.query('ROLLBACK');
+    } catch (e) {}
     console.error('Error limpiando datos de prueba:', error);
     res.status(500).json({
       error: 'Error al limpiar datos de prueba',

@@ -205,48 +205,84 @@ const generateEvaluationResultsPDF = (resultsData) => {
       });
       doc.on('error', reject);
 
+      const pageWidth = 595;
+      const margin = 50;
+      const contentWidth = pageWidth - 2 * margin;
       let yPos = 50;
 
-      // Header
-      doc.fontSize(16).font('Helvetica-Bold').fillColor('#1A237E').text('Talent IA', 50, yPos);
-      doc.fontSize(10).font('Helvetica').fillColor('#666').text('Reporte de Evaluaciones', 50, yPos + 20);
-      doc.moveTo(50, yPos + 40).lineTo(545, yPos + 40).stroke('#E0E0E0');
+      // ═══════════════════════════════════════════════════════════════════
+      // HEADER PROFESIONAL
+      // ═══════════════════════════════════════════════════════════════════
+      doc.fontSize(24).font('Helvetica-Bold').fillColor('#1A237E').text('Talent IA', margin, yPos);
+      doc.fontSize(10).font('Helvetica').fillColor('#666').text('Sistema Integral de Evaluación de Talentos', margin, yPos + 25);
+
+      // Línea decorativa
+      doc.moveTo(margin, yPos + 42).lineTo(pageWidth - margin, yPos + 42).stroke('#1A237E');
+      doc.moveTo(margin, yPos + 43).lineTo(pageWidth - margin, yPos + 43).stroke('#4A90E2');
+
+      yPos += 65;
+
+      // ═══════════════════════════════════════════════════════════════════
+      // INFORMACIÓN DEL CANDIDATO
+      // ═══════════════════════════════════════════════════════════════════
+      // Fondo de caja
+      doc.rect(margin, yPos - 5, contentWidth, 50).fill('#F5F7FA').stroke('#E0E0E0');
+
+      doc.fontSize(18).font('Helvetica-Bold').fillColor('#1A237E').text(resultsData.candidateName, margin + 10, yPos);
+      doc.fontSize(10).font('Helvetica').fillColor('#0066cc').text(resultsData.email, margin + 10, yPos + 25);
 
       yPos += 60;
 
-      // Candidate name as title
-      doc.fontSize(20).font('Helvetica-Bold').fillColor('#000').text(resultsData.candidateName, 50, yPos);
+      // Fecha de generación
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+      doc.fontSize(8).font('Helvetica').fillColor('#999').text(`Generado: ${dateStr}`, margin, yPos);
+      yPos += 20;
 
-      // Email below name
-      doc.fontSize(10).font('Helvetica').fillColor('#0066cc').text(resultsData.email, 50, yPos + 25);
+      // ═══════════════════════════════════════════════════════════════════
+      // RESUMEN EJECUTIVO
+      // ═══════════════════════════════════════════════════════════════════
+      const overallScore = calculateOverallScore(resultsData.evaluationResults);
+      const overallLevel = getLevelLabel(overallScore);
+      const overallColor = getLevelColor(overallScore);
 
-      yPos += 50;
+      doc.fontSize(13).font('Helvetica-Bold').fillColor('#1A237E').text('Resumen Ejecutivo', margin, yPos);
+      yPos += 18;
 
-      // Evaluation results
+      // Caja de puntuación general
+      doc.rect(margin, yPos, contentWidth, 60).fill(overallColor).strokeColor('#000').lineWidth(1).stroke();
+      doc.fontSize(32).font('Helvetica-Bold').fillColor('#FFFFFF').text(`${overallScore.toFixed(1)}%`, margin + 20, yPos + 10);
+      doc.fontSize(11).font('Helvetica').fillColor('#FFFFFF').text(`Nivel: ${overallLevel}`, margin + 150, yPos + 18);
+      doc.fontSize(9).font('Helvetica').fillColor('#FFFFFF').text(getRecommendation(overallScore), margin + 150, yPos + 38, { width: 300 });
+
+      yPos += 80;
+
+      // ═══════════════════════════════════════════════════════════════════
+      // RESULTADOS DE EVALUACIONES
+      // ═══════════════════════════════════════════════════════════════════
       if (resultsData.evaluationResults && Array.isArray(resultsData.evaluationResults)) {
         resultsData.evaluationResults.forEach((result, idx) => {
-          if (yPos > 700) {
+          if (yPos > 680) {
             doc.addPage();
             yPos = 50;
           }
 
           if (result.type === 'evaluation' && result.data) {
-            // Title
-            doc.fontSize(14).font('Helvetica-Bold').fillColor('#1A237E').text(result.name || 'Evaluación', 50, yPos);
-            yPos += 20;
+            // Sección de evaluación de competencias
+            drawSectionHeader(doc, result.name || 'Evaluación', margin, yPos, contentWidth);
+            yPos += 25;
 
-            // Description
             if (result.description) {
               doc.fontSize(9).font('Helvetica').fillColor('#666');
-              doc.text(result.description, 50, yPos, { width: 445, align: 'left' });
-              yPos += 40;
+              const descHeight = doc.heightOfString(result.description, { width: contentWidth });
+              doc.text(result.description, margin, yPos, { width: contentWidth });
+              yPos += descHeight + 15;
             }
 
-            // Competencies
             const entries = Object.entries(result.data);
             if (entries.length > 0) {
               entries.forEach(([competency, values]) => {
-                if (yPos > 700) {
+                if (yPos > 680) {
                   doc.addPage();
                   yPos = 50;
                 }
@@ -255,78 +291,114 @@ const generateEvaluationResultsPDF = (resultsData) => {
                 const level = getLevelLabel(pct);
                 const levelColor = getLevelColor(pct);
 
-                // Competency name and level
-                doc.fontSize(11).font('Helvetica-Bold').fillColor('#000').text(competency, 50, yPos);
-                doc.fontSize(9).font('Helvetica').fillColor('#666').text(level, 350, yPos);
-                doc.fontSize(10).font('Helvetica-Bold').fillColor(levelColor).text(`${pct.toFixed(1)}%`, 480, yPos);
+                // Fila de competencia
+                doc.fontSize(10).font('Helvetica-Bold').fillColor('#333').text(competency, margin + 10, yPos);
+                doc.fontSize(8).font('Helvetica').fillColor('#999').text(level, margin + 310, yPos);
+                doc.fontSize(10).font('Helvetica-Bold').fillColor(levelColor).text(`${pct.toFixed(1)}%`, margin + 420, yPos);
 
-                yPos += 18;
+                yPos += 16;
 
-                // Progress bar background
-                doc.rect(50, yPos, 445, 8).fill('#E0E0E0');
+                // Barra de progreso con mejor diseño
+                doc.rect(margin + 10, yPos, contentWidth - 20, 6).fill('#EEEEEE').stroke('#DDD');
+                const barWidth = ((contentWidth - 20) * pct) / 100;
+                doc.rect(margin + 10, yPos, barWidth, 6).fill(levelColor).stroke(levelColor);
 
-                // Progress bar fill
-                const barWidth = (pct / 100) * 445;
-                doc.rect(50, yPos, barWidth, 8).fill(levelColor);
-
-                yPos += 20;
+                yPos += 14;
               });
             }
 
-            yPos += 20;
+            yPos += 15;
+
           } else if (result.type === 'typing' && result.data) {
-            // Typing test results
-            doc.fontSize(14).font('Helvetica-Bold').fillColor('#1A237E').text(result.name || 'Prueba de Mecanografía', 50, yPos);
-            yPos += 20;
+            // Prueba de mecanografía
+            drawSectionHeader(doc, result.name || 'Prueba de Mecanografía', margin, yPos, contentWidth);
+            yPos += 25;
 
             if (result.description) {
               doc.fontSize(9).font('Helvetica').fillColor('#666');
-              doc.text(result.description, 50, yPos, { width: 445 });
-              yPos += 30;
+              const descHeight = doc.heightOfString(result.description, { width: contentWidth });
+              doc.text(result.description, margin, yPos, { width: contentWidth });
+              yPos += descHeight + 15;
             }
 
-            // Metrics
-            doc.fontSize(9).font('Helvetica').fillColor('#333');
-            doc.text(`Palabras por Minuto (WPM): ${result.data.wpm || 0}`, 60, yPos);
-            yPos += 12;
-            doc.text(`Net WPM: ${result.data.netWPM || 0}`, 60, yPos);
-            yPos += 12;
-            doc.text(`Precisión: ${result.data.accuracy || 0}%`, 60, yPos);
-            yPos += 12;
-            doc.text(`Errores: ${result.data.totalErrors || 0}`, 60, yPos);
-            yPos += 20;
+            // Métrica de velocidad
+            const wpm = result.data.wpm || 0;
+            const wpmColor = wpm >= 60 ? '#1B5E20' : wpm >= 40 ? '#F57F17' : '#D84315';
+
+            doc.rect(margin, yPos, contentWidth / 2 - 10, 50).fill('#F5F7FA').stroke('#E0E0E0');
+            doc.fontSize(24).font('Helvetica-Bold').fillColor(wpmColor).text(wpm, margin + 15, yPos + 8);
+            doc.fontSize(9).font('Helvetica').fillColor('#666').text('Palabras por Minuto', margin + 15, yPos + 32);
+
+            const netWpm = result.data.netWPM || 0;
+            doc.rect(margin + contentWidth / 2, yPos, contentWidth / 2 - 10, 50).fill('#F5F7FA').stroke('#E0E0E0');
+            doc.fontSize(24).font('Helvetica-Bold').fillColor('#2E7D32').text(netWpm, margin + contentWidth / 2 + 15, yPos + 8);
+            doc.fontSize(9).font('Helvetica').fillColor('#666').text('Net WPM (ajustado)', margin + contentWidth / 2 + 15, yPos + 32);
+
+            yPos += 65;
+
+            // Otras métricas
+            const accuracy = result.data.accuracy || 0;
+            const errors = result.data.totalErrors || 0;
+
+            doc.fontSize(10).font('Helvetica-Bold').fillColor('#333').text('Precisión', margin, yPos);
+            doc.fontSize(10).font('Helvetica').fillColor('#666').text(`${accuracy}%`, margin + 300, yPos);
+            doc.rect(margin, yPos + 12, contentWidth / 2 - 10, 8).fill('#EEEEEE');
+            doc.rect(margin, yPos + 12, (contentWidth / 2 - 10) * accuracy / 100, 8).fill(getLevelColor(accuracy));
+
+            doc.fontSize(10).font('Helvetica-Bold').fillColor('#333').text('Errores', margin + contentWidth / 2, yPos);
+            doc.fontSize(10).font('Helvetica').fillColor('#666').text(errors, margin + contentWidth / 2 + 300, yPos);
+
+            yPos += 30;
+
           } else if (result.type === 'spelling' && result.data) {
-            // Spelling test results
-            doc.fontSize(14).font('Helvetica-Bold').fillColor('#1A237E').text(result.name || 'Prueba de Ortografía', 50, yPos);
-            yPos += 20;
+            // Prueba de ortografía
+            drawSectionHeader(doc, result.name || 'Prueba de Ortografía', margin, yPos, contentWidth);
+            yPos += 25;
 
             if (result.description) {
               doc.fontSize(9).font('Helvetica').fillColor('#666');
-              doc.text(result.description, 50, yPos, { width: 445 });
-              yPos += 30;
+              const descHeight = doc.heightOfString(result.description, { width: contentWidth });
+              doc.text(result.description, margin, yPos, { width: contentWidth });
+              yPos += descHeight + 15;
             }
 
-            // Metrics
-            doc.fontSize(9).font('Helvetica').fillColor('#333');
-            doc.text(`Respuestas Correctas: ${result.data.correctAnswers || 0}`, 60, yPos);
-            yPos += 12;
-            doc.text(`Precisión: ${result.data.accuracy || 0}%`, 60, yPos);
-            yPos += 12;
-            doc.text(`Puntuación: ${result.data.score || 0} puntos`, 60, yPos);
-            yPos += 20;
+            // Métricas en cajas
+            const accuracy = result.data.accuracy || 0;
+            const correctAnswers = result.data.correctAnswers || 0;
+            const score = result.data.score || 0;
+
+            const boxWidth = (contentWidth - 10) / 3;
+            const boxHeight = 45;
+
+            // Caja 1: Correctas
+            doc.rect(margin, yPos, boxWidth, boxHeight).fill('#F0F5F9').stroke('#E0E0E0');
+            doc.fontSize(20).font('Helvetica-Bold').fillColor('#1B5E20').text(correctAnswers, margin + 10, yPos + 5);
+            doc.fontSize(8).font('Helvetica').fillColor('#666').text('Respuestas Correctas', margin + 10, yPos + 28);
+
+            // Caja 2: Precisión
+            doc.rect(margin + boxWidth + 5, yPos, boxWidth, boxHeight).fill('#F0F5F9').stroke('#E0E0E0');
+            doc.fontSize(20).font('Helvetica-Bold').fillColor(getLevelColor(accuracy)).text(`${accuracy}%`, margin + boxWidth + 15, yPos + 5);
+            doc.fontSize(8).font('Helvetica').fillColor('#666').text('Precisión', margin + boxWidth + 15, yPos + 28);
+
+            // Caja 3: Puntuación
+            doc.rect(margin + (boxWidth + 5) * 2, yPos, boxWidth, boxHeight).fill('#F0F5F9').stroke('#E0E0E0');
+            doc.fontSize(20).font('Helvetica-Bold').fillColor('#4A90E2').text(score, margin + (boxWidth + 5) * 2 + 10, yPos + 5);
+            doc.fontSize(8).font('Helvetica').fillColor('#666').text('Puntuación Total', margin + (boxWidth + 5) * 2 + 10, yPos + 28);
+
+            yPos += boxHeight + 20;
           }
         });
       }
 
-      // Footer
+      // ═══════════════════════════════════════════════════════════════════
+      // FOOTER
+      // ═══════════════════════════════════════════════════════════════════
       doc.fontSize(8).font('Helvetica').fillColor('#999');
-      const now = new Date();
-      const dateStr = now.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
       doc.text(
-        `Generado el ${dateStr} | Talent IA - Sistema de Evaluación de Talentos`,
-        50,
+        `Talent IA - Sistema de Evaluación de Talentos | Reporte Confidencial | ${dateStr}`,
+        margin,
         760,
-        { align: 'center', width: 445 }
+        { align: 'center', width: contentWidth }
       );
 
       doc.end();
@@ -335,6 +407,45 @@ const generateEvaluationResultsPDF = (resultsData) => {
     }
   });
 };
+
+function drawSectionHeader(doc, title, x, y, width) {
+  doc.fontSize(13).font('Helvetica-Bold').fillColor('#FFFFFF').rect(x, y, width, 22).fill('#1A237E').stroke();
+  doc.text(title, x + 10, y + 4, { width: width - 20, align: 'left' });
+}
+
+function calculateOverallScore(evaluationResults) {
+  if (!evaluationResults || !Array.isArray(evaluationResults)) return 0;
+
+  let totalScore = 0;
+  let count = 0;
+
+  evaluationResults.forEach(result => {
+    if (result.type === 'evaluation' && result.data) {
+      const entries = Object.entries(result.data);
+      entries.forEach(([_, values]) => {
+        if (values && values.percentage) {
+          totalScore += parseFloat(values.percentage);
+          count++;
+        }
+      });
+    } else if (result.type === 'typing' && result.data) {
+      totalScore += result.data.wpm || 0;
+      count++;
+    } else if (result.type === 'spelling' && result.data) {
+      totalScore += result.data.accuracy || 0;
+      count++;
+    }
+  });
+
+  return count > 0 ? totalScore / count : 0;
+}
+
+function getRecommendation(score) {
+  if (score >= 80) return 'Excelente desempeño. Candidato altamente calificado.';
+  if (score >= 60) return 'Buen desempeño. Candidato calificado para el rol.';
+  if (score >= 40) return 'Desempeño aceptable. Requiere evaluación adicional.';
+  return 'Desempeño bajo. Requiere desarrollo o reconsideración.';
+}
 
 function getLevelLabel(percentage) {
   if (percentage >= 80) return 'Muy Alto';

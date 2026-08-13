@@ -221,7 +221,7 @@ function Invitations() {
             </div>
 
             {/* Step Labels */}
-            <div className="grid grid-cols-5 gap-4 text-center text-sm">
+            <div className="grid grid-cols-4 gap-4 text-center text-sm">
               <div>
                 <p className={`font-semibold ${step === 1 ? 'text-purple-600' : 'text-gray-600'}`}>
                   Candidatos
@@ -239,12 +239,7 @@ function Invitations() {
               </div>
               <div>
                 <p className={`font-semibold ${step === 4 ? 'text-purple-600' : 'text-gray-600'}`}>
-                  Mensaje
-                </p>
-              </div>
-              <div>
-                <p className={`font-semibold ${step === 5 ? 'text-purple-600' : 'text-gray-600'}`}>
-                  Enviar
+                  Revisar & Enviar
                 </p>
               </div>
             </div>

@@ -18,7 +18,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8dff5 100%);
   min-height: 100vh;
 }
 
@@ -61,10 +61,10 @@ code {
 
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+    box-shadow: 0 0 0 0 rgba(91, 63, 160, 0.7);
   }
   50% {
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    box-shadow: 0 0 0 10px rgba(91, 63, 160, 0);
   }
 }
 
@@ -120,7 +120,18 @@ input[type="tel"],
 input[type="number"],
 select,
 textarea {
-  @apply focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  @apply focus:ring-2 focus:border-transparent;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="tel"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus {
+  box-shadow: 0 0 0 3px rgba(91, 63, 160, 0.1);
+  border-color: #5B3FA0;
 }
 
 /* Estilos de tabla */

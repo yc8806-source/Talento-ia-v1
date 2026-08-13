@@ -208,19 +208,44 @@ const generateEvaluationResultsPDF = (resultsData) => {
       const pageWidth = 595;
       const margin = 50;
       const contentWidth = pageWidth - 2 * margin;
-      let yPos = 50;
+      let yPos = 30;
 
       // ═══════════════════════════════════════════════════════════════════
-      // HEADER PROFESIONAL
+      // HEADER PROFESIONAL CON LOGO
       // ═══════════════════════════════════════════════════════════════════
-      doc.fontSize(24).font('Helvetica-Bold').fillColor('#5B3FA0').text('IMPULSA TALENTO', margin, yPos);
-      doc.fontSize(10).font('Helvetica').fillColor('#666').text('Sistema Integral de Evaluación de Talentos', margin, yPos + 25);
+      // Cargar logo PNG original
+      try {
+        const logoPath = path.join(__dirname, '../../assets/impulsa-talento-logo.png');
+        if (fs.existsSync(logoPath)) {
+          doc.image(logoPath, margin, yPos, {
+            fit: [80, 80],
+            align: 'left',
+            valign: 'top'
+          });
+          console.log('✅ Logo PNG cargado en el PDF');
+        }
+      } catch (err) {
+        console.log('⚠️ No se pudo cargar logo PNG, usando logo visual');
+        // Logo visual fallback (círculos púrpura y verde)
+        const logoSize = 70;
+        const logoX = margin + 5;
+        const logoY = yPos + 5;
+        doc.circle(logoX + logoSize/2, logoY + logoSize/2, logoSize/2).stroke('#5B3FA0').lineWidth(3);
+        doc.circle(logoX + logoSize/2, logoY + logoSize/2, logoSize/3.5).stroke('#00B894').lineWidth(2);
+        doc.circle(logoX + logoSize/2, logoY + logoSize/2, logoSize/5.5).stroke('#00B894').lineWidth(1.5);
+        doc.circle(logoX + logoSize/2, logoY + 8, 4).fill('#00B894');
+      }
+
+      // Texto al lado del logo
+      doc.fontSize(22).font('Helvetica-Bold').fillColor('#2D1B69').text('IMPULSA TALENTO', margin + 100, yPos + 15);
+      doc.fontSize(9).font('Helvetica').fillColor('#666').text('Sistema Integral de Evaluación de Talentos', margin + 100, yPos + 45);
 
       // Línea decorativa
-      doc.moveTo(margin, yPos + 42).lineTo(pageWidth - margin, yPos + 42).stroke('#5B3FA0');
-      doc.moveTo(margin, yPos + 43).lineTo(pageWidth - margin, yPos + 43).stroke('#00B894');
+      yPos += 95;
+      doc.moveTo(margin, yPos).lineTo(pageWidth - margin, yPos).stroke('#5B3FA0');
+      doc.moveTo(margin, yPos + 1).lineTo(pageWidth - margin, yPos + 1).stroke('#00B894');
 
-      yPos += 65;
+      yPos += 20;
 
       // ═══════════════════════════════════════════════════════════════════
       // INFORMACIÓN DEL CANDIDATO

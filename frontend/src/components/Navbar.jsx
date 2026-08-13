@@ -21,9 +21,14 @@ function Navbar({ onLogout }) {
       to={to}
       className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
         isActive(to)
-          ? 'bg-blue-100 text-blue-700 font-semibold'
-          : 'text-gray-700 hover:text-blue-600 hover:bg-gray-100'
+          ? 'font-semibold'
+          : 'text-gray-700 hover:bg-gray-100'
       }`}
+      style={
+        isActive(to)
+          ? { color: '#5B3FA0', backgroundColor: '#E8DFF5' }
+          : {}
+      }
     >
       <Icon className="w-5 h-5" />
       {label}
@@ -36,9 +41,10 @@ function Navbar({ onLogout }) {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             {/* Logo */}
-            <Link to="/dashboard" className="flex items-center gap-2 text-2xl font-bold">
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Talent IA
+            <Link to="/dashboard" className="flex items-center gap-3">
+              <img src="/impulsa-talento-logo.png" alt="IMPULSA TALENTO" className="h-12 w-12" />
+              <span className="text-2xl font-bold" style={{ color: '#2D1B69' }}>
+                IMPULSA TALENTO
               </span>
             </Link>
 

@@ -13,6 +13,7 @@ function CandidateDashboard() {
   const [cvFileName, setCVFileName] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState('');
+  const [error, setError] = useState(null);
 
   // Obtener ID del usuario autenticado
   useEffect(() => {
@@ -31,15 +32,47 @@ function CandidateDashboard() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [summaryRes, historyRes] = await Promise.all([
-        candidateDashboardAPI.getSummary(candidateId),
-        candidateDashboardAPI.getHistory(candidateId),
-      ]);
+      setError(null);
 
-      setSummary(summaryRes.data);
-      setHistory(historyRes.data.history || []);
-    } catch (error) {
-      console.error('Error cargando datos del candidato:', error);
+      // Intentar cargar summary con manejo de error individual
+      try {
+        const summaryRes = await candidateDashboardAPI.getSummary(candidateId);
+        setSummary(summaryRes.data);
+      } catch (summaryErr) {
+        console.error('Error cargando summary:', summaryErr);
+        if (summaryErr.response?.status === 404) {
+          // Usuario es admin, mostrar datos básicos
+          setSummary({
+            candidate: {
+              id: candidateId,
+              name: 'Administrador',
+              email: 'admin@talent-ia.com',
+              phone: '',
+              joinedAt: new Date()
+            },
+            statistics: {
+              totalEvaluations: 0,
+              completedEvaluations: 0,
+              inProgressEvaluations: 0,
+              notStartedEvaluations: 0,
+              averageScore: 0,
+              bestScore: 0
+            },
+            recentEvaluation: null
+          });
+        } else {
+          setError('No se pudo cargar el perfil. Por favor intenta más tarde.');
+        }
+      }
+
+      // Intentar cargar history con manejo de error individual
+      try {
+        const historyRes = await candidateDashboardAPI.getHistory(candidateId);
+        setHistory(historyRes.data.history || []);
+      } catch (historyErr) {
+        console.error('Error cargando history:', historyErr);
+        setHistory([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -107,6 +140,22 @@ function CandidateDashboard() {
       <div className="text-center py-12 text-gray-600">
         <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         <p className="mt-4">Cargando tu dashboard...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-600 text-lg">{error}</p>
+      </div>
+    );
+  }
+
+  if (!summary) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-600 text-lg">No hay datos disponibles</p>
       </div>
     );
   }

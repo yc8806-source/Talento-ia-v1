@@ -232,7 +232,7 @@ const getCandidateSummary = async (req, res) => {
         id: candidate.id,
         name: `${candidate.first_name} ${candidate.last_name}`,
         email: candidate.email,
-        phone: candidate.phone,
+        phone: candidate.phone || '',
         joinedAt: candidate.created_at
       },
       statistics: {
@@ -243,11 +243,14 @@ const getCandidateSummary = async (req, res) => {
         averageScore: 0,
         bestScore: 0
       },
-      recentEvaluation
+      recentEvaluation: recentEvaluation || {}
     });
   } catch (error) {
-    console.error('Error obteniendo resumen:', error);
-    res.status(500).json({ error: 'Error al obtener resumen' });
+    console.error('❌ Error obteniendo resumen del candidato:', error.message);
+    res.status(500).json({
+      error: 'Error al obtener resumen',
+      details: error.message
+    });
   }
 };
 

@@ -575,11 +575,18 @@ function Invitations() {
                             {result.whatsappMessage && (
                               <div>
                                 <p className="text-xs font-semibold text-gray-600 mb-2">💬 Mensaje de WhatsApp:</p>
-                                <div className="bg-green-50 p-3 rounded border border-green-200 text-xs text-gray-700 whitespace-pre-wrap break-words">
+                                <div className="bg-green-50 p-3 rounded border border-green-200 text-xs text-gray-700 whitespace-pre-wrap break-words max-h-32 overflow-y-auto">
                                   {result.whatsappMessage}
                                 </div>
                               </div>
                             )}
+
+                            {/* Advertencia sobre envío uno a uno */}
+                            <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                              <p className="text-xs text-blue-900">
+                                ℹ️ Para evitar que WhatsApp bloquee el número por spam, los mensajes se deben enviar <strong>uno a la vez</strong> con una pausa entre cada uno.
+                              </p>
+                            </div>
 
                             {/* Botón para Enviar por WhatsApp */}
                             {result.whatsappLink ? (
@@ -588,7 +595,7 @@ function Invitations() {
                                 className="w-full px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded font-semibold flex items-center justify-center gap-2 transition-colors"
                               >
                                 <FiMessageCircle className="w-5 h-5" />
-                                Enviar por WhatsApp Web
+                                📱 Enviar este candidato por WhatsApp
                               </button>
                             ) : (
                               <div className="bg-yellow-50 border border-yellow-200 rounded p-3">

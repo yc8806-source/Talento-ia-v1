@@ -15,7 +15,7 @@ function Invitations() {
   // Selections
   const [selectedCandidates, setSelectedCandidates] = useState([]);
   const [selectedVacancy, setSelectedVacancy] = useState('');
-  const [selectedExams, setSelectedExams] = useState([]);
+  const [vacancyExams, setVacancyExams] = useState([]);
 
   // Results
   const [sending, setSending] = useState(false);
@@ -68,16 +68,21 @@ function Invitations() {
     );
   };
 
-  const handleExamToggle = (examId) => {
-    setSelectedExams(prev =>
-      prev.includes(examId)
-        ? prev.filter(id => id !== examId)
-        : [...prev, examId]
-    );
+  const handleVacancySelect = async (vacancyId) => {
+    setSelectedVacancy(vacancyId);
+
+    // Cargar los exámenes de la vacante
+    try {
+      const response = await vacancyAPI.getById(vacancyId);
+      setVacancyExams(response.data.exams || []);
+    } catch (error) {
+      console.error('Error cargando exámenes de la vacante:', error);
+      setVacancyExams([]);
+    }
   };
 
   const handleSendInvitations = async () => {
-    if (!selectedVacancy || selectedExams.length === 0 || selectedCandidates.length === 0) {
+    if (!selectedVacancy || vacancyExams.length === 0 || selectedCandidates.length === 0) {
       alert('Por favor completa todos los pasos');
       return;
     }
@@ -100,17 +105,17 @@ function Invitations() {
           const candidate = candidates.find(c => c.id === candidateId);
           const vacancy = vacancies.find(v => v.id === parseInt(selectedVacancy));
 
-          // Crear links de evaluación para cada examen seleccionado
+          // Crear links de evaluación para cada examen de la vacante
           const evaluationLinks = [];
-          for (const examId of selectedExams) {
+          for (const exam of vacancyExams) {
             try {
               const linkRes = await evaluationAPI.createAndShareLink({
                 candidateVacancyId,
-                examId: examId,
+                examId: exam.id,
               });
               evaluationLinks.push(linkRes.data.evaluation.link);
             } catch (err) {
-              console.error(`Error creando link para examen ${examId}:`, err);
+              console.error(`Error creando link para examen ${exam.id}:`, err);
             }
           }
 
@@ -119,7 +124,7 @@ function Invitations() {
           }
 
           const candidatePhone = (candidate.phone || '').replace(/\D/g, ''); // Solo dígitos
-          const examNames = selectedExams.map(eid => exams.find(e => e.id === parseInt(eid))?.name).filter(Boolean).join(', ');
+          const examNames = vacancyExams.map(e => e.name).join(', ');
 
           // Texto predefinido profesional para WhatsApp
           const whatsappMessage = `¡Hola ${candidate.first_name}! 👋\n\nTe invitamos a participar en evaluaciones de ${vacancy.title} en IMPULSA TALENTO.\n\nExámenes: ${examNames}\n\nAccede a los siguientes enlaces:\n\n${evaluationLinks.map((link, idx) => `${idx + 1}. ${link}`).join('\n\n')}\n\n¡Mucho éxito! 🚀`;
@@ -215,7 +220,7 @@ function Invitations() {
 
             {/* Progress Steps */}
             <div className="flex items-center justify-between bg-white rounded-lg p-6 shadow-sm">
-              {[1, 2, 3, 4].map((s) => (
+              {[1, 2, 3].map((s) => (
                 <div key={s} className="flex items-center flex-1">
                   <button
                     onClick={() => setStep(s)}
@@ -229,7 +234,7 @@ function Invitations() {
                   >
                     {s < step ? <FiCheck /> : s}
                   </button>
-                  {s < 4 && (
+                  {s < 3 && (
                     <div
                       className={`h-1 flex-1 mx-2 transition-all ${
                         s < step ? 'bg-green-500' : 'bg-gray-200'
@@ -241,7 +246,7 @@ function Invitations() {
             </div>
 
             {/* Step Labels */}
-            <div className="grid grid-cols-4 gap-4 text-center text-sm">
+            <div className="grid grid-cols-3 gap-4 text-center text-sm">
               <div>
                 <p className={`font-semibold ${step === 1 ? 'text-purple-600' : 'text-gray-600'}`}>
                   Candidatos
@@ -254,11 +259,6 @@ function Invitations() {
               </div>
               <div>
                 <p className={`font-semibold ${step === 3 ? 'text-purple-600' : 'text-gray-600'}`}>
-                  Examen
-                </p>
-              </div>
-              <div>
-                <p className={`font-semibold ${step === 4 ? 'text-purple-600' : 'text-gray-600'}`}>
                   Revisar & Enviar
                 </p>
               </div>
@@ -363,7 +363,7 @@ function Invitations() {
                       <button
                         key={vacancy.id}
                         onClick={() => {
-                          setSelectedVacancy(vacancy.id);
+                          handleVacancySelect(vacancy.id);
                           setStep(3);
                         }}
                         className={`p-4 rounded-lg border-2 text-left transition-all ${
@@ -388,60 +388,8 @@ function Invitations() {
               </div>
             )}
 
-            {/* Step 3: Select Exams */}
+            {/* Step 3: Review & Send */}
             {step === 3 && (
-              <div className="bg-white rounded-xl shadow-md p-8 space-y-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-                    <FiBook className="w-6 h-6 text-purple-600" />
-                    Selecciona Exámenes
-                  </h2>
-                  <p className="text-gray-600">Elige una o más evaluaciones para asignar a los candidatos</p>
-                </div>
-
-                <div className="grid grid-cols-1 gap-3">
-                  {exams.length === 0 ? (
-                    <p className="text-center text-gray-500 py-8">No hay exámenes disponibles</p>
-                  ) : (
-                    exams.map(exam => (
-                      <div
-                        key={exam.id}
-                        className="p-4 rounded-lg border-2 border-gray-200 hover:border-purple-300 transition-all hover:shadow-sm"
-                      >
-                        <label className="flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={selectedExams.includes(exam.id)}
-                            onChange={() => handleExamToggle(exam.id)}
-                            className="w-5 h-5 text-purple-600 rounded cursor-pointer"
-                          />
-                          <div className="ml-3 flex-1">
-                            <p className="font-bold text-gray-900">{exam.name}</p>
-                            <p className="text-sm text-gray-600">
-                              {exam.question_count || 0} preguntas
-                            </p>
-                          </div>
-                          {selectedExams.includes(exam.id) && (
-                            <FiCheck className="w-6 h-6 text-purple-600" />
-                          )}
-                        </label>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                {selectedExams.length > 0 && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm text-blue-900">
-                      ✓ <strong>{selectedExams.length}</strong> examen{selectedExams.length !== 1 ? 'es' : ''} seleccionado{selectedExams.length !== 1 ? 's' : ''}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Step 4: Review & Send */}
-            {step === 4 && (
               <div className="bg-white rounded-xl shadow-md p-8 space-y-6">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">Resumen de Invitación</h2>
@@ -466,12 +414,12 @@ function Invitations() {
                   <div className="bg-gray-50 rounded-lg p-4">
                     <p className="text-sm font-semibold text-gray-600 mb-2">📚 EXÁMENES</p>
                     <div className="space-y-1">
-                      {selectedExams.length === 0 ? (
-                        <p className="text-lg font-bold text-gray-900">No seleccionados</p>
+                      {vacancyExams.length === 0 ? (
+                        <p className="text-lg font-bold text-gray-900">Sin exámenes asignados</p>
                       ) : (
-                        selectedExams.map(examId => (
-                          <p key={examId} className="text-lg font-bold text-gray-900">
-                            • {exams.find(e => e.id === parseInt(examId))?.name}
+                        vacancyExams.map(exam => (
+                          <p key={exam.id} className="text-lg font-bold text-gray-900">
+                            • {exam.name}
                           </p>
                         ))
                       )}
@@ -497,13 +445,12 @@ function Invitations() {
                 ← Anterior
               </button>
 
-              {step < 4 ? (
+              {step < 3 ? (
                 <button
                   onClick={() => setStep(step + 1)}
                   disabled={
                     (step === 1 && selectedCandidates.length === 0) ||
-                    (step === 2 && !selectedVacancy) ||
-                    (step === 3 && selectedExams.length === 0)
+                    (step === 2 && !selectedVacancy)
                   }
                   className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
@@ -545,7 +492,7 @@ function Invitations() {
                     setStep(1);
                     setSelectedCandidates([]);
                     setSelectedVacancy('');
-                    setSelectedExams([]);
+                    setVacancyExams([]);
                   }}
                   className="px-4 py-2 text-purple-600 hover:text-purple-700 font-semibold"
                 >
@@ -606,7 +553,7 @@ function Invitations() {
                                   <div key={idx} className="flex items-center justify-between gap-2 bg-gray-50 p-2 rounded">
                                     <div className="flex-1">
                                       <p className="text-xs text-gray-600 font-semibold mb-1">
-                                        {exams.find(e => e.id === parseInt(selectedExams[idx]))?.name || `Examen ${idx + 1}`}
+                                        {vacancyExams[idx]?.name || `Examen ${idx + 1}`}
                                       </p>
                                       <code className="text-xs text-gray-700 break-all">
                                         {link}

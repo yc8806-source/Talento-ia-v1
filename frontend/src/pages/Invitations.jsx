@@ -15,7 +15,7 @@ function Invitations() {
   // Selections
   const [selectedCandidates, setSelectedCandidates] = useState([]);
   const [selectedVacancy, setSelectedVacancy] = useState('');
-  const [selectedExam, setSelectedExam] = useState('');
+  const [selectedExams, setSelectedExams] = useState([]);
 
   // Results
   const [sending, setSending] = useState(false);
@@ -68,8 +68,16 @@ function Invitations() {
     );
   };
 
+  const handleExamToggle = (examId) => {
+    setSelectedExams(prev =>
+      prev.includes(examId)
+        ? prev.filter(id => id !== examId)
+        : [...prev, examId]
+    );
+  };
+
   const handleSendInvitations = async () => {
-    if (!selectedVacancy || !selectedExam || selectedCandidates.length === 0) {
+    if (!selectedVacancy || selectedExams.length === 0 || selectedCandidates.length === 0) {
       alert('Por favor completa todos los pasos');
       return;
     }
@@ -92,17 +100,29 @@ function Invitations() {
           const candidate = candidates.find(c => c.id === candidateId);
           const vacancy = vacancies.find(v => v.id === parseInt(selectedVacancy));
 
-          // Crear link de evaluación
-          const linkRes = await evaluationAPI.createAndShareLink({
-            candidateVacancyId,
-            examId: selectedExam,
-          });
+          // Crear links de evaluación para cada examen seleccionado
+          const evaluationLinks = [];
+          for (const examId of selectedExams) {
+            try {
+              const linkRes = await evaluationAPI.createAndShareLink({
+                candidateVacancyId,
+                examId: examId,
+              });
+              evaluationLinks.push(linkRes.data.evaluation.link);
+            } catch (err) {
+              console.error(`Error creando link para examen ${examId}:`, err);
+            }
+          }
 
-          const evaluationLink = linkRes.data.evaluation.link;
+          if (evaluationLinks.length === 0) {
+            throw new Error('No se pudieron crear los links de evaluación');
+          }
+
           const candidatePhone = (candidate.phone || '').replace(/\D/g, ''); // Solo dígitos
+          const examNames = selectedExams.map(eid => exams.find(e => e.id === parseInt(eid))?.name).filter(Boolean).join(', ');
 
           // Texto predefinido profesional para WhatsApp
-          const whatsappMessage = `¡Hola ${candidate.first_name}! 👋\n\nTe invitamos a participar en una evaluación de ${vacancy.title} en IMPULSA TALENTO.\n\nPor favor, accede al siguiente enlace para completar tu evaluación:\n\n${evaluationLink}\n\n¡Mucho éxito! 🚀`;
+          const whatsappMessage = `¡Hola ${candidate.first_name}! 👋\n\nTe invitamos a participar en evaluaciones de ${vacancy.title} en IMPULSA TALENTO.\n\nExámenes: ${examNames}\n\nAccede a los siguientes enlaces:\n\n${evaluationLinks.map((link, idx) => `${idx + 1}. ${link}`).join('\n\n')}\n\n¡Mucho éxito! 🚀`;
 
           // Crear link de WhatsApp Web
           const whatsappLink = candidatePhone
@@ -114,10 +134,10 @@ function Invitations() {
             candidateName: `${candidate.first_name} ${candidate.last_name}`,
             candidateEmail: candidate.email,
             candidatePhone: candidate.phone,
-            link: evaluationLink,
+            links: evaluationLinks,
             whatsappLink: whatsappLink,
             whatsappMessage: whatsappMessage,
-            message: 'Link de evaluación generado exitosamente',
+            message: 'Links de evaluación generados exitosamente',
           });
         } catch (error) {
           const candidate = candidates.find(c => c.id === candidateId);
@@ -368,15 +388,15 @@ function Invitations() {
               </div>
             )}
 
-            {/* Step 3: Select Exam */}
+            {/* Step 3: Select Exams */}
             {step === 3 && (
               <div className="bg-white rounded-xl shadow-md p-8 space-y-6">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
                     <FiBook className="w-6 h-6 text-purple-600" />
-                    Selecciona un Examen
+                    Selecciona Exámenes
                   </h2>
-                  <p className="text-gray-600">Elige qué evaluación asignar a los candidatos</p>
+                  <p className="text-gray-600">Elige una o más evaluaciones para asignar a los candidatos</p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-3">
@@ -384,33 +404,39 @@ function Invitations() {
                     <p className="text-center text-gray-500 py-8">No hay exámenes disponibles</p>
                   ) : (
                     exams.map(exam => (
-                      <button
+                      <div
                         key={exam.id}
-                        onClick={() => {
-                          setSelectedExam(exam.id);
-                          setStep(4);
-                        }}
-                        className={`p-4 rounded-lg border-2 text-left transition-all ${
-                          selectedExam === exam.id
-                            ? 'border-purple-600 bg-purple-50'
-                            : 'border-gray-200 hover:border-purple-300'
-                        }`}
+                        className="p-4 rounded-lg border-2 border-gray-200 hover:border-purple-300 transition-all hover:shadow-sm"
                       >
-                        <div className="flex items-center justify-between">
-                          <div>
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedExams.includes(exam.id)}
+                            onChange={() => handleExamToggle(exam.id)}
+                            className="w-5 h-5 text-purple-600 rounded cursor-pointer"
+                          />
+                          <div className="ml-3 flex-1">
                             <p className="font-bold text-gray-900">{exam.name}</p>
                             <p className="text-sm text-gray-600">
                               {exam.question_count || 0} preguntas
                             </p>
                           </div>
-                          {selectedExam === exam.id && (
+                          {selectedExams.includes(exam.id) && (
                             <FiCheck className="w-6 h-6 text-purple-600" />
                           )}
-                        </div>
-                      </button>
+                        </label>
+                      </div>
                     ))
                   )}
                 </div>
+
+                {selectedExams.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-blue-900">
+                      ✓ <strong>{selectedExams.length}</strong> examen{selectedExams.length !== 1 ? 'es' : ''} seleccionado{selectedExams.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -438,10 +464,18 @@ function Invitations() {
                   </div>
 
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-sm font-semibold text-gray-600 mb-2">📚 EXAMEN</p>
-                    <p className="text-lg font-bold text-gray-900">
-                      {exams.find(e => e.id === parseInt(selectedExam))?.name || 'No seleccionado'}
-                    </p>
+                    <p className="text-sm font-semibold text-gray-600 mb-2">📚 EXÁMENES</p>
+                    <div className="space-y-1">
+                      {selectedExams.length === 0 ? (
+                        <p className="text-lg font-bold text-gray-900">No seleccionados</p>
+                      ) : (
+                        selectedExams.map(examId => (
+                          <p key={examId} className="text-lg font-bold text-gray-900">
+                            • {exams.find(e => e.id === parseInt(examId))?.name}
+                          </p>
+                        ))
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -469,7 +503,7 @@ function Invitations() {
                   disabled={
                     (step === 1 && selectedCandidates.length === 0) ||
                     (step === 2 && !selectedVacancy) ||
-                    (step === 3 && !selectedExam)
+                    (step === 3 && selectedExams.length === 0)
                   }
                   className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
@@ -511,7 +545,7 @@ function Invitations() {
                     setStep(1);
                     setSelectedCandidates([]);
                     setSelectedVacancy('');
-                    setSelectedExam('');
+                    setSelectedExams([]);
                   }}
                   className="px-4 py-2 text-purple-600 hover:text-purple-700 font-semibold"
                 >
@@ -562,22 +596,31 @@ function Invitations() {
                         </div>
                         <p className="text-sm text-gray-600 mb-3">{result.candidateEmail}</p>
 
-                        {result.success && result.link && (
+                        {result.success && result.links && (
                           <div className="bg-white p-4 rounded border border-gray-300 space-y-4">
-                            {/* Link de Evaluación */}
+                            {/* Links de Evaluación */}
                             <div>
-                              <p className="text-xs font-semibold text-gray-600 mb-2">🔗 Link de Evaluación:</p>
-                              <div className="flex items-center justify-between gap-2 bg-gray-50 p-2 rounded">
-                                <code className="text-xs text-gray-700 break-all flex-1">
-                                  {result.link}
-                                </code>
-                                <button
-                                  onClick={() => copyToClipboard(result.link)}
-                                  className="flex-shrink-0 p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
-                                  title="Copiar"
-                                >
-                                  <FiCopy className="w-4 h-4" />
-                                </button>
+                              <p className="text-xs font-semibold text-gray-600 mb-2">🔗 Links de Evaluación:</p>
+                              <div className="space-y-2">
+                                {result.links.map((link, idx) => (
+                                  <div key={idx} className="flex items-center justify-between gap-2 bg-gray-50 p-2 rounded">
+                                    <div className="flex-1">
+                                      <p className="text-xs text-gray-600 font-semibold mb-1">
+                                        {exams.find(e => e.id === parseInt(selectedExams[idx]))?.name || `Examen ${idx + 1}`}
+                                      </p>
+                                      <code className="text-xs text-gray-700 break-all">
+                                        {link}
+                                      </code>
+                                    </div>
+                                    <button
+                                      onClick={() => copyToClipboard(link)}
+                                      className="flex-shrink-0 p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                                      title="Copiar"
+                                    >
+                                      <FiCopy className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                ))}
                               </div>
                             </div>
 
@@ -603,7 +646,7 @@ function Invitations() {
                             ) : (
                               <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
                                 <p className="text-xs text-yellow-800">
-                                  ⚠️ El candidato no tiene número de teléfono registrado. Copia el link y comparte manualmente.
+                                  ⚠️ El candidato no tiene número de teléfono registrado. Copia los links y comparte manualmente.
                                 </p>
                               </div>
                             )}

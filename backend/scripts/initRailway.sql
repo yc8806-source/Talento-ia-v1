@@ -123,6 +123,29 @@ CREATE TABLE IF NOT EXISTS role_permissions (
   UNIQUE(role_name, permission_key)
 );
 
+CREATE TABLE IF NOT EXISTS candidate_vacancies (
+  id SERIAL PRIMARY KEY,
+  candidate_id INTEGER NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+  vacancy_id INTEGER NOT NULL REFERENCES vacancies(id) ON DELETE CASCADE,
+  status VARCHAR(50) DEFAULT 'pending',
+  assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(candidate_id, vacancy_id)
+);
+
+CREATE TABLE IF NOT EXISTS evaluations (
+  id SERIAL PRIMARY KEY,
+  candidate_vacancy_id INTEGER NOT NULL REFERENCES candidate_vacancies(id) ON DELETE CASCADE,
+  exam_id INTEGER NOT NULL REFERENCES exams(id),
+  status VARCHAR(50) DEFAULT 'pending',
+  access_token VARCHAR(256) UNIQUE NOT NULL,
+  started_at TIMESTAMP,
+  completed_at TIMESTAMP,
+  score DECIMAL(5,2),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Crear índices
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_candidates_user_id ON candidates(user_id);
@@ -132,6 +155,13 @@ CREATE INDEX IF NOT EXISTS idx_evaluation_results_candidate ON evaluation_result
 CREATE INDEX IF NOT EXISTS idx_team_members_user ON team_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_team_members_team ON team_members(team_id);
 CREATE INDEX IF NOT EXISTS idx_questions_exam ON questions(exam_id);
+CREATE INDEX IF NOT EXISTS idx_candidate_vacancies_candidate ON candidate_vacancies(candidate_id);
+CREATE INDEX IF NOT EXISTS idx_candidate_vacancies_vacancy ON candidate_vacancies(vacancy_id);
+CREATE INDEX IF NOT EXISTS idx_candidate_vacancies_status ON candidate_vacancies(status);
+CREATE INDEX IF NOT EXISTS idx_evaluations_candidate_vacancy ON evaluations(candidate_vacancy_id);
+CREATE INDEX IF NOT EXISTS idx_evaluations_exam ON evaluations(exam_id);
+CREATE INDEX IF NOT EXISTS idx_evaluations_status ON evaluations(status);
+CREATE INDEX IF NOT EXISTS idx_evaluations_token ON evaluations(access_token);
 
 -- Insertar usuario admin
 INSERT INTO users (email, password_hash, firstName, lastName, role)

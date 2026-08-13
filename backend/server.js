@@ -629,6 +629,7 @@ app.get('/api/test/create-test-results', async (req, res) => {
 const PORT = process.env.PORT || 3000;
 const http = require('http');
 const { initSocket } = require('./src/websocket/notificationSocket');
+const { initDatabase } = require('./src/services/initDatabase');
 
 const server = http.createServer(app);
 const io = initSocket(server);
@@ -638,6 +639,9 @@ server.listen(PORT, async () => {
   console.log(`🚀 Talent IA Backend corriendo en puerto ${PORT}`);
   console.log(`✅ RAILWAY_DATABASE_URL: ${process.env.RAILWAY_DATABASE_URL ? 'SET' : 'NOT SET'}`);
   console.log(`✅ DATABASE_URL: ${process.env.DATABASE_URL ? 'SET' : 'NOT SET'}`);
+
+  // Initialize database schema
+  await initDatabase();
 
   // Initialize exam_scores table if not exists
   try {

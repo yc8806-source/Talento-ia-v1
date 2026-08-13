@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getAllUsers, deleteUser } = require('../controllers/userController');
+const { getAllUsers, deleteUser, cleanupTestData } = require('../controllers/userController');
 const { verifyToken } = require('../middleware/authMiddleware');
 const { requirePermission } = require('../middleware/permissionsMiddleware');
 
@@ -19,6 +19,13 @@ router.delete(
   '/:userId',
   requirePermission('users.delete'),
   deleteUser
+);
+
+// POST /api/users/cleanup-test-data - Limpiar datos de prueba (admin only)
+router.post(
+  '/cleanup/test-data',
+  requirePermission('users.delete'),
+  cleanupTestData
 );
 
 module.exports = router;

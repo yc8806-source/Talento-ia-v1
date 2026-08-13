@@ -89,3 +89,60 @@ exports.deleteUser = async (req, res) => {
     });
   }
 };
+
+// Limpiar datos de prueba (solo admin)
+exports.cleanupTestData = async (req, res) => {
+  try {
+    const adminId = req.user?.id;
+    const adminResult = await pool.query(
+      'SELECT role FROM users WHERE id = $1',
+      [adminId]
+    );
+
+    if (adminResult.rows.length === 0 || adminResult.rows[0].role !== 'admin') {
+      return res.status(403).json({
+        error: 'Solo administradores pueden ejecutar esta acción'
+      });
+    }
+
+    await pool.query('BEGIN');
+
+    const cleanup = [
+      'DELETE FROM exam_scores WHERE candidate_id IN (SELECT id FROM candidates WHERE user_id IS NULL OR user_id > 2)',
+      'DELETE FROM spelling_grammar_results WHERE candidate_id IN (SELECT id FROM candidates WHERE user_id IS NULL OR user_id > 2)',
+      'DELETE FROM typing_results WHERE candidate_id IN (SELECT id FROM candidates WHERE user_id IS NULL OR user_id > 2)',
+      'DELETE FROM tpl80_results WHERE candidate_id IN (SELECT id FROM candidates WHERE user_id IS NULL OR user_id > 2)',
+      'DELETE FROM evaluation_results WHERE candidate_id IN (SELECT id FROM candidates WHERE user_id IS NULL OR user_id > 2)',
+      'DELETE FROM exam_answers WHERE candidate_id IN (SELECT id FROM candidates WHERE user_id IS NULL OR user_id > 2)',
+      'DELETE FROM evaluation_assignments WHERE candidate_id IN (SELECT id FROM candidates WHERE user_id IS NULL OR user_id > 2)',
+      'DELETE FROM candidate_vacancy_assignments WHERE candidate_id IN (SELECT id FROM candidates WHERE user_id IS NULL OR user_id > 2)',
+      'DELETE FROM candidates WHERE user_id IS NULL OR user_id > 2',
+      'DELETE FROM users WHERE id > 2 AND role != $1'
+    ];
+
+    for (const query of cleanup) {
+      await pool.query(query, query.includes('role') ? ['admin'] : []);
+    }
+
+    const candidatesCount = await pool.query('SELECT COUNT(*) as count FROM candidates');
+    const usersCount = await pool.query('SELECT COUNT(*) as count FROM users');
+
+    await pool.query('COMMIT');
+
+    res.json({
+      message: 'Limpieza de datos de prueba completada exitosamente ✅',
+      data: {
+        candidatesRemaining: candidatesCount.rows[0].count,
+        usersRemaining: usersCount.rows[0].count,
+        timestamp: new Date()
+      }
+    });
+  } catch (error) {
+    await pool.query('ROLLBACK');
+    console.error('Error limpiando datos de prueba:', error);
+    res.status(500).json({
+      error: 'Error al limpiar datos de prueba',
+      details: error.message
+    });
+  }
+};

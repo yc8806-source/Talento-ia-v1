@@ -124,7 +124,7 @@ function Login({ setIsLoggedIn, setUserRole }) {
         <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10 animate-slide-in-up">
           {/* Logo */}
           <div className="text-center mb-8">
-            <img src="/impulsa-talento-logo.png" alt="IMPULSA TALENTO" className="h-16 w-16 mx-auto mb-4" />
+            <img src="/impulsa-talento-logo.png" alt="IMPULSA TALENTO" className="h-32 w-32 mx-auto mb-4" />
             <h1 className="text-3xl font-bold" style={{ color: '#2D1B69' }}>
               IMPULSA TALENTO
             </h1>

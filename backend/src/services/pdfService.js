@@ -213,12 +213,12 @@ const generateEvaluationResultsPDF = (resultsData) => {
       // ═══════════════════════════════════════════════════════════════════
       // HEADER PROFESIONAL
       // ═══════════════════════════════════════════════════════════════════
-      doc.fontSize(24).font('Helvetica-Bold').fillColor('#1A237E').text('Talent IA', margin, yPos);
+      doc.fontSize(24).font('Helvetica-Bold').fillColor('#5B3FA0').text('IMPULSA TALENTO', margin, yPos);
       doc.fontSize(10).font('Helvetica').fillColor('#666').text('Sistema Integral de Evaluación de Talentos', margin, yPos + 25);
 
       // Línea decorativa
-      doc.moveTo(margin, yPos + 42).lineTo(pageWidth - margin, yPos + 42).stroke('#1A237E');
-      doc.moveTo(margin, yPos + 43).lineTo(pageWidth - margin, yPos + 43).stroke('#4A90E2');
+      doc.moveTo(margin, yPos + 42).lineTo(pageWidth - margin, yPos + 42).stroke('#5B3FA0');
+      doc.moveTo(margin, yPos + 43).lineTo(pageWidth - margin, yPos + 43).stroke('#00B894');
 
       yPos += 65;
 
@@ -228,8 +228,8 @@ const generateEvaluationResultsPDF = (resultsData) => {
       // Fondo de caja
       doc.rect(margin, yPos - 5, contentWidth, 50).fill('#F5F7FA').stroke('#E0E0E0');
 
-      doc.fontSize(18).font('Helvetica-Bold').fillColor('#1A237E').text(resultsData.candidateName, margin + 10, yPos);
-      doc.fontSize(10).font('Helvetica').fillColor('#0066cc').text(resultsData.email, margin + 10, yPos + 25);
+      doc.fontSize(18).font('Helvetica-Bold').fillColor('#5B3FA0').text(resultsData.candidateName, margin + 10, yPos);
+      doc.fontSize(10).font('Helvetica').fillColor('#00B894').text(resultsData.email, margin + 10, yPos + 25);
 
       yPos += 60;
 
@@ -247,9 +247,10 @@ const generateEvaluationResultsPDF = (resultsData) => {
       const overallColor = getLevelColor(overallScore);
       const badgeLabel = overallLevel === 'Muy Alto' ? 'Rango Alto' : overallLevel === 'Alto' ? 'Rango Medio-Alto' : overallLevel === 'Medio' ? 'Rango Medio' : 'Rango Bajo';
 
-      // Badge de rango (lado derecho)
+      // Badge de rango (lado derecho) - Colores corporativos
       const badgeWidth = 120;
-      doc.rect(pageWidth - margin - badgeWidth, yPos - 10, badgeWidth, 55).fill(overallColor).stroke('#000').lineWidth(1);
+      const badgeColor = overallScore >= 80 ? '#00B894' : overallScore >= 60 ? '#5B3FA0' : overallScore >= 40 ? '#F9A825' : '#E74C3C';
+      doc.rect(pageWidth - margin - badgeWidth, yPos - 10, badgeWidth, 55).fill(badgeColor).stroke('#000').lineWidth(1);
       doc.fontSize(11).font('Helvetica-Bold').fillColor('#FFFFFF').text(badgeLabel, pageWidth - margin - badgeWidth + 10, yPos + 2, { width: badgeWidth - 20, align: 'center' });
       doc.fontSize(28).font('Helvetica-Bold').fillColor('#FFFFFF').text(`${overallScore.toFixed(1)}%`, pageWidth - margin - badgeWidth + 10, yPos + 20, { width: badgeWidth - 20, align: 'center' });
 
@@ -267,11 +268,11 @@ const generateEvaluationResultsPDF = (resultsData) => {
 
           if (result.type === 'evaluation' && result.data) {
             // Título con nombre completo de la prueba
-            doc.fontSize(11).font('Helvetica-Bold').fillColor('#1A237E').text(`Evaluación: ${result.name || 'TEST DE PERSONALIDAD LABORAL (TPL-80)'}`, margin, yPos);
+            doc.fontSize(11).font('Helvetica-Bold').fillColor('#5B3FA0').text(`Evaluación: ${result.name || 'TEST DE PERSONALIDAD LABORAL (TPL-80)'}`, margin, yPos);
             yPos += 18;
 
             // Sección de evaluación de competencias
-            drawSectionHeader(doc, `🎯 ${result.name || 'Evaluación de Competencias'}`, margin, yPos, contentWidth);
+            drawSectionHeader(doc, `🎯 ${result.name || 'Evaluación de Competencias'}`, margin, yPos, contentWidth, '#5B3FA0');
             yPos += 25;
 
             if (result.description) {
@@ -324,11 +325,11 @@ const generateEvaluationResultsPDF = (resultsData) => {
 
           } else if (result.type === 'typing' && result.data) {
             // Título con nombre completo de la prueba de mecanografía
-            doc.fontSize(11).font('Helvetica-Bold').fillColor('#1A237E').text(`Test de Mecanografía (Typing)`, margin, yPos);
+            doc.fontSize(11).font('Helvetica-Bold').fillColor('#5B3FA0').text(`Test de Mecanografía (Typing)`, margin, yPos);
             yPos += 18;
 
             // Prueba de mecanografía
-            drawSectionHeader(doc, `📝 Resultados`, margin, yPos, contentWidth);
+            drawSectionHeader(doc, `📝 Resultados`, margin, yPos, contentWidth, '#5B3FA0');
             yPos += 25;
 
             // Métrica de velocidad
@@ -362,11 +363,11 @@ const generateEvaluationResultsPDF = (resultsData) => {
 
           } else if (result.type === 'spelling' && result.data) {
             // Título con nombre completo de la prueba de ortografía
-            doc.fontSize(11).font('Helvetica-Bold').fillColor('#1A237E').text(`Prueba de Ortografía y Gramática (Spelling): ${result.name || 'Evaluación de Ortografía'}`, margin, yPos);
+            doc.fontSize(11).font('Helvetica-Bold').fillColor('#5B3FA0').text(`Prueba de Ortografía y Gramática (Spelling): ${result.name || 'Evaluación de Ortografía'}`, margin, yPos);
             yPos += 18;
 
             // Prueba de ortografía
-            drawSectionHeader(doc, `📝 ${result.name || 'Prueba de Ortografía'}`, margin, yPos, contentWidth);
+            drawSectionHeader(doc, `📝 ${result.name || 'Prueba de Ortografía'}`, margin, yPos, contentWidth, '#5B3FA0');
             yPos += 25;
 
             if (result.description) {
@@ -422,8 +423,8 @@ const generateEvaluationResultsPDF = (resultsData) => {
   });
 };
 
-function drawSectionHeader(doc, title, x, y, width) {
-  doc.fontSize(13).font('Helvetica-Bold').fillColor('#FFFFFF').rect(x, y, width, 22).fill('#1A237E').stroke();
+function drawSectionHeader(doc, title, x, y, width, color = '#5B3FA0') {
+  doc.fontSize(13).font('Helvetica-Bold').fillColor('#FFFFFF').rect(x, y, width, 22).fill(color).stroke();
   doc.text(title, x + 10, y + 4, { width: width - 20, align: 'left' });
 }
 

@@ -324,19 +324,12 @@ const generateEvaluationResultsPDF = (resultsData) => {
 
           } else if (result.type === 'typing' && result.data) {
             // Título con nombre completo de la prueba de mecanografía
-            doc.fontSize(11).font('Helvetica-Bold').fillColor('#1A237E').text(`Test de Mecanografía (Typing): ${result.name || 'Prueba de Velocidad y Precisión'}`, margin, yPos);
+            doc.fontSize(11).font('Helvetica-Bold').fillColor('#1A237E').text(`Test de Mecanografía (Typing)`, margin, yPos);
             yPos += 18;
 
             // Prueba de mecanografía
-            drawSectionHeader(doc, `📝 ${result.name || 'Prueba de Mecanografía'}`, margin, yPos, contentWidth);
+            drawSectionHeader(doc, `📝 Resultados`, margin, yPos, contentWidth);
             yPos += 25;
-
-            if (result.description) {
-              doc.fontSize(9).font('Helvetica').fillColor('#666');
-              const descHeight = doc.heightOfString(result.description, { width: contentWidth });
-              doc.text(result.description, margin, yPos, { width: contentWidth });
-              yPos += descHeight + 15;
-            }
 
             // Métrica de velocidad
             const wpm = result.data.wpm || 0;

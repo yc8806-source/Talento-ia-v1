@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { candidateAPI, vacancyAPI, examAPI, evaluationAPI } from '../api/api';
-import { FiMail, FiMessageCircle, FiCheck, FiAlertCircle, FiCopy, FiChevronRight, FiUsers, FiFileText, FiBook } from 'react-icons/fi';
+import { FiMessageCircle, FiCheck, FiAlertCircle, FiCopy, FiChevronRight, FiUsers, FiFileText, FiBook } from 'react-icons/fi';
 
 function Invitations() {
   const [step, setStep] = useState(1);
@@ -16,8 +16,6 @@ function Invitations() {
   const [selectedCandidates, setSelectedCandidates] = useState([]);
   const [selectedVacancy, setSelectedVacancy] = useState('');
   const [selectedExam, setSelectedExam] = useState('');
-  const [customMessage, setCustomMessage] = useState('');
-  const [sendingMethod, setSendingMethod] = useState('email'); // email, whatsapp, both
 
   // Results
   const [sending, setSending] = useState(false);
@@ -101,14 +99,25 @@ function Invitations() {
           });
 
           const evaluationLink = linkRes.data.evaluation.link;
+          const candidatePhone = (candidate.phone || '').replace(/\D/g, ''); // Solo dígitos
+
+          // Texto predefinido profesional para WhatsApp
+          const whatsappMessage = `¡Hola ${candidate.first_name}! 👋\n\nTe invitamos a participar en una evaluación de ${vacancy.title} en IMPULSA TALENTO.\n\nPor favor, accede al siguiente enlace para completar tu evaluación:\n\n${evaluationLink}\n\n¡Mucho éxito! 🚀`;
+
+          // Crear link de WhatsApp Web
+          const whatsappLink = candidatePhone
+            ? `https://wa.me/${candidatePhone}?text=${encodeURIComponent(whatsappMessage)}`
+            : null;
 
           invitationResults.push({
             success: true,
             candidateName: `${candidate.first_name} ${candidate.last_name}`,
             candidateEmail: candidate.email,
+            candidatePhone: candidate.phone,
             link: evaluationLink,
-            whatsappLink: `https://wa.me/?text=Hola,%20te%20invitamos%20a%20participar%20en%20una%20evaluación%20de%20${vacancy.title}.%20Accede%20aquí:%20${evaluationLink}`,
-            message: 'Invitación enviada exitosamente',
+            whatsappLink: whatsappLink,
+            whatsappMessage: whatsappMessage,
+            message: 'Link de evaluación generado exitosamente',
           });
         } catch (error) {
           const candidate = candidates.find(c => c.id === candidateId);
@@ -178,9 +187,15 @@ function Invitations() {
       <div className="p-8">
         {!showResults ? (
           <div className="space-y-8">
+            {/* Title */}
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-1">Paso 1: Selecciona Candidatos</h2>
+              <p className="text-gray-600">Busca y selecciona los candidatos a invitar</p>
+            </div>
+
             {/* Progress Steps */}
             <div className="flex items-center justify-between bg-white rounded-lg p-6 shadow-sm">
-              {[1, 2, 3, 4, 5].map((s) => (
+              {[1, 2, 3, 4].map((s) => (
                 <div key={s} className="flex items-center flex-1">
                   <button
                     onClick={() => setStep(s)}
@@ -194,7 +209,7 @@ function Invitations() {
                   >
                     {s < step ? <FiCheck /> : s}
                   </button>
-                  {s < 5 && (
+                  {s < 4 && (
                     <div
                       className={`h-1 flex-1 mx-2 transition-all ${
                         s < step ? 'bg-green-500' : 'bg-gray-200'
@@ -404,35 +419,8 @@ function Invitations() {
               </div>
             )}
 
-            {/* Step 4: Custom Message */}
+            {/* Step 4: Review & Send */}
             {step === 4 && (
-              <div className="bg-white rounded-xl shadow-md p-8 space-y-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-                    <FiMessageCircle className="w-6 h-6 text-purple-600" />
-                    Personaliza el Mensaje
-                  </h2>
-                  <p className="text-gray-600">Opcional: Agrega un mensaje personalizado</p>
-                </div>
-
-                <textarea
-                  value={customMessage}
-                  onChange={(e) => setCustomMessage(e.target.value)}
-                  placeholder="Escribe un mensaje opcional para los candidatos..."
-                  rows={6}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent resize-none"
-                />
-
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-900">
-                    💡 <strong>Nota:</strong> Un email de invitación automático se enviará a cada candidato con el link de acceso.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Step 5: Review & Send */}
-            {step === 5 && (
               <div className="bg-white rounded-xl shadow-md p-8 space-y-6">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">Resumen de Invitación</h2>
@@ -464,7 +452,7 @@ function Invitations() {
 
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <p className="text-sm text-green-900">
-                    ✅ <strong>Se enviarán emails</strong> automáticamente a todos los candidatos con sus links únicos de acceso.
+                    ✅ <strong>Se generarán enlaces únicos</strong> para cada candidato que podrás compartir por WhatsApp Web.
                   </p>
                 </div>
               </div>
@@ -480,7 +468,7 @@ function Invitations() {
                 ← Anterior
               </button>
 
-              {step < 5 ? (
+              {step < 4 ? (
                 <button
                   onClick={() => setStep(step + 1)}
                   disabled={
@@ -501,12 +489,12 @@ function Invitations() {
                   {sending ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      Enviando...
+                      Generando...
                     </>
                   ) : (
                     <>
-                      <FiMail />
-                      Enviar Invitaciones
+                      <FiMessageCircle />
+                      Generar Enlaces
                     </>
                   )}
                 </button>
@@ -529,7 +517,6 @@ function Invitations() {
                     setSelectedCandidates([]);
                     setSelectedVacancy('');
                     setSelectedExam('');
-                    setCustomMessage('');
                   }}
                   className="px-4 py-2 text-purple-600 hover:text-purple-700 font-semibold"
                 >
@@ -581,9 +568,10 @@ function Invitations() {
                         <p className="text-sm text-gray-600 mb-3">{result.candidateEmail}</p>
 
                         {result.success && result.link && (
-                          <div className="bg-white p-3 rounded border border-gray-300 space-y-3">
+                          <div className="bg-white p-4 rounded border border-gray-300 space-y-4">
+                            {/* Link de Evaluación */}
                             <div>
-                              <p className="text-xs font-semibold text-gray-600 mb-2">📧 Link de Email:</p>
+                              <p className="text-xs font-semibold text-gray-600 mb-2">🔗 Link de Evaluación:</p>
                               <div className="flex items-center justify-between gap-2 bg-gray-50 p-2 rounded">
                                 <code className="text-xs text-gray-700 break-all flex-1">
                                   {result.link}
@@ -598,21 +586,32 @@ function Invitations() {
                               </div>
                             </div>
 
-                            <div>
-                              <p className="text-xs font-semibold text-gray-600 mb-2">💬 Link para WhatsApp:</p>
-                              <div className="flex items-center justify-between gap-2 bg-gray-50 p-2 rounded">
-                                <code className="text-xs text-gray-700 break-all flex-1">
-                                  {result.whatsappLink}
-                                </code>
-                                <button
-                                  onClick={() => window.open(result.whatsappLink, '_blank')}
-                                  className="flex-shrink-0 p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
-                                  title="Abrir WhatsApp"
-                                >
-                                  <FiMessageCircle className="w-4 h-4" />
-                                </button>
+                            {/* Mensaje de WhatsApp */}
+                            {result.whatsappMessage && (
+                              <div>
+                                <p className="text-xs font-semibold text-gray-600 mb-2">💬 Mensaje de WhatsApp:</p>
+                                <div className="bg-green-50 p-3 rounded border border-green-200 text-xs text-gray-700 whitespace-pre-wrap break-words">
+                                  {result.whatsappMessage}
+                                </div>
                               </div>
-                            </div>
+                            )}
+
+                            {/* Botón para Enviar por WhatsApp */}
+                            {result.whatsappLink ? (
+                              <button
+                                onClick={() => window.open(result.whatsappLink, '_blank')}
+                                className="w-full px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded font-semibold flex items-center justify-center gap-2 transition-colors"
+                              >
+                                <FiMessageCircle className="w-5 h-5" />
+                                Enviar por WhatsApp Web
+                              </button>
+                            ) : (
+                              <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+                                <p className="text-xs text-yellow-800">
+                                  ⚠️ El candidato no tiene número de teléfono registrado. Copia el link y comparte manualmente.
+                                </p>
+                              </div>
+                            )}
                           </div>
                         )}
 

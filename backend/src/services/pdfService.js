@@ -267,7 +267,7 @@ const generateEvaluationResultsPDF = (resultsData) => {
 
           if (result.type === 'evaluation' && result.data) {
             // Sección de evaluación de competencias
-            drawSectionHeader(doc, result.name || 'Evaluación', margin, yPos, contentWidth);
+            drawSectionHeader(doc, `🎯 ${result.name || 'Evaluación de Competencias'}`, margin, yPos, contentWidth);
             yPos += 25;
 
             if (result.description) {
@@ -320,7 +320,7 @@ const generateEvaluationResultsPDF = (resultsData) => {
 
           } else if (result.type === 'typing' && result.data) {
             // Prueba de mecanografía
-            drawSectionHeader(doc, result.name || 'Prueba de Mecanografía', margin, yPos, contentWidth);
+            drawSectionHeader(doc, `📝 ${result.name || 'Prueba de Mecanografía'}`, margin, yPos, contentWidth);
             yPos += 25;
 
             if (result.description) {
@@ -361,7 +361,7 @@ const generateEvaluationResultsPDF = (resultsData) => {
 
           } else if (result.type === 'spelling' && result.data) {
             // Prueba de ortografía
-            drawSectionHeader(doc, result.name || 'Prueba de Ortografía', margin, yPos, contentWidth);
+            drawSectionHeader(doc, `📝 ${result.name || 'Prueba de Ortografía'}`, margin, yPos, contentWidth);
             yPos += 25;
 
             if (result.description) {
@@ -432,17 +432,20 @@ function calculateOverallScore(evaluationResults) {
     if (result.type === 'evaluation' && result.data) {
       const entries = Object.entries(result.data);
       entries.forEach(([_, values]) => {
-        if (values && values.percentage) {
+        if (values && values.percentage && !isNaN(values.percentage)) {
           totalScore += parseFloat(values.percentage);
           count++;
         }
       });
-    } else if (result.type === 'typing' && result.data) {
+    } else if (result.type === 'typing' && result.data && result.data.wpm > 0) {
       totalScore += result.data.wpm || 0;
       count++;
     } else if (result.type === 'spelling' && result.data) {
-      totalScore += result.data.accuracy || 0;
-      count++;
+      const acc = parseFloat(result.data.accuracy) || 0;
+      if (!isNaN(acc) && acc > 0) {
+        totalScore += acc;
+        count++;
+      }
     }
   });
 

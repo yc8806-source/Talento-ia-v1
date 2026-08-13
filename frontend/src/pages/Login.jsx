@@ -124,7 +124,7 @@ function Login({ setIsLoggedIn, setUserRole }) {
         <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10 animate-slide-in-up">
           {/* Logo */}
           <div className="text-center mb-8">
-            <img src="/impulsa-talento-logo.png" alt="IMPULSA TALENTO" className="h-32 w-32 mx-auto mb-4" />
+            <img src="/impulsa-talento-logo.png" alt="IMPULSA TALENTO" className="h-48 w-48 mx-auto mb-4" />
             <p className="text-gray-600 text-sm">Sistema Integral de Evaluación de Talentos</p>
           </div>
 

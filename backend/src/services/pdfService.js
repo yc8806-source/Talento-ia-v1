@@ -266,6 +266,10 @@ const generateEvaluationResultsPDF = (resultsData) => {
           }
 
           if (result.type === 'evaluation' && result.data) {
+            // Título con nombre completo de la prueba
+            doc.fontSize(11).font('Helvetica-Bold').fillColor('#1A237E').text(`Evaluación: ${result.name || 'TEST DE PERSONALIDAD LABORAL (TPL-80)'}`, margin, yPos);
+            yPos += 18;
+
             // Sección de evaluación de competencias
             drawSectionHeader(doc, `🎯 ${result.name || 'Evaluación de Competencias'}`, margin, yPos, contentWidth);
             yPos += 25;
@@ -319,6 +323,10 @@ const generateEvaluationResultsPDF = (resultsData) => {
             yPos += 10;
 
           } else if (result.type === 'typing' && result.data) {
+            // Título con nombre completo de la prueba de mecanografía
+            doc.fontSize(11).font('Helvetica-Bold').fillColor('#1A237E').text(`Test de Mecanografía (Typing): ${result.name || 'Prueba de Velocidad y Precisión'}`, margin, yPos);
+            yPos += 18;
+
             // Prueba de mecanografía
             drawSectionHeader(doc, `📝 ${result.name || 'Prueba de Mecanografía'}`, margin, yPos, contentWidth);
             yPos += 25;
@@ -360,6 +368,10 @@ const generateEvaluationResultsPDF = (resultsData) => {
             yPos += 30;
 
           } else if (result.type === 'spelling' && result.data) {
+            // Título con nombre completo de la prueba de ortografía
+            doc.fontSize(11).font('Helvetica-Bold').fillColor('#1A237E').text(`Prueba de Ortografía y Gramática (Spelling): ${result.name || 'Evaluación de Ortografía'}`, margin, yPos);
+            yPos += 18;
+
             // Prueba de ortografía
             drawSectionHeader(doc, `📝 ${result.name || 'Prueba de Ortografía'}`, margin, yPos, contentWidth);
             yPos += 25;

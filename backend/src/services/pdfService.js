@@ -240,22 +240,20 @@ const generateEvaluationResultsPDF = (resultsData) => {
       yPos += 20;
 
       // ═══════════════════════════════════════════════════════════════════
-      // RESUMEN EJECUTIVO
+      // PUNTUACIÓN GENERAL
       // ═══════════════════════════════════════════════════════════════════
       const overallScore = calculateOverallScore(resultsData.evaluationResults);
       const overallLevel = getLevelLabel(overallScore);
       const overallColor = getLevelColor(overallScore);
+      const badgeLabel = overallLevel === 'Muy Alto' ? 'Rango Alto' : overallLevel === 'Alto' ? 'Rango Medio-Alto' : overallLevel === 'Medio' ? 'Rango Medio' : 'Rango Bajo';
 
-      doc.fontSize(13).font('Helvetica-Bold').fillColor('#1A237E').text('Resumen Ejecutivo', margin, yPos);
-      yPos += 18;
+      // Badge de rango (lado derecho)
+      const badgeWidth = 120;
+      doc.rect(pageWidth - margin - badgeWidth, yPos - 10, badgeWidth, 55).fill(overallColor).stroke('#000').lineWidth(1);
+      doc.fontSize(11).font('Helvetica-Bold').fillColor('#FFFFFF').text(badgeLabel, pageWidth - margin - badgeWidth + 10, yPos + 2, { width: badgeWidth - 20, align: 'center' });
+      doc.fontSize(28).font('Helvetica-Bold').fillColor('#FFFFFF').text(`${overallScore.toFixed(1)}%`, pageWidth - margin - badgeWidth + 10, yPos + 20, { width: badgeWidth - 20, align: 'center' });
 
-      // Caja de puntuación general
-      doc.rect(margin, yPos, contentWidth, 60).fill(overallColor).strokeColor('#000').lineWidth(1).stroke();
-      doc.fontSize(32).font('Helvetica-Bold').fillColor('#FFFFFF').text(`${overallScore.toFixed(1)}%`, margin + 20, yPos + 10);
-      doc.fontSize(11).font('Helvetica').fillColor('#FFFFFF').text(`Nivel: ${overallLevel}`, margin + 150, yPos + 18);
-      doc.fontSize(9).font('Helvetica').fillColor('#FFFFFF').text(getRecommendation(overallScore), margin + 150, yPos + 38, { width: 300 });
-
-      yPos += 80;
+      yPos += 70;
 
       // ═══════════════════════════════════════════════════════════════════
       // RESULTADOS DE EVALUACIONES
@@ -281,6 +279,10 @@ const generateEvaluationResultsPDF = (resultsData) => {
 
             const entries = Object.entries(result.data);
             if (entries.length > 0) {
+              // Encabezado de sección
+              doc.fontSize(11).font('Helvetica-Bold').fillColor('#1A237E').text('Resumen por Competencia', margin + 10, yPos);
+              yPos += 20;
+
               entries.forEach(([competency, values]) => {
                 if (yPos > 680) {
                   doc.addPage();
@@ -290,8 +292,9 @@ const generateEvaluationResultsPDF = (resultsData) => {
                 const pct = values && values.percentage ? parseFloat(values.percentage) : 0;
                 const level = getLevelLabel(pct);
                 const levelColor = getLevelColor(pct);
+                const description = getCompetencyDescription(competency, level);
 
-                // Fila de competencia
+                // Fila de competencia con mejor layout
                 doc.fontSize(10).font('Helvetica-Bold').fillColor('#333').text(competency, margin + 10, yPos);
                 doc.fontSize(8).font('Helvetica').fillColor('#999').text(level, margin + 310, yPos);
                 doc.fontSize(10).font('Helvetica-Bold').fillColor(levelColor).text(`${pct.toFixed(1)}%`, margin + 420, yPos);
@@ -299,15 +302,21 @@ const generateEvaluationResultsPDF = (resultsData) => {
                 yPos += 16;
 
                 // Barra de progreso con mejor diseño
-                doc.rect(margin + 10, yPos, contentWidth - 20, 6).fill('#EEEEEE').stroke('#DDD');
+                doc.rect(margin + 10, yPos, contentWidth - 20, 8).fill('#EEEEEE').stroke('#DDD').lineWidth(0.5);
                 const barWidth = ((contentWidth - 20) * pct) / 100;
-                doc.rect(margin + 10, yPos, barWidth, 6).fill(levelColor).stroke(levelColor);
+                doc.rect(margin + 10, yPos, barWidth, 8).fill(levelColor).stroke('none');
 
                 yPos += 14;
+
+                // Descripción de la competencia
+                doc.fontSize(8).font('Helvetica').fillColor('#666');
+                const descHeight = doc.heightOfString(description, { width: contentWidth - 40 });
+                doc.text(`Resultado Competencia: ${description}`, margin + 10, yPos, { width: contentWidth - 40 });
+                yPos += descHeight + 12;
               });
             }
 
-            yPos += 15;
+            yPos += 10;
 
           } else if (result.type === 'typing' && result.data) {
             // Prueba de mecanografía
@@ -459,6 +468,16 @@ function getLevelColor(percentage) {
   if (percentage >= 60) return '#2E7D32';
   if (percentage >= 40) return '#F57F17';
   return '#D84315';
+}
+
+function getCompetencyDescription(competency, level) {
+  const descriptions = {
+    'Muy Alto': `Puntajes altos denotan que la persona muestra un dominio excepcional en esta competencia. Desempeño superior y consistente.`,
+    'Alto': `Puntajes altos denotan que la persona muestra capacidad avanzada en esta competencia. Desempeño sólido y confiable.`,
+    'Medio': `Puntajes promedio denotan que la persona tiene capacidades aceptables en esta competencia. Posibilidad de mejora identificada.`,
+    'Bajo': `Puntajes bajos denotan que la persona tiene limitaciones en esta competencia. Área que requiere desarrollo y entrenamiento.`
+  };
+  return descriptions[level] || 'Competencia evaluada sin clasificación específica.';
 }
 
 module.exports = {

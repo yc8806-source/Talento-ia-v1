@@ -125,10 +125,7 @@ function Login({ setIsLoggedIn, setUserRole }) {
           {/* Logo */}
           <div className="text-center mb-8">
             <img src="/impulsa-talento-logo.png" alt="IMPULSA TALENTO" className="h-32 w-32 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold" style={{ color: '#2D1B69' }}>
-              IMPULSA TALENTO
-            </h1>
-            <p className="text-gray-600 text-sm mt-2">Sistema Integral de Evaluación de Talentos</p>
+            <p className="text-gray-600 text-sm">Sistema Integral de Evaluación de Talentos</p>
           </div>
 
           {/* Formulario */}

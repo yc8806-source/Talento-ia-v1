@@ -1155,8 +1155,110 @@ exports.downloadPDF = async (req, res) => {
       competencies: competencies
     };
 
-    // Generar PDF
-    const pdfData = await generateResultsPDF(candidateData, evaluationData);
+    // Generar PDF con el formato profesional de IMPULSA TALENTO
+    const { generateEvaluationResultsPDF } = require('../services/pdfService');
+
+    const evaluationResults = [];
+
+    // 1. Agregar resultados de TPL-80
+    evaluationResults.push({
+      type: 'evaluation',
+      name: 'TEST DE PERSONALIDAD LABORAL (TPL-80)',
+      data: competencies.reduce((acc, comp) => {
+        acc[comp.name] = {
+          score: comp.score,
+          maxScore: comp.maxScore,
+          percentage: comp.percentage,
+          level: comp.level
+        };
+        return acc;
+      }, {})
+    });
+
+    // 2. Obtener resultados de Typing Test
+    const typingResults = await pool.query(
+      `SELECT tr.*, tt.duration_seconds, tt.word_count
+       FROM typing_results tr
+       INNER JOIN typing_tests tt ON tr.typing_test_id = tt.id
+       WHERE tr.candidate_id = $1
+       ORDER BY tr.completed_at DESC`,
+      [info.candidate_id]
+    );
+
+    if (typingResults.rows.length > 0) {
+      const typing = typingResults.rows[0];
+      evaluationResults.push({
+        type: 'evaluation',
+        name: 'PRUEBA DE VELOCIDAD DE MECANOGRAFÍA',
+        data: {
+          'Velocidad (WPM)': {
+            score: typing.wpm || 0,
+            percentage: typing.wpm ? Math.min((typing.wpm / 80) * 100, 100) : 0,
+            level: (typing.wpm || 0) >= 60 ? 'Alto' : (typing.wpm || 0) >= 40 ? 'Medio' : 'Bajo'
+          },
+          'Precisión': {
+            score: typing.accuracy || 0,
+            percentage: typing.accuracy || 0,
+            level: (typing.accuracy || 0) >= 95 ? 'Alto' : (typing.accuracy || 0) >= 85 ? 'Medio' : 'Bajo'
+          },
+          'Tiempo (seg)': {
+            score: typing.time_taken_seconds || 0,
+            percentage: 100,
+            level: 'Completado'
+          }
+        }
+      });
+    }
+
+    // 3. Obtener resultados de Spelling/Grammar Test
+    const spellingResults = await pool.query(
+      `SELECT sr.*, sg.difficulty, sg.title
+       FROM spelling_grammar_results sr
+       INNER JOIN spelling_grammar_tests sg ON sr.test_id = sg.id
+       WHERE sr.candidate_id = $1
+       ORDER BY sr.completed_at DESC`,
+      [info.candidate_id]
+    );
+
+    if (spellingResults.rows.length > 0) {
+      const spelling = spellingResults.rows[0];
+      const spellingPercentage = spelling.total_questions > 0
+        ? (spelling.correct_answers / spelling.total_questions) * 100
+        : 0;
+
+      evaluationResults.push({
+        type: 'evaluation',
+        name: 'PRUEBA DE ORTOGRAFÍA Y GRAMÁTICA',
+        data: {
+          'Respuestas Correctas': {
+            score: spelling.correct_answers || 0,
+            maxScore: spelling.total_questions || 0,
+            percentage: Math.round(spellingPercentage * 100) / 100,
+            level: spellingPercentage >= 80 ? 'Alto' : spellingPercentage >= 60 ? 'Medio' : 'Bajo'
+          },
+          'Precisión': {
+            score: spelling.accuracy || 0,
+            percentage: spelling.accuracy || 0,
+            level: (spelling.accuracy || 0) >= 85 ? 'Alto' : (spelling.accuracy || 0) >= 70 ? 'Medio' : 'Bajo'
+          },
+          'Dificultad': {
+            score: spelling.difficulty || 'N/A',
+            percentage: 100,
+            level: 'Completado'
+          }
+        }
+      });
+    }
+
+    const resultsData = {
+      candidateId: info.candidate_id,
+      candidateName: `${info.first_name} ${info.last_name}`,
+      email: info.email,
+      phone: info.phone,
+      evaluationResults: evaluationResults
+    };
+
+    const pdfData = await generateEvaluationResultsPDF(resultsData);
 
     // Leer el archivo y enviarlo como descarga
     const filepath = pdfData.filepath;

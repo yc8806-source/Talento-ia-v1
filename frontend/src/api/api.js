@@ -28,6 +28,12 @@ export const authAPI = {
   login: (data) => api.post('/auth/login', data),
 };
 
+// Users
+export const userAPI = {
+  getAll: () => api.get('/users'),
+  delete: (userId) => api.delete(`/users/${userId}`),
+};
+
 // Candidates
 export const candidateAPI = {
   register: (data) => api.post('/candidates', data),
@@ -92,7 +98,7 @@ export const evaluationAPI = {
   answer: (data) => api.post('/evaluations/answer', data),
   submit: (evaluationId) => api.post(`/evaluations/${evaluationId}/submit`, {}),
   getResults: (candidateVacancyId) => api.get(`/evaluations/${candidateVacancyId}/results`),
-  generatePDF: (candidateVacancyId) => api.get(`/evaluations/${candidateVacancyId}/pdf-download`, { responseType: 'blob' }),
+  generatePDF: (candidateVacancyId) => api.get(`/evaluations/${candidateVacancyId}/pdf/download`, { responseType: 'blob' }),
   createAndShareLink: (data) => api.post('/evaluations/share-link', data),
   getByToken: (token) => api.get(`/evaluations/token/${token}`),
 };

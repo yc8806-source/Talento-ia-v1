@@ -7,9 +7,6 @@ function Candidates() {
   const [candidates, setCandidates] = useState([]);
   const [vacancies, setVacancies] = useState([]);
   const [showForm, setShowForm] = useState(false);
-  const [showInviteForm, setShowInviteForm] = useState(false);
-  const [selectedCandidate, setSelectedCandidate] = useState(null);
-  const [selectedVacancy, setSelectedVacancy] = useState('');
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -35,8 +32,6 @@ function Candidates() {
   const [sortBy, setSortBy] = useState('name');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showBulkActionsModal, setShowBulkActionsModal] = useState(false);
-  const [showTokenModal, setShowTokenModal] = useState(false);
-  const [invitationToken, setInvitationToken] = useState('');
 
   const itemsPerPage = 10;
 
@@ -97,23 +92,6 @@ function Candidates() {
     }
   };
 
-  const handleInvite = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await candidateAPI.invite({
-        candidateId: selectedCandidate.id,
-        vacancyId: parseInt(selectedVacancy),
-      });
-      setInvitationToken(response.data.candidateVacancy.token);
-      setShowTokenModal(true);
-      setShowInviteForm(false);
-      setSelectedCandidate(null);
-      setSelectedVacancy('');
-      loadData();
-    } catch (error) {
-      alert('Error: ' + (error.response?.data?.error || 'No se pudo invitar'));
-    }
-  };
 
   const handleCSVImport = async (e) => {
     e.preventDefault();
@@ -363,9 +341,6 @@ function Candidates() {
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                       CV
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Acciones
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -399,17 +374,6 @@ function Candidates() {
                         ) : (
                           <span className="text-gray-400">—</span>
                         )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={() => {
-                            setSelectedCandidate(candidate);
-                            setShowInviteForm(true);
-                          }}
-                          className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
-                        >
-                          Invitar
-                        </button>
                       </td>
                     </tr>
                   ))}
@@ -448,92 +412,6 @@ function Candidates() {
       )}
 
       {/* Modal de Invitación */}
-      {showInviteForm && selectedCandidate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
-              Invitar a Vacante
-            </h2>
-            <p className="text-gray-600 mb-4">
-              {selectedCandidate.firstName} {selectedCandidate.lastName}
-            </p>
-
-            <form onSubmit={handleInvite} className="space-y-4">
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">
-                  Selecciona una vacante:
-                </label>
-                <select
-                  value={selectedVacancy}
-                  onChange={(e) => setSelectedVacancy(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  required
-                >
-                  <option value="">-- Seleccionar --</option>
-                  {vacancies.map((vac) => (
-                    <option key={vac.id} value={vac.id}>
-                      {vac.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="submit"
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium"
-                >
-                  Invitar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowInviteForm(false);
-                    setSelectedCandidate(null);
-                  }}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg font-medium"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {showTokenModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-            <h2 className="text-xl font-bold text-green-600 mb-4">
-              ✓ Candidato Invitado
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Comparte este token con el postulante por WhatsApp o email:
-            </p>
-
-            <div className="bg-gray-100 p-4 rounded-lg mb-4 break-all font-mono text-sm">
-              {invitationToken}
-            </div>
-
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(invitationToken);
-                alert('Token copiado al portapapeles');
-              }}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium mb-2"
-            >
-              Copiar Token
-            </button>
-
-            <button
-              onClick={() => setShowTokenModal(false)}
-              className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg font-medium"
-            >
-              Cerrar
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

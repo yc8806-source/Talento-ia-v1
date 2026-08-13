@@ -20,6 +20,7 @@ function CandidateDashboard() {
     }
   }, []);
 
+
   if (loading) {
     return (
       <div className="text-center py-12">
@@ -124,6 +125,7 @@ function CandidateDashboard() {
           )}
         </div>
       </div>
+
     </div>
   );
 }

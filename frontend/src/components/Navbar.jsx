@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FiMenu, FiX, FiLogOut, FiHome, FiUsers, FiBriefcase, FiTrendingUp, FiSettings, FiBarChart2, FiShare2, FiLock, FiUser } from 'react-icons/fi';
+import { FiMenu, FiX, FiLogOut, FiHome, FiUsers, FiBriefcase, FiTrendingUp, FiSettings, FiBarChart2, FiShare2, FiLock, FiUser, FiMail } from 'react-icons/fi';
 
 function Navbar({ onLogout }) {
   const navigate = useNavigate();
@@ -41,11 +41,8 @@ function Navbar({ onLogout }) {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             {/* Logo */}
-            <Link to="/dashboard" className="flex items-center gap-3">
+            <Link to="/dashboard" className="flex items-center">
               <img src="/impulsa-talento-logo.png" alt="IMPULSA TALENTO" className="h-12 w-12" />
-              <span className="text-2xl font-bold" style={{ color: '#2D1B69' }}>
-                IMPULSA TALENTO
-              </span>
             </Link>
 
             {/* Desktop Menu */}
@@ -58,7 +55,7 @@ function Navbar({ onLogout }) {
               <NavLink to="/reportes" icon={FiBarChart2} label="Reportes" />
               {role === 'admin' && (
                 <>
-                  <NavLink to="/compartir" icon={FiShare2} label="Compartir" />
+                  <NavLink to="/invitaciones" icon={FiMail} label="Invitaciones" />
                   <NavLink to="/permisos" icon={FiLock} label="Permisos" />
                   <NavLink to="/admin" icon={FiSettings} label="Admin" />
                 </>
@@ -104,7 +101,7 @@ function Navbar({ onLogout }) {
               <NavLink to="/reportes" icon={FiBarChart2} label="Reportes" />
               {role === 'admin' && (
                 <>
-                  <NavLink to="/compartir" icon={FiShare2} label="Compartir" />
+                  <NavLink to="/invitaciones" icon={FiMail} label="Invitaciones" />
                   <NavLink to="/permisos" icon={FiLock} label="Permisos" />
                   <NavLink to="/admin" icon={FiSettings} label="Admin" />
                 </>

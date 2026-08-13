@@ -15,6 +15,7 @@ import AssignEvaluationsToVacancy from './pages/AssignEvaluationsToVacancy';
 import EvaluationByToken from './pages/EvaluationByToken';
 import CandidatesByVacancy from './pages/CandidatesByVacancy';
 import ShareEvaluations from './pages/ShareEvaluations';
+import Invitations from './pages/Invitations';
 import TypingTestPage from './pages/TypingTestPage';
 import PermissionsManagement from './pages/PermissionsManagement';
 import CandidateDashboard from './pages/CandidateDashboard';
@@ -80,6 +81,7 @@ function App() {
           <Route path="/skills-assessments" element={<SkillsAssessmentsPage />} />
           <Route path="/skills-assessment/:assessmentId" element={<SkillsAssessmentTest />} />
           <Route path="/reportes" element={<Reports userRole={userRole} />} />
+          <Route path="/invitaciones" element={userRole === 'admin' ? <Invitations /> : <Navigate to="/dashboard" />} />
           <Route path="/compartir" element={userRole === 'admin' ? <ShareEvaluations /> : <Navigate to="/dashboard" />} />
           <Route path="/permisos" element={userRole === 'admin' ? <PermissionsManagement /> : <Navigate to="/dashboard" />} />
           <Route path="/admin" element={userRole === 'admin' ? <Admin /> : <Navigate to="/dashboard" />} />

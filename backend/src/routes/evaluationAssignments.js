@@ -5,6 +5,7 @@ const ExamScoreService = require('../services/examScoreService');
 const { verifyToken } = require('../middleware/authMiddleware');
 const pool = require('../config/database');
 const { generateEvaluationResultsPDF } = require('../services/pdfService');
+const { calculateTPLResults } = require('../services/examScoreService');
 
 /**
  * ADMIN: Asignar evaluaciones a candidato
@@ -410,72 +411,129 @@ router.get('/results-pdf/:candidateId', verifyToken, async (req, res) => {
     const candidate = candidateResult.rows[0];
     const evaluationResults = [];
 
-    // Obtener typing results
+    // 1. Obtener resultados de TPL-80
+    try {
+      const competencies = await calculateTPLResults(candidateId, 27);
+      if (competencies && competencies.length > 0) {
+        const totalScore = competencies.reduce((sum, c) => sum + c.score, 0);
+        const maxScore = competencies.length * 40;
+        const overallPercentage = (totalScore / maxScore) * 100;
+
+        let overallLevel;
+        if (overallPercentage >= 85) overallLevel = 'Muy Alto';
+        else if (overallPercentage >= 70) overallLevel = 'Alto';
+        else if (overallPercentage >= 55) overallLevel = 'Medio';
+        else if (overallPercentage >= 40) overallLevel = 'Bajo';
+        else overallLevel = 'Muy Bajo';
+
+        evaluationResults.push({
+          type: 'evaluation',
+          name: 'TEST DE PERSONALIDAD LABORAL (TPL-80)',
+          data: competencies.reduce((acc, comp) => {
+            acc[comp.name] = {
+              score: comp.score,
+              maxScore: comp.maxScore,
+              percentage: comp.percentage,
+              level: comp.level
+            };
+            return acc;
+          }, {})
+        });
+      }
+    } catch (err) {
+      console.log('No TPL-80 results:', err.message);
+    }
+
+    // 3. Obtener typing results
     try {
       const typingResults = await pool.query(
-        `SELECT tr.id, tt.title, tt.description, tr.wpm, tr.net_wpm, tr.accuracy,
-                tr.total_errors, tr.completed_at
+        `SELECT tr.*, tt.duration_seconds, tt.word_count
          FROM typing_results tr
-         JOIN typing_tests tt ON tr.typing_test_id = tt.id
+         INNER JOIN typing_tests tt ON tr.typing_test_id = tt.id
          WHERE tr.candidate_id = $1
          ORDER BY tr.completed_at DESC`,
         [candidateId]
       );
 
-      typingResults.rows.forEach(result => {
+      if (typingResults.rows.length > 0) {
+        const typing = typingResults.rows[0];
         evaluationResults.push({
-          type: 'typing',
-          name: result.title || 'Prueba de Mecanografía',
-          description: result.description,
-          completedAt: result.completed_at,
+          type: 'evaluation',
+          name: 'PRUEBA DE VELOCIDAD DE MECANOGRAFÍA',
           data: {
-            wpm: result.wpm,
-            netWPM: result.net_wpm,
-            accuracy: parseFloat(result.accuracy) || 0,
-            totalErrors: result.total_errors,
+            'Velocidad (WPM)': {
+              score: typing.wpm || 0,
+              percentage: typing.wpm ? Math.min((typing.wpm / 80) * 100, 100) : 0,
+              level: (typing.wpm || 0) >= 60 ? 'Alto' : (typing.wpm || 0) >= 40 ? 'Medio' : 'Bajo'
+            },
+            'Precisión': {
+              score: typing.accuracy || 0,
+              percentage: typing.accuracy || 0,
+              level: (typing.accuracy || 0) >= 95 ? 'Alto' : (typing.accuracy || 0) >= 85 ? 'Medio' : 'Bajo'
+            },
+            'Tiempo (seg)': {
+              score: typing.time_taken_seconds || 0,
+              percentage: 100,
+              level: 'Completado'
+            }
           }
         });
-      });
+      }
     } catch (err) {
       console.log('No typing results:', err.message);
     }
 
-    // Obtener spelling results
+    // 4. Obtener spelling results
     try {
       const spellingResults = await pool.query(
-        `SELECT sgr.id, sgt.title, sgt.description, sgr.score, sgr.percentage,
-                sgr.correct_answers, sgr.completed_at
-         FROM spelling_grammar_results sgr
-         JOIN spelling_grammar_tests sgt ON sgr.test_id = sgt.id
-         WHERE sgr.candidate_id = $1
-         ORDER BY sgr.completed_at DESC`,
+        `SELECT sr.*, sg.difficulty, sg.title
+         FROM spelling_grammar_results sr
+         INNER JOIN spelling_grammar_tests sg ON sr.test_id = sg.id
+         WHERE sr.candidate_id = $1
+         ORDER BY sr.completed_at DESC`,
         [candidateId]
       );
 
-      spellingResults.rows.forEach(result => {
+      if (spellingResults.rows.length > 0) {
+        const spelling = spellingResults.rows[0];
+        const spellingPercentage = spelling.total_questions > 0
+          ? (spelling.correct_answers / spelling.total_questions) * 100
+          : 0;
+
         evaluationResults.push({
-          type: 'spelling',
-          name: result.title || 'Prueba de Ortografía',
-          description: result.description,
-          completedAt: result.completed_at,
+          type: 'evaluation',
+          name: 'PRUEBA DE ORTOGRAFÍA Y GRAMÁTICA',
           data: {
-            score: parseFloat(result.score) || 0,
-            accuracy: parseFloat(result.percentage) || 0,
-            correctAnswers: result.correct_answers,
+            'Respuestas Correctas': {
+              score: spelling.correct_answers || 0,
+              maxScore: spelling.total_questions || 0,
+              percentage: Math.round(spellingPercentage * 100) / 100,
+              level: spellingPercentage >= 80 ? 'Alto' : spellingPercentage >= 60 ? 'Medio' : 'Bajo'
+            },
+            'Precisión': {
+              score: spelling.accuracy || 0,
+              percentage: spelling.accuracy || 0,
+              level: (spelling.accuracy || 0) >= 85 ? 'Alto' : (spelling.accuracy || 0) >= 70 ? 'Medio' : 'Bajo'
+            },
+            'Dificultad': {
+              score: spelling.difficulty || 'N/A',
+              percentage: 100,
+              level: 'Completado'
+            }
           }
         });
-      });
+      }
     } catch (err) {
       console.log('No spelling results:', err.message);
     }
 
-    // Obtener evaluation results
+    // 5. Obtener otras evaluation results (si las hay)
     try {
       const evaluationResults_query = await pool.query(
         `SELECT er.id, er.overall_score, er.competency_results, er.created_at, e.name, e.description
          FROM evaluation_results er
          LEFT JOIN exams e ON er.exam_id = e.id
-         WHERE er.candidate_id = $1
+         WHERE er.candidate_id = $1 AND e.id != 27
          ORDER BY er.created_at DESC`,
         [candidateId]
       );
@@ -501,7 +559,7 @@ router.get('/results-pdf/:candidateId', verifyToken, async (req, res) => {
         });
       });
     } catch (err) {
-      console.log('No evaluation results found:', err.message);
+      console.log('No additional evaluation results found:', err.message);
     }
 
     // Log datos para debugging

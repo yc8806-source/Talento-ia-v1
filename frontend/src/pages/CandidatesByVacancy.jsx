@@ -9,10 +9,6 @@ export default function CandidatesByVacancy() {
   const [vacancy, setVacancy] = useState(null);
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [availableCandidates, setAvailableCandidates] = useState([]);
-  const [selectedCandidateId, setSelectedCandidateId] = useState(null);
-  const [invitingToken, setInvitingToken] = useState(null);
   const [showResultsModal, setShowResultsModal] = useState(false);
   const [resultsModalCandidateId, setResultsModalCandidateId] = useState(null);
 
@@ -40,46 +36,8 @@ export default function CandidatesByVacancy() {
     }
   };
 
-  const loadAvailableCandidates = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/candidates`);
-      const invitedIds = candidates.map(c => c.candidateId);
-      const candidatesList = res.data.candidates || res.data;
-      // Filtrar candidatos que NO estén invitados a esta vacante (comparar por id)
-      const available = candidatesList.filter(c => !invitedIds.includes(c.id));
-      setAvailableCandidates(available);
-      setSelectedCandidateId(null);  // Resetear selección
-      setInvitingToken(null);  // Resetear token
-      setShowInviteModal(true);
-    } catch (error) {
-      alert('Error al cargar candidatos: ' + error.message);
-    }
-  };
 
-  const handleInviteCandidate = async () => {
-    if (!selectedCandidateId) {
-      alert('Selecciona un candidato');
-      return;
-    }
 
-    try {
-      const response = await axios.post(`${API_URL}/candidates/invite`, {
-        candidateId: parseInt(selectedCandidateId, 10),
-        vacancyId: parseInt(vacancyId, 10)
-      });
-
-      setInvitingToken(response.data.candidateVacancy.token);
-    } catch (error) {
-      alert('Error al invitar: ' + (error.response?.data?.error || error.message));
-    }
-  };
-
-  const handleCloseInviteModal = () => {
-    setShowInviteModal(false);
-    setSelectedCandidateId(null);
-    setInvitingToken(null);
-    fetchData();
-  };
 
   const handleMarkStatus = async (candidateVacancyId, newStatus) => {
     try {
@@ -96,7 +54,7 @@ export default function CandidatesByVacancy() {
 
   const handleDownloadPDF = async (candidateVacancyId) => {
     try {
-      const response = await axios.get(`${API_URL}/evaluations/${candidateVacancyId}/pdf-download`, {
+      const response = await axios.get(`${API_URL}/evaluations/${candidateVacancyId}/pdf/download`, {
         responseType: 'blob'
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -105,7 +63,7 @@ export default function CandidatesByVacancy() {
       link.setAttribute('download', `resultados_${candidateVacancyId}.pdf`);
       document.body.appendChild(link);
       link.click();
-      link.parentChild.removeChild(link);
+      document.body.removeChild(link);
     } catch (error) {
       alert('Error al descargar PDF: ' + (error.response?.data?.error || error.message));
     }
@@ -186,20 +144,6 @@ export default function CandidatesByVacancy() {
       {/* Tabla de Candidatos */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h2 style={{ margin: 0 }}>Candidatos Invitados</h2>
-        <button
-          onClick={loadAvailableCandidates}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#28a745',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            fontSize: '0.95em'
-          }}
-        >
-          + Invitar Candidato
-        </button>
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table style={{
@@ -437,189 +381,6 @@ export default function CandidatesByVacancy() {
         </table>
       </div>
 
-      {/* Modal de Invitación - DEBUG */}
-      {showInviteModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            padding: '30px',
-            borderRadius: '8px',
-            maxWidth: '500px',
-            width: '90%'
-          }}>
-            {!invitingToken ? (
-              <>
-                <h2 style={{ marginTop: 0 }}>Invitar Candidato</h2>
-                <p style={{ color: '#666' }}>Selecciona un candidato para invitarlo a esta vacante</p>
-
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                    Candidatos Disponibles:
-                  </label>
-                  <select
-                    value={selectedCandidateId || ''}
-                    onChange={(e) => setSelectedCandidateId(parseInt(e.target.value))}
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      borderRadius: '4px',
-                      border: '1px solid #ddd',
-                      fontSize: '0.95em'
-                    }}
-                  >
-                    <option value="">-- Selecciona un candidato --</option>
-                    {availableCandidates.map(c => (
-                      <option key={c.id} value={c.id}>
-                        {c.firstName} {c.lastName} ({c.email})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button
-                    onClick={handleInviteCandidate}
-                    style={{
-                      flex: 1,
-                      padding: '12px',
-                      backgroundColor: '#28a745',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.95em'
-                    }}
-                  >
-                    Invitar
-                  </button>
-                  <button
-                    onClick={handleCloseInviteModal}
-                    style={{
-                      flex: 1,
-                      padding: '12px',
-                      backgroundColor: '#6c757d',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.95em'
-                    }}
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <h2 style={{ marginTop: 0, color: '#28a745' }}>✅ Candidato Invitado</h2>
-                <p style={{ color: '#666' }}>
-                  El candidato ha sido invitado. Aquí está el enlace para que acceda a los exámenes:
-                </p>
-
-                <div style={{
-                  backgroundColor: '#f0f4ff',
-                  padding: '15px',
-                  borderRadius: '4px',
-                  marginBottom: '20px',
-                  wordBreak: 'break-all'
-                }}>
-                  <p style={{ margin: '0 0 10px 0', fontSize: '0.85em', color: '#666' }}>Token:</p>
-                  <code style={{
-                    display: 'block',
-                    padding: '10px',
-                    backgroundColor: '#fff',
-                    borderRadius: '4px',
-                    fontSize: '0.9em',
-                    fontFamily: 'monospace',
-                    marginBottom: '10px'
-                  }}>
-                    {invitingToken}
-                  </code>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(invitingToken);
-                      alert('Token copiado al portapapeles');
-                    }}
-                    style={{
-                      padding: '8px 12px',
-                      backgroundColor: '#0066ff',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.85em'
-                    }}
-                  >
-                    📋 Copiar Token
-                  </button>
-                </div>
-
-                <div style={{
-                  backgroundColor: '#fff3cd',
-                  padding: '12px',
-                  borderRadius: '4px',
-                  marginBottom: '20px',
-                  fontSize: '0.9em',
-                  color: '#856404'
-                }}>
-                  <strong>💡 Instrucciones:</strong> Envía este enlace al candidato via WhatsApp:
-                  <br />
-                  <code style={{ display: 'block', marginTop: '8px', wordBreak: 'break-all' }}>
-                    {typeof window !== 'undefined' ? window.location.origin : 'https://talento-ia-v1-frontend.onrender.com'}/evaluacion?token={invitingToken}
-                  </code>
-                  <button
-                    onClick={() => {
-                      const fullUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://talento-ia-v1-frontend.onrender.com'}/evaluacion?token=${invitingToken}`;
-                      navigator.clipboard.writeText(fullUrl);
-                      alert('Enlace copiado al portapapeles');
-                    }}
-                    style={{
-                      marginTop: '10px',
-                      padding: '8px 12px',
-                      backgroundColor: '#25d366',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.85em',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    📱 Copiar Enlace WhatsApp
-                  </button>
-                </div>
-
-                <button
-                  onClick={handleCloseInviteModal}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    backgroundColor: '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '0.95em'
-                  }}
-                >
-                  Listo
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Modal de Resultados */}
       {showResultsModal && resultsModalCandidateId && (

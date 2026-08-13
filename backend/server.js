@@ -70,6 +70,7 @@ app.use('/pdfs', express.static(path.join(__dirname, 'pdfs')));
 
 // Importar rutas
 const authRoutes = require('./src/routes/auth');
+const userRoutes = require('./src/routes/users');
 const candidateRoutes = require('./src/routes/candidates');
 const vacancyRoutes = require('./src/routes/vacancies');
 const evaluationRoutes = require('./src/routes/evaluations');
@@ -90,6 +91,7 @@ const softSkillsRoutes = require('./src/routes/softSkills');
 
 // Usar rutas
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/candidates', candidateRoutes);
 app.use('/api/candidate-dashboard', candidateDashboardRoutes);
 app.use('/api/bulk-actions', bulkActionsRoutes);

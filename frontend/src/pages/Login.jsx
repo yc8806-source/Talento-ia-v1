@@ -124,8 +124,8 @@ function Login({ setIsLoggedIn, setUserRole }) {
         <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10 animate-slide-in-up">
           {/* Logo */}
           <div className="text-center mb-8">
-            <img src="/impulsa-talento-logo.png" alt="IMPULSA TALENTO" className="h-48 w-48 mx-auto mb-4" />
-            <p className="text-gray-600 text-sm">Sistema Integral de Evaluación de Talentos</p>
+            <img src="/impulsa-talento-logo.png" alt="IMPULSA TALENTO" className="h-48 w-48 mx-auto" />
+            <p className="text-gray-600 text-sm mt-4">Sistema Integral de Evaluación de Talentos</p>
           </div>
 
           {/* Formulario */}
@@ -221,13 +221,6 @@ function Login({ setIsLoggedIn, setUserRole }) {
               Registrarse
             </Link>
           </p>
-        </div>
-
-        {/* Demo credentials */}
-        <div className="mt-6 bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-4 text-white text-xs">
-          <p className="font-semibold mb-2">📝 Credenciales de Demo</p>
-          <p className="mb-1"><span className="opacity-75">Admin:</span> admin@talent-ia.com / Admin123!</p>
-          <p><span className="opacity-75">RR.HH:</span> rrhh@talent-ia.com / RrHh123!</p>
         </div>
       </div>
 

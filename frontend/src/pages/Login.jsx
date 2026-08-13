@@ -112,11 +112,11 @@ function Login({ setIsLoggedIn, setUserRole }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-500 to-purple-600 flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(135deg, #5B3FA0 0%, #2D1B69 100%)' }}>
       {/* Decoración de fondo */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" style={{ backgroundColor: '#00B894' }}></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000" style={{ backgroundColor: '#5B3FA0' }}></div>
       </div>
 
       <div className="w-full max-w-md relative z-10">
@@ -124,13 +124,11 @@ function Login({ setIsLoggedIn, setUserRole }) {
         <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10 animate-slide-in-up">
           {/* Logo */}
           <div className="text-center mb-8">
-            <div className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-3 mb-4">
-              <span className="text-2xl">🎯</span>
-            </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Talent IA
+            <img src="/impulsa-talento-logo.png" alt="IMPULSA TALENTO" className="h-16 w-16 mx-auto mb-4" />
+            <h1 className="text-3xl font-bold" style={{ color: '#2D1B69' }}>
+              IMPULSA TALENTO
             </h1>
-            <p className="text-gray-600 text-sm mt-2">Plataforma de Evaluación de Talento</p>
+            <p className="text-gray-600 text-sm mt-2">Sistema Integral de Evaluación de Talentos</p>
           </div>
 
           {/* Formulario */}
@@ -154,8 +152,11 @@ function Login({ setIsLoggedIn, setUserRole }) {
                   className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:border-transparent focus:ring-2 transition-all ${
                     errors.email
                       ? 'border-red-500 focus:ring-red-500'
-                      : 'border-gray-300 focus:ring-blue-500'
+                      : 'border-gray-300'
                   }`}
+                  style={
+                    !errors.email ? { '--tw-ring-color': '#5B3FA0' } : {}
+                  }
                   placeholder="tu@email.com"
                   required
                 />
@@ -177,8 +178,11 @@ function Login({ setIsLoggedIn, setUserRole }) {
                   className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:border-transparent focus:ring-2 transition-all ${
                     errors.password
                       ? 'border-red-500 focus:ring-red-500'
-                      : 'border-gray-300 focus:ring-blue-500'
+                      : 'border-gray-300'
                   }`}
+                  style={
+                    !errors.password ? { '--tw-ring-color': '#5B3FA0' } : {}
+                  }
                   placeholder="••••••••"
                   required
                 />
@@ -192,7 +196,12 @@ function Login({ setIsLoggedIn, setUserRole }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2.5 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group"
+              className="w-full text-white font-semibold py-2.5 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group"
+              style={{
+                backgroundColor: '#5B3FA0',
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#4a2f85'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#5B3FA0'}
             >
               {loading ? (
                 <>
@@ -211,7 +220,7 @@ function Login({ setIsLoggedIn, setUserRole }) {
           {/* Enlace de registro */}
           <p className="text-center text-gray-600 text-sm mt-6">
             ¿No tienes cuenta?{' '}
-            <Link to="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
+            <Link to="/register" className="font-semibold hover:underline" style={{ color: '#5B3FA0' }}>
               Registrarse
             </Link>
           </p>

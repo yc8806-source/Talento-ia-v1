@@ -25,19 +25,31 @@ exports.getTypingTestByToken = async (req, res) => {
 
     const candidateVacancy = cvResult.rows[0];
 
-    // Obtener typing test asignado a esta vacante
-    const testResult = await pool.query(
-      `SELECT tt.id, tt.title, tt.description, tt.text, tt.difficulty, tt.duration_seconds, tt.word_count
-       FROM vacancy_typing_tests vtt
-       INNER JOIN typing_tests tt ON vtt.typing_test_id = tt.id
-       WHERE vtt.vacancy_id = $1
+    // Verificar que hay un typing test asignado a esta vacante
+    const examCheck = await pool.query(
+      `SELECT e.id FROM vacancy_exams ve
+       INNER JOIN exams e ON ve.exam_id = e.id
+       WHERE ve.vacancy_id = $1 AND e.type = 'typing'
        LIMIT 1`,
       [candidateVacancy.vacancy_id]
     );
 
-    if (testResult.rows.length === 0) {
+    if (examCheck.rows.length === 0) {
       return res.status(404).json({
         error: 'No hay typing test asignado a esta vacante'
+      });
+    }
+
+    // Obtener un typing test disponible (usar el primero)
+    const testResult = await pool.query(
+      `SELECT id, title, description, text, difficulty, duration_seconds, word_count
+       FROM typing_tests
+       LIMIT 1`
+    );
+
+    if (testResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'No hay typing tests disponibles'
       });
     }
 
@@ -47,7 +59,7 @@ exports.getTypingTestByToken = async (req, res) => {
       candidateVacancy: {
         id: candidateVacancy.id,
         candidateName: `${candidateVacancy.first_name} ${candidateVacancy.last_name}`,
-        candidateEmail: candidateVacancy.candidate_id,
+        candidateId: candidateVacancy.candidate_id,
         vacancyTitle: candidateVacancy.title
       },
       test: {

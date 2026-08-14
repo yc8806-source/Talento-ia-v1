@@ -106,8 +106,17 @@ function Invitations() {
           const vacancy = vacancies.find(v => v.id === parseInt(selectedVacancy));
 
           // Generar UN ÚNICO link para TODOS los exámenes de la vacante
-          const examIds = vacancyExams.map(e => e.id);
-          console.log('DEBUG createSingleLink:', { candidateVacancyId, examIds, vacancyExams });
+          const examIds = vacancyExams && vacancyExams.length > 0
+            ? vacancyExams.map(e => e.id).filter(id => id !== undefined)
+            : [];
+          console.log('DEBUG createSingleLink:', {
+            candidateVacancyId,
+            examIds,
+            vacancyExamsLength: vacancyExams?.length,
+            vacancyExamsFirst: vacancyExams?.[0],
+            examIdsLength: examIds?.length,
+            isArray: Array.isArray(examIds)
+          });
           const linkRes = await evaluationAPI.createSingleLink({
             candidateVacancyId,
             examIds,

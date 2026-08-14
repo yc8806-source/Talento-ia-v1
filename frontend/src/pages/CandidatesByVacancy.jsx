@@ -85,7 +85,7 @@ export default function CandidatesByVacancy() {
     setShareCandidate(candidate);
     try {
       const response = await axios.get(`${API_URL}/evaluations/vacancy-by-token/${candidate.token}`);
-      setShareEvaluations(response.data.evaluations || []);
+      setShareEvaluations(response.data.exams || []);
     } catch (error) {
       console.error('Error al obtener evaluaciones:', error);
       setShareEvaluations([]);
@@ -472,15 +472,18 @@ export default function CandidatesByVacancy() {
                 </h3>
                 {shareEvaluations.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {shareEvaluations.map((evaluation, idx) => (
+                    {shareEvaluations.map((exam, idx) => (
                       <div key={idx} style={{
                         padding: '12px',
                         backgroundColor: '#f8f9fa',
                         borderRadius: '4px',
                         borderLeft: '3px solid #17a2b8'
                       }}>
-                        <p style={{ margin: '0 0 8px 0', fontSize: '0.9em', color: '#333', fontWeight: '500' }}>
-                          {evaluation.examName || evaluation.name || 'Evaluación'}
+                        <p style={{ margin: '0 0 5px 0', fontSize: '0.9em', color: '#333', fontWeight: '500' }}>
+                          {exam.name}
+                        </p>
+                        <p style={{ margin: '0 0 8px 0', fontSize: '0.8em', color: '#666' }}>
+                          {exam.description}
                         </p>
                         <code style={{
                           display: 'block',
@@ -493,11 +496,11 @@ export default function CandidatesByVacancy() {
                           wordBreak: 'break-all',
                           marginBottom: '8px'
                         }}>
-                          {evaluation.evaluationLink || `${window.location.origin}/evaluacion?token=${shareCandidate.token}`}
+                          {`${window.location.origin}/evaluacion?token=${shareCandidate.token}`}
                         </code>
                         <button
                           onClick={() => {
-                            navigator.clipboard.writeText(evaluation.evaluationLink || `${window.location.origin}/evaluacion?token=${shareCandidate.token}`);
+                            navigator.clipboard.writeText(`${window.location.origin}/evaluacion?token=${shareCandidate.token}`);
                             alert('Enlace copiado al portapapeles');
                           }}
                           style={{

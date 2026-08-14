@@ -87,6 +87,36 @@ async function initDatabase() {
     } else {
       console.log('✅ Database schema already exists - no initialization needed');
     }
+
+    // Aplicar migración 010: Agregar typing_test_id a exams
+    console.log('🔄 Verificando migración 010 (typing_test_id)...');
+    try {
+      const checkColumn = await pool.query(
+        `SELECT column_name
+         FROM information_schema.columns
+         WHERE table_name = 'exams' AND column_name = 'typing_test_id'`
+      );
+
+      if (checkColumn.rows.length === 0) {
+        console.log('📝 Aplicando migración 010: Agregar typing_test_id a exams...');
+
+        await pool.query(`
+          ALTER TABLE exams
+          ADD COLUMN IF NOT EXISTS typing_test_id INTEGER REFERENCES typing_tests(id) ON DELETE SET NULL;
+        `);
+
+        await pool.query(`
+          CREATE INDEX IF NOT EXISTS idx_exams_typing_test_id ON exams(typing_test_id);
+        `);
+
+        console.log('✅ Migración 010 aplicada');
+      } else {
+        console.log('✅ Migración 010 ya aplicada (typing_test_id column exists)');
+      }
+    } catch (err) {
+      console.error('⚠️ Error verificando/aplicando migración 010:', err.message);
+    }
+
   } catch (error) {
     console.error('❌ Error initializing database:', error.message);
     console.error('Stack:', error.stack);

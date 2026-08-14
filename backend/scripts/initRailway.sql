@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS exams (
   description TEXT,
   type VARCHAR(50),
   max_time_minutes INTEGER,
+  typing_test_id INTEGER,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

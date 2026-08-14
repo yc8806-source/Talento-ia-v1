@@ -1286,15 +1286,19 @@ exports.getVacancyEvaluationByToken = async (req, res) => {
   try {
     const { token } = req.params;
 
-    // Buscar el token en candidate_vacancies
-    const cvResult = await pool.query(
-      `SELECT cv.id, cv.candidate_id, cv.vacancy_id, c.first_name, c.last_name, c.email, v.title, v.description
-       FROM candidate_vacancies cv
+    // Buscar el token en evaluations tabla
+    const evalResult = await pool.query(
+      `SELECT cv.id, cv.candidate_id, cv.vacancy_id, c.first_name, c.last_name, c.email, v.title, v.description, e.exam_id, e.id as evaluation_id
+       FROM evaluations e
+       INNER JOIN candidate_vacancies cv ON e.candidate_vacancy_id = cv.id
        INNER JOIN candidates c ON cv.candidate_id = c.id
        INNER JOIN vacancies v ON cv.vacancy_id = v.id
-       WHERE cv.token = $1`,
+       WHERE e.access_token = $1
+       LIMIT 1`,
       [token]
     );
+
+    let cvResult = evalResult;
 
     if (cvResult.rows.length === 0) {
       // Para pruebas: retornar datos ficticios si el token no existe

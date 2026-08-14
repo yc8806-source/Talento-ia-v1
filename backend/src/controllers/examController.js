@@ -99,7 +99,8 @@ exports.getExamById = async (req, res) => {
     let questionsWithOptions = [];
 
     // Verificar si es un examen de ortografía y gramática
-    if (exam.name && exam.name.toLowerCase().includes('ortografía') || exam.name && exam.name.toLowerCase().includes('gramatica')) {
+    const isSpellingExam = exam.name && (exam.name.toLowerCase().includes('ortografía') || exam.name.toLowerCase().includes('gramatica'));
+    if (isSpellingExam) {
       // Obtener preguntas de spelling_grammar
       const spellingResult = await pool.query(
         `SELECT id, question_text as title, 'spelling' as type, correct_answer
@@ -157,7 +158,7 @@ exports.getExamById = async (req, res) => {
       name: exam.name,
       description: exam.description,
       maxTimeMinutes: exam.max_time_minutes,
-      type: exam.name && (exam.name.toLowerCase().includes('ortografía') || exam.name.toLowerCase().includes('gramatica')) ? 'spelling' : 'standard',
+      type: isSpellingExam ? 'spelling' : 'standard',
       minScore: exam.min_score,
       totalQuestions: questionsWithOptions.length,
       questions: questionsWithOptions,

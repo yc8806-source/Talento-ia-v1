@@ -25,16 +25,25 @@ async function initDatabase() {
       // Split by statements and execute
       const statements = initScript
         .split(';')
-        .map(stmt => stmt.trim())
-        .filter(stmt => stmt && !stmt.startsWith('--'));
+        .map(stmt => {
+          // Remove comments and trim
+          return stmt
+            .split('\n')
+            .filter(line => !line.trim().startsWith('--'))
+            .join('\n')
+            .trim();
+        })
+        .filter(stmt => stmt && stmt.length > 0);
 
       for (const statement of statements) {
         try {
           await pool.query(statement);
+          console.log(`✅ Executed: ${statement.substring(0, 50)}...`);
         } catch (err) {
           // Ignore errors from IF EXISTS checks
           if (!err.message.includes('already exists')) {
             console.warn(`⚠️ Warning executing statement: ${err.message}`);
+            console.warn(`   Statement: ${statement.substring(0, 100)}...`);
           }
         }
       }

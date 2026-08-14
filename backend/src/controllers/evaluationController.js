@@ -1608,6 +1608,12 @@ exports.createSingleLinkForAllExams = async (req, res) => {
       });
     }
 
+    // Eliminar evaluaciones antiguas del mismo candidateVacancyId
+    await pool.query(
+      'DELETE FROM evaluations WHERE candidate_vacancy_id = $1',
+      [candidateVacancyId]
+    );
+
     // Generar token único para todas las evaluaciones
     const token = crypto.randomBytes(32).toString('hex');
 

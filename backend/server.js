@@ -267,6 +267,67 @@ app.get('/api/admin/tables-check', async (req, res) => {
   }
 });
 
+// Force Create Tables Endpoint - Create missing tables immediately
+app.post('/api/admin/create-tables', async (req, res) => {
+  try {
+    console.log('🔧 Forcing table creation...');
+
+    // Create candidate_vacancies if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS candidate_vacancies (
+        id SERIAL PRIMARY KEY,
+        candidate_id INTEGER NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+        vacancy_id INTEGER NOT NULL REFERENCES vacancies(id) ON DELETE CASCADE,
+        status VARCHAR(50) DEFAULT 'pending',
+        assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(candidate_id, vacancy_id)
+      )
+    `);
+    console.log('✅ candidate_vacancies table created');
+
+    // Create evaluations if not exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS evaluations (
+        id SERIAL PRIMARY KEY,
+        candidate_vacancy_id INTEGER NOT NULL REFERENCES candidate_vacancies(id) ON DELETE CASCADE,
+        exam_id INTEGER NOT NULL REFERENCES exams(id),
+        status VARCHAR(50) DEFAULT 'pending',
+        access_token VARCHAR(256) UNIQUE NOT NULL,
+        started_at TIMESTAMP,
+        completed_at TIMESTAMP,
+        score DECIMAL(5,2),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('✅ evaluations table created');
+
+    // Create indexes
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_candidate_vacancies_candidate ON candidate_vacancies(candidate_id)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_candidate_vacancies_vacancy ON candidate_vacancies(vacancy_id)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_candidate_vacancies_status ON candidate_vacancies(status)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_evaluations_candidate_vacancy ON evaluations(candidate_vacancy_id)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_evaluations_exam ON evaluations(exam_id)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_evaluations_status ON evaluations(status)');
+    await pool.query('CREATE INDEX IF NOT EXISTS idx_evaluations_token ON evaluations(access_token)');
+    console.log('✅ Indexes created');
+
+    res.json({
+      status: 'SUCCESS',
+      message: 'Tables and indexes created successfully',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Error creating tables:', error);
+    res.status(500).json({
+      status: 'ERROR',
+      error: error.message,
+      detail: error.detail
+    });
+  }
+});
+
 // Public Exams Endpoint (no auth required) - Correctly fetches exam with questions and options
 app.get('/api/exams-public/:id', async (req, res) => {
   try {

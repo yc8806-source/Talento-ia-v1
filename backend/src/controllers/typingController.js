@@ -192,25 +192,39 @@ exports.submitResultWithToken = async (req, res) => {
     let candidateId;
     let cvId = candidateVacancyId;
 
-    // Intentar obtener candidateId del token de evaluación (en body)
+    // Intentar obtener candidateId del token de candidato
     if (token) {
-      // Buscar en evaluations.access_token y luego obtener candidate_id via candidate_vacancies
-      const evalResult = await pool.query(
-        `SELECT e.id, e.candidate_vacancy_id, cv.candidate_id
-         FROM evaluations e
-         JOIN candidate_vacancies cv ON e.candidate_vacancy_id = cv.id
-         WHERE e.access_token = $1`,
+      // Primero buscar en candidate_vacancies.token (nuevo sistema URL sharing)
+      let tokenResult = await pool.query(
+        `SELECT id, candidate_id FROM candidate_vacancies WHERE token = $1`,
         [token]
       );
 
-      if (evalResult.rows.length === 0) {
-        // Si el token no existe en DB, crear un candidato temporal para pruebas
-        console.log('Token no encontrado en evaluations, usando candidato de prueba');
-        candidateId = 1; // Usar ID de prueba
-        cvId = null;
+      if (tokenResult.rows.length > 0) {
+        candidateId = tokenResult.rows[0].candidate_id;
+        cvId = tokenResult.rows[0].id;
+        console.log(`✅ Token encontrado en candidate_vacancies: cvId=${cvId}, candidateId=${candidateId}`);
       } else {
-        candidateId = evalResult.rows[0].candidate_id;
-        cvId = evalResult.rows[0].candidate_vacancy_id;
+        // Fallback: buscar en evaluations.access_token (legacy system)
+        tokenResult = await pool.query(
+          `SELECT e.id, e.candidate_vacancy_id, cv.candidate_id
+           FROM evaluations e
+           JOIN candidate_vacancies cv ON e.candidate_vacancy_id = cv.id
+           WHERE e.access_token = $1`,
+          [token]
+        );
+
+        if (tokenResult.rows.length > 0) {
+          candidateId = tokenResult.rows[0].candidate_id;
+          cvId = tokenResult.rows[0].candidate_vacancy_id;
+          console.log(`✅ Token encontrado en evaluations: cvId=${cvId}, candidateId=${candidateId}`);
+        } else {
+          // Token no encontrado en ningún lugar
+          console.error('❌ Token no encontrado:', token);
+          return res.status(401).json({
+            error: 'Token inválido'
+          });
+        }
       }
     } else if (req.user?.id) {
       // Usar JWT si no hay token de candidato

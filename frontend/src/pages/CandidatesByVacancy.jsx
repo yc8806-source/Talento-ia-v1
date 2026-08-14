@@ -12,6 +12,9 @@ export default function CandidatesByVacancy() {
   const [availableCandidates, setAvailableCandidates] = useState([]);
   const [selectedCandidateId, setSelectedCandidateId] = useState(null);
   const [invitingToken, setInvitingToken] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareCandidate, setShareCandidate] = useState(null);
+  const [shareEvaluations, setShareEvaluations] = useState([]);
 
   const API_URL = typeof window !== 'undefined' && window.location.hostname === 'talento-ia-v1-frontend.onrender.com'
     ? 'https://talento-ia-backend.onrender.com/api'
@@ -76,6 +79,24 @@ export default function CandidatesByVacancy() {
     setSelectedCandidateId(null);
     setInvitingToken(null);
     fetchData();
+  };
+
+  const handleOpenShareModal = async (candidate) => {
+    setShareCandidate(candidate);
+    try {
+      const response = await axios.get(`${API_URL}/evaluations/vacancy-by-token/${candidate.token}`);
+      setShareEvaluations(response.data.evaluations || []);
+    } catch (error) {
+      console.error('Error al obtener evaluaciones:', error);
+      setShareEvaluations([]);
+    }
+    setShowShareModal(true);
+  };
+
+  const handleCloseShareModal = () => {
+    setShowShareModal(false);
+    setShareCandidate(null);
+    setShareEvaluations([]);
   };
 
   const handleMarkStatus = async (candidateVacancyId, newStatus) => {
@@ -249,10 +270,7 @@ export default function CandidatesByVacancy() {
                       {candidate.status === 'invited' && (
                         <>
                           <button
-                            onClick={() => {
-                              const evalLink = `${window.location.origin}/evaluacion?token=${candidate.token}`;
-                              window.open(evalLink, '_blank');
-                            }}
+                            onClick={() => handleOpenShareModal(candidate)}
                             style={{
                               padding: '6px 12px',
                               backgroundColor: '#17a2b8',
@@ -414,6 +432,186 @@ export default function CandidatesByVacancy() {
           </tbody>
         </table>
       </div>
+
+      {/* Modal de Compartir URL */}
+      {showShareModal && shareCandidate && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1001,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            maxWidth: '600px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            borderLeft: '4px solid #28a745'
+          }}>
+            <div style={{ padding: '30px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+                <div style={{ flex: 1 }}>
+                  <h2 style={{ margin: '0 0 5px 0', color: '#333' }}>✅ {shareCandidate.firstName} {shareCandidate.lastName}</h2>
+                  <p style={{ margin: 0, color: '#666', fontSize: '0.9em' }}>{shareCandidate.email}</p>
+                </div>
+              </div>
+
+              {/* Enlaces de Evaluación */}
+              <div style={{ marginBottom: '25px' }}>
+                <h3 style={{ margin: '0 0 15px 0', color: '#333', fontSize: '0.95em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  🔗 <span>Enlaces de Evaluación:</span>
+                </h3>
+                {shareEvaluations.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {shareEvaluations.map((evaluation, idx) => (
+                      <div key={idx} style={{
+                        padding: '12px',
+                        backgroundColor: '#f8f9fa',
+                        borderRadius: '4px',
+                        borderLeft: '3px solid #17a2b8'
+                      }}>
+                        <p style={{ margin: '0 0 8px 0', fontSize: '0.9em', color: '#333', fontWeight: '500' }}>
+                          {evaluation.examName || evaluation.name || 'Evaluación'}
+                        </p>
+                        <code style={{
+                          display: 'block',
+                          padding: '8px',
+                          backgroundColor: '#fff',
+                          borderRadius: '3px',
+                          fontSize: '0.8em',
+                          fontFamily: 'monospace',
+                          color: '#0066ff',
+                          wordBreak: 'break-all',
+                          marginBottom: '8px'
+                        }}>
+                          {evaluation.evaluationLink || `${window.location.origin}/evaluacion?token=${shareCandidate.token}`}
+                        </code>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(evaluation.evaluationLink || `${window.location.origin}/evaluacion?token=${shareCandidate.token}`);
+                            alert('Enlace copiado al portapapeles');
+                          }}
+                          style={{
+                            padding: '6px 12px',
+                            backgroundColor: '#0066ff',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '3px',
+                            cursor: 'pointer',
+                            fontSize: '0.8em'
+                          }}
+                        >
+                          📋 Copiar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{
+                    padding: '12px',
+                    backgroundColor: '#fff3cd',
+                    borderRadius: '4px',
+                    color: '#856404',
+                    fontSize: '0.9em'
+                  }}>
+                    No hay evaluaciones asignadas aún. Usa el enlace de evaluación general:
+                    <br />
+                    <code style={{
+                      display: 'block',
+                      padding: '8px',
+                      backgroundColor: '#fff',
+                      borderRadius: '3px',
+                      fontSize: '0.8em',
+                      fontFamily: 'monospace',
+                      color: '#0066ff',
+                      marginTop: '8px',
+                      wordBreak: 'break-all'
+                    }}>
+                      {`${window.location.origin}/evaluacion?token=${shareCandidate.token}`}
+                    </code>
+                  </div>
+                )}
+              </div>
+
+              {/* Mensaje WhatsApp */}
+              <div style={{ marginBottom: '25px' }}>
+                <h3 style={{ margin: '0 0 15px 0', color: '#333', fontSize: '0.95em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  💬 <span>Mensaje de WhatsApp:</span>
+                </h3>
+                <div style={{
+                  padding: '15px',
+                  backgroundColor: '#e7f5e8',
+                  borderRadius: '4px',
+                  borderLeft: '3px solid #28a745',
+                  fontSize: '0.9em',
+                  color: '#333',
+                  lineHeight: '1.6'
+                }}>
+                  <p style={{ margin: '0 0 10px 0' }}>¡Hola {shareCandidate.firstName}! 👋</p>
+                  <p style={{ margin: '0 0 10px 0' }}>Te invitamos a participar en evaluaciones en IMPULSA TALENTO.</p>
+                  <p style={{ margin: '0 0 10px 0', fontWeight: 'bold' }}>Accede con este enlace:</p>
+                  <p style={{ margin: '0 0 10px 0', padding: '10px', backgroundColor: '#fff', borderRadius: '3px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                    {`${window.location.origin}/evaluacion?token=${shareCandidate.token}`}
+                  </p>
+                  <p style={{ margin: 0, fontSize: '0.85em', color: '#666' }}>⏱️ Por favor, envía uno a la vez para evitar que WhatsApp bloquee el número por spam.</p>
+                </div>
+              </div>
+
+              {/* Botón WhatsApp */}
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={() => {
+                    const message = `¡Hola ${shareCandidate.firstName}! 👋\n\nTe invitamos a participar en evaluaciones en IMPULSA TALENTO.\n\nAccede con este enlace:\n${window.location.origin}/evaluacion?token=${shareCandidate.token}\n\n⏱️ Por favor, envía uno a la vez para evitar que WhatsApp bloquee el número por spam.`;
+                    const phone = shareCandidate.phone?.replace(/[^0-9]/g, '') || '';
+                    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+                    window.open(whatsappUrl, '_blank');
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    backgroundColor: '#25d366',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '0.95em',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  📱 Enviar este candidato por WhatsApp
+                </button>
+                <button
+                  onClick={handleCloseShareModal}
+                  style={{
+                    padding: '12px 20px',
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '0.95em'
+                  }}
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Invitación - DEBUG */}
       {showInviteModal && (

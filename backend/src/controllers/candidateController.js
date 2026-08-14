@@ -143,6 +143,7 @@ exports.getCandidatesByVacancy = async (req, res) => {
         c.cv_url,
         cv.id as candidate_vacancy_id,
         cv.status,
+        cv.token,
         cv.created_at
       FROM candidates c
       INNER JOIN candidate_vacancies cv ON c.id = cv.candidate_id
@@ -160,6 +161,7 @@ exports.getCandidatesByVacancy = async (req, res) => {
       phone: row.phone,
       cvUrl: row.cv_url,
       status: row.status,
+      token: row.token,
       appliedAt: row.created_at
     }));
 

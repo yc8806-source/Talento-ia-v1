@@ -124,6 +124,9 @@ function Invitations() {
             ? `https://wa.me/${candidatePhone}?text=${encodeURIComponent(whatsappMessage)}`
             : null;
 
+          // Actualizar estado del candidato a "invited"
+          await candidateAPI.updateProfile(candidateId, { status: 'invited' });
+
           invitationResults.push({
             success: true,
             candidateName: `${candidate.first_name} ${candidate.last_name}`,
@@ -165,8 +168,10 @@ function Invitations() {
   };
 
   const filteredCandidates = candidates.filter(c =>
-    `${c.first_name || ''} ${c.last_name || ''}`.toLowerCase().includes(candidateSearch.toLowerCase()) ||
-    (c.email || '').toLowerCase().includes(candidateSearch.toLowerCase())
+    (c.status !== 'invited') && (
+      `${c.first_name || ''} ${c.last_name || ''}`.toLowerCase().includes(candidateSearch.toLowerCase()) ||
+      (c.email || '').toLowerCase().includes(candidateSearch.toLowerCase())
+    )
   );
 
   const filteredVacancies = vacancies.filter(v =>

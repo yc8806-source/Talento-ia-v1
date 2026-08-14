@@ -719,38 +719,60 @@ exports.generatePDFOnDemand = async (req, res) => {
     const candidate = info.rows[0];
     const candidateId = candidate.candidate_id;
 
-    // Buscar el examen TPL-80
-    console.log(`🔍 Buscando TPL-80 para candidateId=${candidateId}`);
+    // Buscar el examen TPL-80 (el único tipo que genera PDF con ese formato)
+    console.log(`🔍 Buscando examen TPL-80 para candidateId=${candidateId}`);
 
-    const examCheck = await pool.query(
-      `SELECT DISTINCT e.id FROM exams e
+    let examCheck = await pool.query(
+      `SELECT DISTINCT e.id, e.name FROM exams e
        INNER JOIN exam_answers ea ON e.id = ea.exam_id
-       WHERE ea.candidate_id = $1 AND e.name ILIKE '%TPL-80%'
+       WHERE ea.candidate_id = $1 AND (e.name ILIKE '%TPL%80%' OR e.name ILIKE '%TPL-80%' OR e.name = 'TPL-80')
+       ORDER BY e.id DESC
        LIMIT 1`,
       [candidateId]
     );
 
-    console.log(`📊 Resultados búsqueda TPL-80:`, examCheck.rows);
+    console.log(`📊 Búsqueda TPL-80 resultados:`, examCheck.rows.length, examCheck.rows);
 
+    // Si no encuentra por nombre, buscar el examen que tenga 80 preguntas
     if (examCheck.rows.length === 0) {
-      // Intentar buscar por cualquier examen que tenga respuestas
-      const anyExam = await pool.query(
+      console.log(`⚠️ No encontrado por nombre, buscando por número de preguntas...`);
+      examCheck = await pool.query(
+        `SELECT DISTINCT e.id, e.name, COUNT(eq.id) as question_count
+         FROM exams e
+         INNER JOIN exam_answers ea ON e.id = ea.exam_id
+         LEFT JOIN exam_questions eq ON e.id = eq.exam_id
+         WHERE ea.candidate_id = $1
+         GROUP BY e.id, e.name
+         ORDER BY ABS(COUNT(eq.id) - 80) ASC
+         LIMIT 1`,
+        [candidateId]
+      );
+      console.log(`📊 Búsqueda por pregunta resultados:`, examCheck.rows.length, examCheck.rows);
+    }
+
+    // Si aún no hay resultados, buscar cualquier examen
+    if (examCheck.rows.length === 0) {
+      console.log(`⚠️ Buscando cualquier examen para este candidato...`);
+      examCheck = await pool.query(
         `SELECT DISTINCT e.id, e.name FROM exams e
          INNER JOIN exam_answers ea ON e.id = ea.exam_id
          WHERE ea.candidate_id = $1
          LIMIT 1`,
         [candidateId]
       );
-      console.log(`📋 Exámenes disponibles para este candidato:`, anyExam.rows);
+      console.log(`📊 Búsqueda genérica resultados:`, examCheck.rows.length, examCheck.rows);
+    }
 
+    if (examCheck.rows.length === 0) {
       return res.status(404).json({
         error: 'No hay respuestas del TPL-80 para este candidato',
-        availableExams: anyExam.rows
+        candidateId: candidateId
       });
     }
 
     const tpl80ExamId = examCheck.rows[0].id;
-    console.log(`✅ TPL-80 encontrado con ID=${tpl80ExamId}`);
+    const examName = examCheck.rows[0].name;
+    console.log(`✅ Examen encontrado: ID=${tpl80ExamId}, Nombre="${examName}"`);
 
     // Obtener respuestas TPL-80 (answer_value ya contiene la puntuación 1-5)
     const answers = await pool.query(

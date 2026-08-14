@@ -22,15 +22,22 @@ function TypingTestPage() {
     : 'https://talento-ia-backend.onrender.com/api';
 
   useEffect(() => {
-    if (!token || !typingTestId) {
+    if (!token) {
       setLoading(false);
       return;
     }
 
-    fetch(`${API_URL}/typing/tests/${typingTestId}`)
+    // Si tienes typingTestId, usa el endpoint directo; si no, usa el endpoint por token
+    const endpoint = typingTestId
+      ? `${API_URL}/typing/tests/${typingTestId}`
+      : `${API_URL}/typing/by-token/${token}`;
+
+    fetch(endpoint)
       .then(res => res.json())
       .then(data => {
-        setTest(data);
+        // Si vino del endpoint por token, extraer el test del objeto anidado
+        const testData = data.test || data;
+        setTest(testData);
         setLoading(false);
       })
       .catch(err => {

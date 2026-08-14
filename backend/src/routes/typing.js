@@ -14,6 +14,9 @@ const isAdmin = (req, res, next) => {
   next();
 };
 
+// OBTENER TYPING TEST POR TOKEN (para URL sharing modal)
+router.get('/by-token/:token', typingController.getTypingTestByToken);
+
 // OBTENER TODOS LOS TYPING TESTS (público)
 router.get('/tests', typingController.getAllTests);
 

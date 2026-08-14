@@ -2,6 +2,73 @@ const pool = require('../config/database');
 const TypingService = require('../services/typingService');
 const AuditService = require('../services/auditService');
 
+// OBTENER TYPING TEST POR TOKEN (para URL sharing modal)
+exports.getTypingTestByToken = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    // Buscar candidate_vacancy por token
+    const cvResult = await pool.query(
+      `SELECT cv.id, cv.candidate_id, cv.vacancy_id, c.first_name, c.last_name, v.title
+       FROM candidate_vacancies cv
+       INNER JOIN candidates c ON cv.candidate_id = c.id
+       INNER JOIN vacancies v ON cv.vacancy_id = v.id
+       WHERE cv.token = $1`,
+      [token]
+    );
+
+    if (cvResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Token inválido'
+      });
+    }
+
+    const candidateVacancy = cvResult.rows[0];
+
+    // Obtener typing test asignado a esta vacante
+    const testResult = await pool.query(
+      `SELECT tt.id, tt.title, tt.description, tt.text, tt.difficulty, tt.duration_seconds, tt.word_count
+       FROM vacancy_typing_tests vtt
+       INNER JOIN typing_tests tt ON vtt.typing_test_id = tt.id
+       WHERE vtt.vacancy_id = $1
+       LIMIT 1`,
+      [candidateVacancy.vacancy_id]
+    );
+
+    if (testResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'No hay typing test asignado a esta vacante'
+      });
+    }
+
+    const test = testResult.rows[0];
+
+    res.json({
+      candidateVacancy: {
+        id: candidateVacancy.id,
+        candidateName: `${candidateVacancy.first_name} ${candidateVacancy.last_name}`,
+        candidateEmail: candidateVacancy.candidate_id,
+        vacancyTitle: candidateVacancy.title
+      },
+      test: {
+        id: test.id,
+        title: test.title,
+        description: test.description,
+        text: test.text,
+        difficulty: test.difficulty,
+        durationSeconds: test.duration_seconds,
+        wordCount: test.word_count
+      }
+    });
+  } catch (error) {
+    console.error('Error obteniendo typing test por token:', error);
+    res.status(500).json({
+      error: 'Error al obtener typing test',
+      details: error.message
+    });
+  }
+};
+
 // OBTENER TODOS LOS TYPING TESTS
 exports.getAllTests = async (req, res) => {
   try {

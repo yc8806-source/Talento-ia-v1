@@ -109,15 +109,31 @@ exports.getExamById = async (req, res) => {
            ORDER BY order_number, id`
         );
 
-        questionsWithOptions = spellingResult.rows.map((q, idx) => ({
-          id: q.id,
-          title: q.question_text,
-          type: 'spelling',
-          correctAnswer: q.correct_answer,
-          explanation: q.explanation,
-          options: q.options || [],
-          order: idx + 1
-        }));
+        questionsWithOptions = spellingResult.rows.map((q, idx) => {
+          // Extract options array from JSONB structure
+          let optionsArray = [];
+          if (q.options) {
+            if (Array.isArray(q.options)) {
+              optionsArray = q.options;
+            } else if (q.options.options && Array.isArray(q.options.options)) {
+              optionsArray = q.options.options;
+            }
+          }
+
+          return {
+            id: q.id,
+            title: q.question_text,
+            type: 'spelling',
+            correctAnswer: q.correct_answer,
+            explanation: q.explanation,
+            options: optionsArray.map(opt => ({
+              text: typeof opt === 'string' ? opt : opt.text || opt,
+              id: Math.random(),
+              correct: opt === q.correct_answer || (typeof opt === 'object' && opt.text === q.correct_answer)
+            })),
+            order: idx + 1
+          };
+        });
       } catch (err) {
         console.error('Error loading spelling questions:', err.message);
         questionsWithOptions = [];

@@ -1608,8 +1608,17 @@ exports.createSingleLinkForAllExams = async (req, res) => {
       });
     }
 
-    // Generar token único para todas las evaluaciones
-    const token = crypto.randomBytes(32).toString('hex');
+    // Generar token único que no exista ya en la BD
+    let token;
+    let tokenExists = true;
+    while (tokenExists) {
+      token = crypto.randomBytes(32).toString('hex');
+      const existingToken = await pool.query(
+        'SELECT id FROM evaluations WHERE access_token = $1 LIMIT 1',
+        [token]
+      );
+      tokenExists = existingToken.rows.length > 0;
+    }
 
     // Crear una evaluación para cada examen CON EL MISMO TOKEN
     for (const examId of examIds) {

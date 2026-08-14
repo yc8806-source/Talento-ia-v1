@@ -1577,7 +1577,7 @@ exports.submitExamAnswersByToken = async (req, res) => {
 exports.createSingleLinkForAllExams = async (req, res) => {
   try {
     const { candidateVacancyId, examIds } = req.body;
-    console.log('DEBUG createSingleLinkForAllExams:', { candidateVacancyId, examIds, isArray: Array.isArray(examIds), length: examIds?.length });
+    console.log('=== DEBUG createSingleLinkForAllExams ===', { candidateVacancyId, examIds, isArray: Array.isArray(examIds), length: examIds?.length });
 
     if (!candidateVacancyId || !examIds || !Array.isArray(examIds) || examIds.length === 0) {
       return res.status(400).json({

@@ -1525,12 +1525,15 @@ exports.submitExamAnswersByToken = async (req, res) => {
         candidateId = cvResult.rows[0].candidate_id;
         console.log(`  ✅ Encontrado: candidateVacancyId=${candidateVacancyId}, candidateId=${candidateId}`);
 
+        // Generar un token único para la evaluación (requerido por la tabla)
+        const accessToken = crypto.randomBytes(32).toString('hex');
+
         // Crear la evaluación
         const createResult = await pool.query(
-          `INSERT INTO evaluations (candidate_vacancy_id, exam_id, status, started_at)
-           VALUES ($1, $2, 'in_progress', NOW())
+          `INSERT INTO evaluations (candidate_vacancy_id, exam_id, status, access_token, started_at)
+           VALUES ($1, $2, 'in_progress', $3, NOW())
            RETURNING id`,
-          [candidateVacancyId, examId]
+          [candidateVacancyId, examId, accessToken]
         );
 
         if (!createResult.rows[0]) {

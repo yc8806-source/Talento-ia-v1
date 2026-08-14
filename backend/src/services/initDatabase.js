@@ -114,6 +114,28 @@ async function initDatabase() {
         console.log('✅ Migración 010 ya aplicada (typing_test_id column exists)');
       }
 
+      // Aplicar migración 011: Cambiar tamaño de columnas WPM en typing_results
+      console.log('🔄 Verificando migración 011 (typing_results WPM columns)...');
+      try {
+        // Alterar columnas de typing_results para soportar números más grandes
+        await pool.query(`
+          ALTER TABLE typing_results
+          ALTER COLUMN wpm TYPE DECIMAL(10,2),
+          ALTER COLUMN accuracy TYPE DECIMAL(10,2),
+          ALTER COLUMN gross_wpm TYPE DECIMAL(10,2),
+          ALTER COLUMN net_wpm TYPE DECIMAL(10,2);
+        `);
+
+        console.log('✅ Migración 011 aplicada (WPM columns updated)');
+      } catch (err) {
+        // Si falla es porque ya está actualizado o hay otro error
+        if (err.message.includes('column type') && err.message.includes('already')) {
+          console.log('✅ Migración 011 ya aplicada (WPM columns already correct)');
+        } else {
+          console.warn('⚠️ Nota sobre migración 011:', err.message.substring(0, 100));
+        }
+      }
+
       // Auto-asignar typing_test_id a exams de tipo 'typing' que sean NULL
       const nullExams = await pool.query(
         `SELECT id FROM exams WHERE type = 'typing' AND typing_test_id IS NULL`

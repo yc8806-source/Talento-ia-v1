@@ -1640,10 +1640,16 @@ exports.submitExamAnswersByToken = async (req, res) => {
       status: 'completed'
     });
   } catch (error) {
-    console.error('Error guardando respuestas:', error);
+    console.error('❌ Error CRÍTICO guardando respuestas:');
+    console.error('  Mensaje:', error.message);
+    console.error('  Código:', error.code);
+    console.error('  SQL:', error.query || 'N/A');
+    console.error('  Stack:', error.stack);
     res.status(500).json({
       error: 'Error al guardar respuestas',
-      details: error.message
+      details: error.message,
+      code: error.code,
+      sql: error.query || 'N/A'
     });
   }
 };

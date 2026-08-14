@@ -1491,8 +1491,8 @@ exports.submitExamAnswersByToken = async (req, res) => {
 
     for (const [questionIndexStr, answerData] of Object.entries(answers)) {
       const questionIndex = parseInt(questionIndexStr, 10);
-      const questionId = answerData.questionId || answerData.id;
-      const optionId = answerData.optionId || answerData.selected;
+      const questionId = Math.floor(parseFloat(answerData.questionId || answerData.id) || 0);
+      const optionId = Math.floor(parseFloat(answerData.optionId || answerData.selected) || 0);
       const timeSpent = Math.floor(parseFloat(answerData.timeSpent) || 0);
 
       if (!questionId || !optionId) {

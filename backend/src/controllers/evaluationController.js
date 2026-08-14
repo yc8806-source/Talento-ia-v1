@@ -1576,13 +1576,34 @@ exports.submitExamAnswersByToken = async (req, res) => {
 // CREAR UN ÚNICO LINK PARA TODOS LOS EXÁMENES
 exports.createSingleLinkForAllExams = async (req, res) => {
   try {
+    console.log('=== RAW req.body ===', JSON.stringify(req.body));
     const { candidateVacancyId, examIds } = req.body;
-    console.log('=== DEBUG createSingleLinkForAllExams ===', { candidateVacancyId, examIds, isArray: Array.isArray(examIds), length: examIds?.length });
+    console.log('=== DEBUG createSingleLinkForAllExams ===', {
+      candidateVacancyId,
+      examIds,
+      isArray: Array.isArray(examIds),
+      length: examIds?.length,
+      type: typeof examIds,
+      keys: typeof examIds === 'object' ? Object.keys(examIds) : 'N/A'
+    });
+
+    // Si examIds es un objeto con claves numéricas (error de parsing), convertir
+    if (examIds && typeof examIds === 'object' && !Array.isArray(examIds)) {
+      const keys = Object.keys(examIds);
+      if (keys.every(k => /^\d+$/.test(k))) {
+        console.log('Converting object with numeric keys to array...');
+        const newExamIds = Object.values(examIds).map(v => parseInt(v, 10));
+        // Usar los valores convertidos
+        console.log('Converted examIds:', newExamIds);
+        // Continuar con los valores convertidos
+        examIds = newExamIds;
+      }
+    }
 
     if (!candidateVacancyId || !examIds || !Array.isArray(examIds) || examIds.length === 0) {
       return res.status(400).json({
         error: 'candidateVacancyId y examIds (array) son requeridos',
-        received: { candidateVacancyId, examIds, isArray: Array.isArray(examIds) }
+        received: { candidateVacancyId, examIds, isArray: Array.isArray(examIds), length: examIds?.length }
       });
     }
 

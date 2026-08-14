@@ -1609,20 +1609,28 @@ exports.createSingleLinkForAllExams = async (req, res) => {
     }
 
     // Eliminar evaluaciones antiguas del mismo candidateVacancyId
-    await pool.query(
+    const deleteResult = await pool.query(
       'DELETE FROM evaluations WHERE candidate_vacancy_id = $1',
       [candidateVacancyId]
     );
+    console.log(`Deleted ${deleteResult.rowCount} old evaluations for candidateVacancyId ${candidateVacancyId}`);
 
     // Generar token único para todas las evaluaciones
     const token = crypto.randomBytes(32).toString('hex');
+    console.log(`Generated token for candidateVacancyId ${candidateVacancyId}: ${token.substring(0, 16)}...`);
 
     // Crear una evaluación para cada examen CON EL MISMO TOKEN
     for (const examId of examIds) {
-      await pool.query(
-        'INSERT INTO evaluations (candidate_vacancy_id, exam_id, status, access_token, started_at) VALUES ($1, $2, $3, $4, NOW())',
-        [candidateVacancyId, parseInt(examId), 'pending', token]
-      );
+      try {
+        await pool.query(
+          'INSERT INTO evaluations (candidate_vacancy_id, exam_id, status, access_token, started_at) VALUES ($1, $2, $3, $4, NOW())',
+          [candidateVacancyId, parseInt(examId), 'pending', token]
+        );
+        console.log(`Created evaluation for candidateVacancyId ${candidateVacancyId}, examId ${examId}`);
+      } catch (examError) {
+        console.error(`Failed to create evaluation for examId ${examId}:`, examError.message);
+        throw examError;
+      }
     }
 
     // UN ÚNICO link con el mismo token para acceder a todos los exámenes

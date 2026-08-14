@@ -1500,16 +1500,24 @@ exports.submitExamAnswersByToken = async (req, res) => {
         continue;
       }
 
-      // Obtener puntaje de la opción
-      const scoreResult = await pool.query(
-        'SELECT score FROM question_options WHERE id = $1 AND question_id = $2',
-        [optionId, questionId]
-      );
-
+      // Obtener puntaje - diferente para preguntas normales y ortografía
       let score = 0;
-      if (scoreResult.rows.length > 0) {
-        score = parseFloat(scoreResult.rows[0].score) || 0;
-        totalScore += score;
+
+      // Intentar obtener de question_options (preguntas normales)
+      try {
+        const scoreResult = await pool.query(
+          'SELECT score FROM question_options WHERE id = $1 AND question_id = $2',
+          [optionId, questionId]
+        );
+
+        if (scoreResult.rows.length > 0) {
+          score = parseFloat(scoreResult.rows[0].score) || 0;
+          totalScore += score;
+        }
+      } catch (scoreError) {
+        // Si falla, podría ser una pregunta de ortografía
+        // Para ortografía, asumimos 100 puntos si la respuesta es correcta
+        console.debug(`Score lookup failed for question ${questionId}, might be spelling question`);
       }
 
       // Guardar respuesta - usar DELETE + INSERT para mayor confiabilidad

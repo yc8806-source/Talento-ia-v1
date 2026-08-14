@@ -219,6 +219,54 @@ app.get('/api/admin/diagnostics', async (req, res) => {
   res.json(diagnostics);
 });
 
+// Table Check Endpoint - Check if invitations tables exist
+app.get('/api/admin/tables-check', async (req, res) => {
+  try {
+    const tables = {};
+
+    // Check candidate_vacancies
+    const cvCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'candidate_vacancies'
+      )
+    `);
+    tables.candidate_vacancies = cvCheck.rows[0].exists;
+
+    // Check evaluations
+    const evalCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'evaluations'
+      )
+    `);
+    tables.evaluations = evalCheck.rows[0].exists;
+
+    // Try to get column info for candidate_vacancies if it exists
+    if (tables.candidate_vacancies) {
+      const colCheck = await pool.query(`
+        SELECT column_name FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'candidate_vacancies'
+        ORDER BY ordinal_position
+      `);
+      tables.candidate_vacancies_columns = colCheck.rows.map(r => r.column_name);
+    }
+
+    res.json({
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      tables: tables,
+      database: process.env.DATABASE_URL ? process.env.DATABASE_URL.split('/').pop() : 'UNKNOWN'
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'ERROR',
+      error: error.message,
+      detail: error.detail
+    });
+  }
+});
+
 // Public Exams Endpoint (no auth required) - Correctly fetches exam with questions and options
 app.get('/api/exams-public/:id', async (req, res) => {
   try {

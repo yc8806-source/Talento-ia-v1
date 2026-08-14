@@ -1493,7 +1493,7 @@ exports.submitExamAnswersByToken = async (req, res) => {
       const questionIndex = parseInt(questionIndexStr, 10);
       const questionId = answerData.questionId || answerData.id;
       const optionId = answerData.optionId || answerData.selected;
-      const timeSpent = answerData.timeSpent || 0;
+      const timeSpent = Math.floor(parseFloat(answerData.timeSpent) || 0);
 
       if (!questionId || !optionId) {
         console.warn(`Skipping answer: missing questionId (${questionId}) or optionId (${optionId})`);

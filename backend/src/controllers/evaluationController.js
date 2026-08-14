@@ -1483,9 +1483,9 @@ exports.submitExamAnswersByToken = async (req, res) => {
       `SELECT e.id, e.candidate_vacancy_id, cv.candidate_id
        FROM evaluations e
        JOIN candidate_vacancies cv ON e.candidate_vacancy_id = cv.id
-       WHERE cv.token = $1
+       WHERE cv.token = $1 AND e.exam_id = $2
        LIMIT 1`,
-      [token]
+      [token, examId]
     );
 
     // Si no encuentra por candidate_vacancies.token, buscar por evaluations.access_token (compatibilidad)
@@ -1494,21 +1494,55 @@ exports.submitExamAnswersByToken = async (req, res) => {
         `SELECT e.id, e.candidate_vacancy_id, cv.candidate_id
          FROM evaluations e
          JOIN candidate_vacancies cv ON e.candidate_vacancy_id = cv.id
-         WHERE e.access_token = $1
+         WHERE e.access_token = $1 AND e.exam_id = $2
          LIMIT 1`,
-        [token]
+        [token, examId]
       );
     }
 
-    if (evalResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Token inválido'
-      });
-    }
+    let evaluation;
+    let candidateVacancyId;
+    let candidateId;
 
-    const evaluation = evalResult.rows[0];
-    const candidateVacancyId = evaluation.candidate_vacancy_id;
-    const candidateId = evaluation.candidate_id;
+    if (evalResult.rows.length === 0) {
+      // La evaluación no existe - CREARLA AUTOMÁTICAMENTE
+      console.log(`📝 Creando evaluación automáticamente para token=${token}, examId=${examId}`);
+
+      // Primero, encontrar el candidate_vacancy_id y candidate_id del token
+      const cvResult = await pool.query(
+        `SELECT cv.id, cv.candidate_id FROM candidate_vacancies WHERE token = $1`,
+        [token]
+      );
+
+      if (cvResult.rows.length === 0) {
+        return res.status(404).json({
+          error: 'Token inválido'
+        });
+      }
+
+      candidateVacancyId = cvResult.rows[0].id;
+      candidateId = cvResult.rows[0].candidate_id;
+
+      // Crear la evaluación
+      const createResult = await pool.query(
+        `INSERT INTO evaluations (candidate_vacancy_id, exam_id, status, started_at)
+         VALUES ($1, $2, 'in_progress', NOW())
+         RETURNING id`,
+        [candidateVacancyId, examId]
+      );
+
+      evaluation = {
+        id: createResult.rows[0].id,
+        candidate_vacancy_id: candidateVacancyId,
+        candidate_id: candidateId
+      };
+
+      console.log(`✅ Evaluación creada automáticamente: id=${evaluation.id}`);
+    } else {
+      evaluation = evalResult.rows[0];
+      candidateVacancyId = evaluation.candidate_vacancy_id;
+      candidateId = evaluation.candidate_id;
+    }
 
     // Guardar cada respuesta
     let totalScore = 0;

@@ -215,9 +215,41 @@ exports.assignExamsToVacancy = async (req, res) => {
     // Asignar nuevos exámenes
     let insertedCount = 0;
     for (let i = 0; i < examIds.length; i++) {
+      const examId = examIds[i];
+
+      // Verificar si es un exam de typing que no tiene typing_test_id
+      const examCheckResult = await pool.query(
+        'SELECT id, type, typing_test_id FROM exams WHERE id = $1',
+        [examId]
+      );
+
+      if (examCheckResult.rows.length > 0) {
+        const exam = examCheckResult.rows[0];
+
+        // Si es typing y no tiene typing_test_id, asignarle uno
+        if (exam.type === 'typing' && !exam.typing_test_id) {
+          // Obtener el primer typing_test disponible
+          const typingTestResult = await pool.query(
+            'SELECT id FROM typing_tests ORDER BY id ASC LIMIT 1'
+          );
+
+          if (typingTestResult.rows.length > 0) {
+            const typingTestId = typingTestResult.rows[0].id;
+
+            // Actualizar exam con typing_test_id
+            await pool.query(
+              'UPDATE exams SET typing_test_id = $1 WHERE id = $2',
+              [typingTestId, examId]
+            );
+
+            console.log(`✅ Asignado typing_test_id ${typingTestId} al exam ${examId}`);
+          }
+        }
+      }
+
       const insertResult = await pool.query(
         'INSERT INTO vacancy_exams (vacancy_id, exam_id, exam_order) VALUES ($1, $2, $3)',
-        [vacancyId, examIds[i], i + 1]
+        [vacancyId, examId, i + 1]
       );
       insertedCount += insertResult.rowCount;
     }

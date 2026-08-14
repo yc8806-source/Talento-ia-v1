@@ -148,7 +148,8 @@ exports.getCandidatesByVacancy = async (req, res) => {
       FROM candidates c
       INNER JOIN candidate_vacancies cv ON c.id = cv.candidate_id
       WHERE cv.vacancy_id = $1
-      ORDER BY cv.created_at DESC`,
+      ORDER BY cv.created_at DESC
+      `,
       [vacancyId]
     );
 

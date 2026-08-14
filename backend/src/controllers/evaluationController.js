@@ -1619,10 +1619,8 @@ exports.createSingleLinkForAllExams = async (req, res) => {
       );
       console.log(`Deleted ${deleteResult.rowCount} old evaluations for candidateVacancyId ${candidateVacancyId}`);
 
-      // Generar token único usando timestamp + random
-      const timestamp = Date.now();
-      const random = crypto.randomBytes(8).toString('hex');
-      const token = `${timestamp}-${random}`;
+      // Generar token único usando UUID v4 (crypto built-in)
+      const token = crypto.randomUUID();
       console.log(`Generated token: ${token}`);
 
       // Crear evaluaciones para cada examen CON EL MISMO TOKEN

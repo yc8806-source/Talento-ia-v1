@@ -23,13 +23,18 @@ class TypingService {
 
     // Precisión = (Caracteres correctos / Caracteres totales) * 100
     const correctChars = totalChars - charErrors;
-    const accuracy = (correctChars / totalChars) * 100;
+    const accuracy = totalChars > 0 ? (correctChars / totalChars) * 100 : 0;
+
+    // Validar que los valores no sean NaN o Infinity
+    const finalWPM = isNaN(grossWPM) || !isFinite(grossWPM) ? 0 : Math.round(grossWPM * 100) / 100;
+    const finalNetWPM = isNaN(netWPM) || !isFinite(netWPM) ? 0 : Math.round(netWPM * 100) / 100;
+    const finalAccuracy = isNaN(accuracy) || !isFinite(accuracy) ? 0 : Math.round(accuracy * 100) / 100;
 
     return {
-      grossWPM: Math.round(grossWPM * 100) / 100,
-      netWPM: Math.round(netWPM * 100) / 100,
-      wpm: Math.round(netWPM * 100) / 100, // WPM final es el NET WPM
-      accuracy: Math.round(accuracy * 100) / 100,
+      grossWPM: finalWPM,
+      netWPM: finalNetWPM,
+      wpm: finalNetWPM,
+      accuracy: finalAccuracy,
       totalErrors,
       wordCount,
       charCount: totalChars,

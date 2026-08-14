@@ -13,8 +13,8 @@ exports.createExam = async (req, res) => {
 
     // Crear examen
     const examResult = await pool.query(
-      'INSERT INTO exams (name, description, max_time_minutes, min_score, created_by) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [name, description, maxTimeMinutes, minScore, createdBy]
+      'INSERT INTO exams (name, description, max_time_minutes, type) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, description, maxTimeMinutes, 'standard']
     );
 
     const exam = examResult.rows[0];
@@ -36,7 +36,6 @@ exports.createExam = async (req, res) => {
         name: exam.name,
         description: exam.description,
         maxTimeMinutes: exam.max_time_minutes,
-        minScore: exam.min_score,
         questionsAdded: questionIds ? questionIds.length : 0,
         createdAt: exam.created_at
       }
@@ -237,11 +236,11 @@ exports.addQuestionsToExam = async (req, res) => {
 exports.updateExam = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, maxTimeMinutes, minScore } = req.body;
+    const { name, description, maxTimeMinutes } = req.body;
 
     const result = await pool.query(
-      'UPDATE exams SET name = $1, description = $2, max_time_minutes = $3, min_score = $4 WHERE id = $5 RETURNING *',
-      [name, description, maxTimeMinutes, minScore, id]
+      'UPDATE exams SET name = $1, description = $2, max_time_minutes = $3 WHERE id = $4 RETURNING *',
+      [name, description, maxTimeMinutes, id]
     );
 
     if (result.rows.length === 0) {
@@ -254,8 +253,7 @@ exports.updateExam = async (req, res) => {
         id: result.rows[0].id,
         name: result.rows[0].name,
         description: result.rows[0].description,
-        maxTimeMinutes: result.rows[0].max_time_minutes,
-        minScore: result.rows[0].min_score
+        maxTimeMinutes: result.rows[0].max_time_minutes
       }
     });
   } catch (error) {

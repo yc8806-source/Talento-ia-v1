@@ -85,7 +85,7 @@ exports.getExamById = async (req, res) => {
     const { id } = req.params;
 
     const examResult = await pool.query(
-      'SELECT id, name, description, type, max_time_minutes, min_score, created_at FROM exams WHERE id = $1',
+      'SELECT id, name, description, type, max_time_minutes, created_at FROM exams WHERE id = $1',
       [id]
     );
 
@@ -165,7 +165,6 @@ exports.getExamById = async (req, res) => {
       description: exam.description,
       maxTimeMinutes: exam.max_time_minutes,
       type: isSpellingExam ? 'spelling' : 'standard',
-      minScore: exam.min_score,
       totalQuestions: questionsWithOptions.length,
       questions: questionsWithOptions,
       createdAt: exam.created_at

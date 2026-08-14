@@ -103,21 +103,25 @@ exports.submitResultWithToken = async (req, res) => {
     let candidateId;
     let cvId = candidateVacancyId;
 
-    // Intentar obtener candidateId del token de candidato (en body)
+    // Intentar obtener candidateId del token de evaluación (en body)
     if (token) {
-      const cvResult = await pool.query(
-        'SELECT id, candidate_id FROM candidate_vacancies WHERE token = $1',
+      // Buscar en evaluations.access_token y luego obtener candidate_id via candidate_vacancies
+      const evalResult = await pool.query(
+        `SELECT e.id, e.candidate_vacancy_id, cv.candidate_id
+         FROM evaluations e
+         JOIN candidate_vacancies cv ON e.candidate_vacancy_id = cv.id
+         WHERE e.access_token = $1`,
         [token]
       );
 
-      if (cvResult.rows.length === 0) {
+      if (evalResult.rows.length === 0) {
         // Si el token no existe en DB, crear un candidato temporal para pruebas
-        console.log('Token no encontrado en DB, usando candidato de prueba');
+        console.log('Token no encontrado en evaluations, usando candidato de prueba');
         candidateId = 1; // Usar ID de prueba
         cvId = null;
       } else {
-        candidateId = cvResult.rows[0].candidate_id;
-        cvId = cvResult.rows[0].id;
+        candidateId = evalResult.rows[0].candidate_id;
+        cvId = evalResult.rows[0].candidate_vacancy_id;
       }
     } else if (req.user?.id) {
       // Usar JWT si no hay token de candidato

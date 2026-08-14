@@ -15,6 +15,7 @@ function TypingTestPage() {
   const [inputText, setInputText] = useState('');
   const [result, setResult] = useState(null);
   const [startedAt, setStartedAt] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const API_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:3000/api'
@@ -74,7 +75,9 @@ function TypingTestPage() {
       return;
     }
 
-    setTestCompleted(true);
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
 
     try {
       const timeSeconds = Math.max(1, test.durationSeconds - (timeLeft || 0));
@@ -92,10 +95,17 @@ function TypingTestPage() {
       });
 
       const data = await submitResponse.json();
+
+      if (!submitResponse.ok) {
+        throw new Error(data.error || 'Error al guardar');
+      }
+
       setResult(data.result);
+      setTestCompleted(true);
     } catch (error) {
       console.error('Error enviando resultado:', error);
-      alert('Error al guardar el resultado');
+      alert('Error al guardar el resultado: ' + error.message);
+      setIsSubmitting(false);
     }
   };
 
@@ -202,21 +212,24 @@ function TypingTestPage() {
                 <textarea
                   value={inputText}
                   onChange={handleInputChange}
-                  disabled={testCompleted}
+                  disabled={isSubmitting}
                   placeholder="Empieza a escribir aquí..."
-                  className="w-full h-40 p-4 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-600 font-mono text-lg"
+                  className="w-full h-40 p-4 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-600 font-mono text-lg disabled:bg-gray-100"
                   autoFocus
                 />
               </div>
 
-              {!testCompleted && (
-                <button
-                  onClick={handleSubmit}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 rounded-lg font-bold text-lg"
-                >
-                  ✅ Enviar Prueba
-                </button>
-              )}
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting || testCompleted}
+                className={`w-full py-4 rounded-lg font-bold text-lg transition ${
+                  isSubmitting || testCompleted
+                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
+                }`}
+              >
+                {isSubmitting ? '⏳ Enviando...' : testCompleted ? '✅ Enviado' : '✅ Enviar Prueba'}
+              </button>
             </div>
           )}
         </div>

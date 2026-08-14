@@ -101,22 +101,28 @@ exports.getExamById = async (req, res) => {
     // Verificar si es un examen de ortografía y gramática
     const isSpellingExam = exam.name && (exam.name.toLowerCase().includes('ortografía') || exam.name.toLowerCase().includes('gramatica'));
     if (isSpellingExam) {
-      // Obtener preguntas de spelling_grammar
-      const spellingResult = await pool.query(
-        `SELECT id, question_text as title, 'spelling' as type, correct_answer
-         FROM spelling_grammar_questions
-         WHERE test_id IN (SELECT id FROM spelling_grammar_tests WHERE name ILIKE '%ortografía%' OR name ILIKE '%gramatica%')
-         ORDER BY id`
-      );
+      try {
+        // Obtener preguntas de spelling_grammar - buscar por el ID del test en la tabla de exámenes o nombre similar
+        const spellingResult = await pool.query(
+          `SELECT id, question_text, correct_answer, explanation, options, difficulty
+           FROM spelling_grammar_questions
+           WHERE test_id IN (SELECT id FROM spelling_grammar_tests WHERE title ILIKE '%ortografía%' OR title ILIKE '%gramática%' OR title ILIKE '%gramatica%')
+           ORDER BY order_number, id`
+        );
 
-      questionsWithOptions = spellingResult.rows.map((q, idx) => ({
-        id: q.id,
-        title: q.question_text || q.title,
-        type: 'spelling',
-        correctAnswer: q.correct_answer,
-        order: idx + 1,
-        options: []
-      }));
+        questionsWithOptions = spellingResult.rows.map((q, idx) => ({
+          id: q.id,
+          title: q.question_text,
+          type: 'spelling',
+          correctAnswer: q.correct_answer,
+          explanation: q.explanation,
+          options: q.options || [],
+          order: idx + 1
+        }));
+      } catch (err) {
+        console.error('Error loading spelling questions:', err.message);
+        questionsWithOptions = [];
+      }
     } else {
       // Obtener preguntas del examen regulares con sus opciones
       const questionsResult = await pool.query(

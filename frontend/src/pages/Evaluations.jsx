@@ -139,7 +139,21 @@ function Evaluations() {
 
       const response = await evaluationAPI.generatePDF(candidateVacancyId);
 
-      const blob = new Blob([response.data], { type: 'application/pdf' });
+      // Validar que tenemos una respuesta válida
+      if (!response || !response.data) {
+        throw new Error('Respuesta inválida del servidor');
+      }
+
+      // Crear blob solo si la respuesta es válida
+      let blob;
+      if (response.data instanceof Blob) {
+        blob = response.data;
+      } else if (typeof response.data === 'string') {
+        blob = new Blob([response.data], { type: 'application/pdf' });
+      } else {
+        throw new Error('Formato de respuesta inválido');
+      }
+
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -148,7 +162,8 @@ function Evaluations() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error descargando PDF:', error);
-      alert('Error al generar PDF');
+      const errorMsg = error?.response?.data?.error || error?.message || 'Error al generar PDF';
+      alert(`Error al generar PDF: ${errorMsg}`);
     } finally {
       setDownloadingPDF(false);
     }

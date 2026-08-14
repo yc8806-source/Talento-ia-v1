@@ -1577,7 +1577,8 @@ exports.submitExamAnswersByToken = async (req, res) => {
 exports.createSingleLinkForAllExams = async (req, res) => {
   try {
     console.log('=== RAW req.body ===', JSON.stringify(req.body));
-    const { candidateVacancyId, examIds } = req.body;
+    const { candidateVacancyId } = req.body;
+    let examIds = req.body.examIds;
     console.log('=== DEBUG createSingleLinkForAllExams ===', {
       candidateVacancyId,
       examIds,

@@ -301,10 +301,25 @@ exports.submitResultWithToken = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error guardando resultado de typing:', error);
+    console.error('❌ Error guardando resultado de typing:', error.message);
+    console.error('Stack:', error.stack);
+    console.error('Datos que se intentaban guardar:', {
+      candidateId,
+      cvId,
+      typingTestId,
+      inputTextLength: inputText?.length,
+      timeSeconds
+    });
+
     res.status(500).json({
       error: 'Error al guardar resultado',
-      details: error.message
+      details: error.message,
+      debug: {
+        candidateId,
+        cvId,
+        typingTestId,
+        hasTes: !!test
+      }
     });
   }
 };

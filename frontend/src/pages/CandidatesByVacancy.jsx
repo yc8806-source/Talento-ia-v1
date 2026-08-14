@@ -123,7 +123,7 @@ export default function CandidatesByVacancy() {
       link.setAttribute('download', `resultados_${candidateVacancyId}.pdf`);
       document.body.appendChild(link);
       link.click();
-      link.parentChild.removeChild(link);
+      link.parentNode.removeChild(link);
     } catch (error) {
       alert('Error al descargar PDF: ' + (error.response?.data?.error || error.message));
     }

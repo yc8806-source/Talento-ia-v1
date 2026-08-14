@@ -205,37 +205,8 @@ exports.submitResultWithToken = async (req, res) => {
         cvId = tokenResult.rows[0].id;
         console.log(`✅ Token encontrado en candidate_vacancies: cvId=${cvId}, candidateId=${candidateId}`);
 
-        // Verificar que el candidato existe, si no, crear uno
-        const candidateCheck = await pool.query(
-          `SELECT id FROM candidates WHERE id = $1`,
-          [candidateId]
-        );
-
-        if (candidateCheck.rows.length === 0) {
-          console.log(`⚠️ Candidato ${candidateId} no encontrado, creando automáticamente...`);
-
-          // Crear candidato
-          try {
-            const insertResult = await pool.query(
-              `INSERT INTO candidates (id, first_name, last_name, email, status)
-               VALUES ($1, $2, $3, $4, $5)
-               RETURNING id`,
-              [candidateId, 'Candidato', 'Automático', `candidato${candidateId}@system.local`, 'pending']
-            );
-
-            if (insertResult.rowCount > 0) {
-              console.log(`✅ Candidato ${candidateId} creado`);
-            }
-          } catch (err) {
-            console.error(`❌ Error crítico: No se pudo crear candidato ${candidateId}: ${err.message}`);
-            return res.status(500).json({
-              error: 'No se pudo crear candidato',
-              details: err.message
-            });
-          }
-        } else {
-          console.log(`✅ Candidato ${candidateId} existe`);
-        }
+        // El candidateId viene de candidate_vacancies, debería ser válido
+        console.log(`✅ Usando candidateId ${candidateId} de candidate_vacancies`);
       } else {
         // Fallback: buscar en evaluations.access_token (legacy system)
         tokenResult = await pool.query(

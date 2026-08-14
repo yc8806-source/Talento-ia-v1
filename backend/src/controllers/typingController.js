@@ -214,37 +214,27 @@ exports.submitResultWithToken = async (req, res) => {
         if (candidateCheck.rows.length === 0) {
           console.log(`⚠️ Candidato ${candidateId} no encontrado, creando automáticamente...`);
 
-          // Crear candidato con setval para asegurar que el SERIAL continúa correctamente
+          // Crear candidato
           try {
-            await pool.query('BEGIN');
-
-            // Obtener el siguiente ID serial
-            const seqResult = await pool.query(
-              `SELECT setval('candidates_id_seq', (SELECT MAX(id) FROM candidates))`
-            );
-
-            // Insertar directamente con el ID específico
             const insertResult = await pool.query(
               `INSERT INTO candidates (id, first_name, last_name, email, status)
-               VALUES ($1, $2, $3, $4, $5)`,
+               VALUES ($1, $2, $3, $4, $5)
+               RETURNING id`,
               [candidateId, 'Candidato', 'Automático', `candidato${candidateId}@system.local`, 'pending']
             );
 
-            await pool.query('COMMIT');
-            console.log(`✅ Candidato ${candidateId} creado automáticamente`);
-          } catch (err) {
-            await pool.query('ROLLBACK').catch(() => {});
-
-            // Si el error es por duplicate key, el candidato ya existe ahora
-            if (err.message.includes('duplicate') || err.message.includes('unique')) {
-              console.log(`✅ Candidato ${candidateId} ya existe`);
-            } else {
-              console.error(`⚠️ Error creando candidato ${candidateId}:`, err.message);
-              // Continuar de todas formas, quizás el candidato ya existe
+            if (insertResult.rowCount > 0) {
+              console.log(`✅ Candidato ${candidateId} creado`);
             }
+          } catch (err) {
+            console.error(`❌ Error crítico: No se pudo crear candidato ${candidateId}: ${err.message}`);
+            return res.status(500).json({
+              error: 'No se pudo crear candidato',
+              details: err.message
+            });
           }
         } else {
-          console.log(`✅ Candidato ${candidateId} verificado`);
+          console.log(`✅ Candidato ${candidateId} existe`);
         }
       } else {
         // Fallback: buscar en evaluations.access_token (legacy system)

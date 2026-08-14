@@ -1465,20 +1465,25 @@ exports.submitExamAnswersByToken = async (req, res) => {
       });
     }
 
-    // Buscar candidate_vacancy con el token
-    const cvResult = await pool.query(
-      'SELECT * FROM candidate_vacancies WHERE token = $1',
+    // Buscar evaluation con el token (access_token)
+    const evalResult = await pool.query(
+      `SELECT e.id, e.candidate_vacancy_id, cv.candidate_id
+       FROM evaluations e
+       JOIN candidate_vacancies cv ON e.candidate_vacancy_id = cv.id
+       WHERE e.access_token = $1
+       LIMIT 1`,
       [token]
     );
 
-    if (cvResult.rows.length === 0) {
+    if (evalResult.rows.length === 0) {
       return res.status(404).json({
         error: 'Token inválido'
       });
     }
 
-    const candidateVacancy = cvResult.rows[0];
-    const candidateId = candidateVacancy.candidate_id;
+    const evaluation = evalResult.rows[0];
+    const candidateVacancyId = evaluation.candidate_vacancy_id;
+    const candidateId = evaluation.candidate_id;
 
     // Guardar cada respuesta
     let totalScore = 0;
@@ -1527,10 +1532,10 @@ exports.submitExamAnswersByToken = async (req, res) => {
       }
     }
 
-    // Actualizar estado de candidate_vacancy a 'completed'
+    // Actualizar estado de evaluation a 'completed'
     await pool.query(
-      'UPDATE candidate_vacancies SET status = $1, updated_at = NOW() WHERE id = $2',
-      ['completed', candidateVacancy.id]
+      'UPDATE evaluations SET status = $1, completed_at = NOW() WHERE id = $2',
+      ['completed', evaluation.id]
     );
 
     res.status(201).json({

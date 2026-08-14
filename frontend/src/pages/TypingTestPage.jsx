@@ -89,28 +89,38 @@ function TypingTestPage() {
     try {
       const timeSeconds = Math.max(1, test.durationSeconds - (timeLeft || 0));
 
+      const submitData = {
+        token: token,
+        typingTestId: test.id,
+        inputText: inputText,
+        timeSeconds: timeSeconds,
+        startedAt: startedAt,
+      };
+
+      console.log('📤 Enviando datos:', submitData);
+      console.log('Test object:', test);
+
       const submitResponse = await fetch(`${API_URL}/typing/results/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token: token,
-          typingTestId: test.id,
-          inputText: inputText,
-          timeSeconds: timeSeconds,
-          startedAt: startedAt,
-        })
+        body: JSON.stringify(submitData)
       });
 
       const data = await submitResponse.json();
 
+      console.log('📥 Respuesta del servidor:', submitResponse.status, data);
+
       if (!submitResponse.ok) {
+        console.error('❌ Error del servidor:', data);
         throw new Error(data.error || 'Error al guardar');
       }
 
+      console.log('✅ Resultado guardado:', data.result);
       setResult(data.result);
       setTestCompleted(true);
     } catch (error) {
       console.error('Error enviando resultado:', error);
+      console.error('Error completo:', { message: error.message, stack: error.stack });
       alert('Error al guardar el resultado: ' + error.message);
       setIsSubmitting(false);
     }

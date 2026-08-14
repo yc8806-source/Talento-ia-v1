@@ -105,20 +105,18 @@ function Invitations() {
           const candidate = candidates.find(c => c.id === candidateId);
           const vacancy = vacancies.find(v => v.id === parseInt(selectedVacancy));
 
-          // Crear UN ÚNICO link para todos los exámenes de la vacante
-          const examIds = vacancyExams.map(e => e.id);
-          const linkRes = await evaluationAPI.createMultiExamLink({
-            candidateId,
+          // Generar UN ÚNICO link (usamos el primer examen como referencia)
+          const linkRes = await evaluationAPI.createAndShareLink({
             candidateVacancyId,
-            examIds,
+            examId: vacancyExams[0].id,
           });
 
           const evaluationLink = linkRes.data.evaluation.link;
           const candidatePhone = (candidate.phone || '').replace(/\D/g, ''); // Solo dígitos
-          const examNames = vacancyExams.map(e => e.name).join(', ');
+          const examNames = vacancyExams.map(e => e.name).join('\n• ');
 
-          // Texto predefinido profesional para WhatsApp
-          const whatsappMessage = `¡Hola ${candidate.first_name}! 👋\n\nTe invitamos a participar en evaluaciones de ${vacancy.title} en IMPULSA TALENTO.\n\nExámenes:\n${vacancyExams.map(e => `• ${e.name}`).join('\n')}\n\nAccede aquí:\n${evaluationLink}\n\n¡Mucho éxito! 🚀`;
+          // Texto predefinido profesional para WhatsApp - UNA SOLA VEZ
+          const whatsappMessage = `¡Hola ${candidate.first_name}! 👋\n\nTe invitamos a participar en evaluaciones de ${vacancy.title} en IMPULSA TALENTO.\n\nExámenes:\n• ${examNames}\n\nAccede aquí:\n${evaluationLink}\n\n¡Mucho éxito! 🚀`;
 
           // Crear link de WhatsApp Web
           const whatsappLink = candidatePhone
@@ -130,10 +128,9 @@ function Invitations() {
             candidateName: `${candidate.first_name} ${candidate.last_name}`,
             candidateEmail: candidate.email,
             candidatePhone: candidate.phone,
-            evaluationLink: evaluationLink,
+            links: [evaluationLink],
             whatsappLink: whatsappLink,
             whatsappMessage: whatsappMessage,
-            examNames: examNames,
             message: 'Link de evaluación generado exitosamente',
           });
         } catch (error) {

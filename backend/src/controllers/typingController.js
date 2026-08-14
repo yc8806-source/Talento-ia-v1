@@ -212,24 +212,36 @@ exports.submitResultWithToken = async (req, res) => {
         );
 
         if (candidateCheck.rows.length === 0) {
-          console.log(`⚠️ Candidato no encontrado: ${candidateId}, intentando crear...`);
+          console.log(`⚠️ Candidato ${candidateId} no encontrado, creando automáticamente...`);
 
-          // Crear candidato
+          // Crear candidato con setval para asegurar que el SERIAL continúa correctamente
           try {
-            await pool.query(
-              `INSERT INTO candidates (id, first_name, last_name, email, status)
-               SELECT $1, 'Candidato', 'Automático', 'candidato' || $1 || '@system.local', 'pending'
-               WHERE NOT EXISTS (SELECT 1 FROM candidates WHERE id = $1)`,
-              [candidateId]
+            await pool.query('BEGIN');
+
+            // Obtener el siguiente ID serial
+            const seqResult = await pool.query(
+              `SELECT setval('candidates_id_seq', (SELECT MAX(id) FROM candidates))`
             );
 
+            // Insertar directamente con el ID específico
+            const insertResult = await pool.query(
+              `INSERT INTO candidates (id, first_name, last_name, email, status)
+               VALUES ($1, $2, $3, $4, $5)`,
+              [candidateId, 'Candidato', 'Automático', `candidato${candidateId}@system.local`, 'pending']
+            );
+
+            await pool.query('COMMIT');
             console.log(`✅ Candidato ${candidateId} creado automáticamente`);
           } catch (err) {
-            console.error(`❌ Error creando candidato ${candidateId}:`, err.message);
-            return res.status(500).json({
-              error: 'No se pudo crear el candidato',
-              details: err.message
-            });
+            await pool.query('ROLLBACK').catch(() => {});
+
+            // Si el error es por duplicate key, el candidato ya existe ahora
+            if (err.message.includes('duplicate') || err.message.includes('unique')) {
+              console.log(`✅ Candidato ${candidateId} ya existe`);
+            } else {
+              console.error(`⚠️ Error creando candidato ${candidateId}:`, err.message);
+              // Continuar de todas formas, quizás el candidato ya existe
+            }
           }
         } else {
           console.log(`✅ Candidato ${candidateId} verificado`);

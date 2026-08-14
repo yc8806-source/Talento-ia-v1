@@ -125,13 +125,15 @@ exports.submitEvaluation = async (req, res) => {
       ['completed', evaluationId]
     );
 
-    // Obtener todas las respuestas de la evaluación
+    // Obtener respuestas del examen desde exam_answers
     const answersResult = await pool.query(
-      `SELECT ea.score_obtained, q.competency_id
-       FROM evaluation_answers ea
+      `SELECT CAST(qo.score AS FLOAT) as score, q.competency_id
+       FROM exam_answers ea
        INNER JOIN questions q ON ea.question_id = q.id
-       WHERE ea.evaluation_id = $1`,
-      [evaluationId]
+       INNER JOIN question_options qo ON ea.answer_value = qo.id
+       WHERE ea.candidate_id = (SELECT candidate_id FROM candidate_vacancies WHERE id = $1)
+         AND ea.exam_id = $2`,
+      [evaluation.candidate_vacancy_id, evaluation.exam_id]
     );
 
     // Agrupar puntuaciones por competencia
@@ -160,7 +162,7 @@ exports.submitEvaluation = async (req, res) => {
       if (!competencyScores[competencyId]) {
         competencyScores[competencyId] = 0;
       }
-      competencyScores[competencyId] += answer.score_obtained;
+      competencyScores[competencyId] += answer.score;
     });
 
     // Guardar resultados por competencia

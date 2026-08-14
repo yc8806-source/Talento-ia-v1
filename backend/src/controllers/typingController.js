@@ -204,6 +204,20 @@ exports.submitResultWithToken = async (req, res) => {
         candidateId = tokenResult.rows[0].candidate_id;
         cvId = tokenResult.rows[0].id;
         console.log(`✅ Token encontrado en candidate_vacancies: cvId=${cvId}, candidateId=${candidateId}`);
+
+        // Verificar que el candidato existe
+        const candidateCheck = await pool.query(
+          `SELECT id FROM candidates WHERE id = $1`,
+          [candidateId]
+        );
+
+        if (candidateCheck.rows.length === 0) {
+          console.error(`❌ Candidato no encontrado: ${candidateId}`);
+          return res.status(404).json({
+            error: 'Candidato no encontrado',
+            details: `El candidato con ID ${candidateId} no existe en la base de datos`
+          });
+        }
       } else {
         // Fallback: buscar en evaluations.access_token (legacy system)
         tokenResult = await pool.query(

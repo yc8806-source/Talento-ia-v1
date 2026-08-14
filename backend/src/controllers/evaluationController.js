@@ -1610,9 +1610,7 @@ exports.createSingleLinkForAllExams = async (req, res) => {
 
     const client = await pool.connect();
     try {
-      await client.query('BEGIN');
-
-      // Primero: Eliminar evaluaciones antiguas del mismo candidateVacancyId
+      // IMPORTANTE: DELETE fuera de transacción para que no se reviertta por errores posteriores
       const deleteResult = await client.query(
         'DELETE FROM evaluations WHERE candidate_vacancy_id = $1',
         [candidateVacancyId]
@@ -1623,17 +1621,15 @@ exports.createSingleLinkForAllExams = async (req, res) => {
       const token = crypto.randomUUID();
       console.log(`Generated token: ${token}`);
 
-      // Crear evaluaciones para cada examen CON EL MISMO TOKEN
+      // Crear evaluaciones para cada examen CON EL MISMO TOKEN (sin transacción)
       for (const examId of examIds) {
         const parsedExamId = parseInt(examId);
         await client.query(
           'INSERT INTO evaluations (candidate_vacancy_id, exam_id, status, access_token, started_at) VALUES ($1, $2, $3, $4, NOW())',
           [candidateVacancyId, parsedExamId, 'pending', token]
         );
-        console.log(`Created evaluation for candidateVacancyId ${candidateVacancyId}, examId ${examId}, token: ${token}`);
+        console.log(`Created evaluation for candidateVacancyId ${candidateVacancyId}, examId ${examId}`);
       }
-
-      await client.query('COMMIT');
 
       // UN ÚNICO link con el mismo token para acceder a todos los exámenes
       const baseUrl = process.env.FRONTEND_URL || 'https://talento-ia-v1-frontend.onrender.com';
@@ -1647,9 +1643,8 @@ exports.createSingleLinkForAllExams = async (req, res) => {
           examsCount: examIds.length
         }
       });
-    } catch (txnError) {
-      await client.query('ROLLBACK');
-      throw txnError;
+    } catch (error) {
+      throw error;
     } finally {
       client.release();
     }

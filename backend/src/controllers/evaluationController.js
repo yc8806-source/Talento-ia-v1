@@ -1508,50 +1508,47 @@ exports.submitExamAnswersByToken = async (req, res) => {
       // La evaluación no existe - CREARLA AUTOMÁTICAMENTE
       console.log(`📝 Creando evaluación automáticamente para token=${token}, examId=${examId}`);
 
-      try {
-        // Primero, encontrar el candidate_vacancy_id y candidate_id del token
-        const cvResult = await pool.query(
-          `SELECT cv.id, cv.candidate_id FROM candidate_vacancies WHERE token = $1`,
-          [token]
-        );
+      // Encontrar el candidate_vacancy_id y candidate_id del token
+      const cvResult = await pool.query(
+        `SELECT cv.id, cv.candidate_id FROM candidate_vacancies WHERE token = $1`,
+        [token]
+      );
 
-        if (cvResult.rows.length === 0) {
-          return res.status(404).json({
-            error: 'Token inválido'
-          });
-        }
-
-        candidateVacancyId = cvResult.rows[0].id;
-        candidateId = cvResult.rows[0].candidate_id;
-        console.log(`  ✅ Encontrado: candidateVacancyId=${candidateVacancyId}, candidateId=${candidateId}`);
-
-        // Generar un token único para la evaluación (requerido por la tabla)
-        const accessToken = crypto.randomBytes(32).toString('hex');
-
-        // Crear la evaluación
-        const createResult = await pool.query(
-          `INSERT INTO evaluations (candidate_vacancy_id, exam_id, status, access_token, started_at)
-           VALUES ($1, $2, 'in_progress', $3, NOW())
-           RETURNING id`,
-          [candidateVacancyId, examId, accessToken]
-        );
-
-        if (!createResult.rows[0]) {
-          throw new Error('No se pudo obtener el ID de la evaluación creada');
-        }
-
-        evaluation = {
-          id: createResult.rows[0].id,
-          candidate_vacancy_id: candidateVacancyId,
-          candidate_id: candidateId
-        };
-
-        console.log(`✅ Evaluación creada automáticamente: id=${evaluation.id}`);
-      } catch (createError) {
-        console.error('❌ Error creando evaluación:', createError.message);
-        console.error('Stack:', createError.stack);
-        throw createError;
+      if (cvResult.rows.length === 0) {
+        console.error(`❌ Token no encontrado en candidate_vacancies: ${token}`);
+        return res.status(404).json({
+          error: 'Token inválido'
+        });
       }
+
+      candidateVacancyId = cvResult.rows[0].id;
+      candidateId = cvResult.rows[0].candidate_id;
+      console.log(`  ✅ Encontrado CV: id=${candidateVacancyId}, candidateId=${candidateId}`);
+
+      // Generar un token único para la evaluación (requerido por la tabla)
+      const accessToken = crypto.randomBytes(32).toString('hex');
+      console.log(`  🔐 Generado access_token: ${accessToken.substring(0, 16)}...`);
+
+      // Crear la evaluación
+      console.log(`  📊 Insertando: candidateVacancyId=${candidateVacancyId}, examId=${examId}, status='in_progress'`);
+      const createResult = await pool.query(
+        `INSERT INTO evaluations (candidate_vacancy_id, exam_id, status, access_token, started_at)
+         VALUES ($1, $2, 'in_progress', $3, NOW())
+         RETURNING id`,
+        [candidateVacancyId, examId, accessToken]
+      );
+
+      if (!createResult.rows[0]) {
+        throw new Error('No se pudo obtener el ID de la evaluación creada');
+      }
+
+      evaluation = {
+        id: createResult.rows[0].id,
+        candidate_vacancy_id: candidateVacancyId,
+        candidate_id: candidateId
+      };
+
+      console.log(`✅ Evaluación creada automáticamente: id=${evaluation.id}`);
     } else {
       evaluation = evalResult.rows[0];
       candidateVacancyId = evaluation.candidate_vacancy_id;

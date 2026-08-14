@@ -163,6 +163,39 @@ async function initDatabase() {
       } else {
         console.log('✅ Todos los exams de typing ya tienen typing_test_id asignado');
       }
+
+      // Reparar candidate_vacancies huérfanas: crear candidatos faltantes
+      console.log('🔧 Verificando candidate_vacancies huérfanas...');
+      try {
+        const orphanedCVs = await pool.query(
+          `SELECT DISTINCT cv.candidate_id
+           FROM candidate_vacancies cv
+           LEFT JOIN candidates c ON cv.candidate_id = c.id
+           WHERE c.id IS NULL`
+        );
+
+        if (orphanedCVs.rows.length > 0) {
+          console.log(`⚠️ Encontradas ${orphanedCVs.rows.length} candidate_vacancies huérfanas`);
+
+          for (const row of orphanedCVs.rows) {
+            const cid = row.candidate_id;
+            console.log(`📝 Creando candidato faltante con ID ${cid}...`);
+
+            await pool.query(
+              `INSERT INTO candidates (id, first_name, last_name, email, status)
+               VALUES ($1, 'Candidato', 'Importado', 'candidato' || $1 || '@system.local', 'pending')
+               ON CONFLICT (id) DO NOTHING`,
+              [cid]
+            );
+
+            console.log(`✅ Candidato ${cid} creado/verificado`);
+          }
+        } else {
+          console.log('✅ No hay candidate_vacancies huérfanas');
+        }
+      } catch (err) {
+        console.error('⚠️ Error reparando candidate_vacancies:', err.message);
+      }
     } catch (err) {
       console.error('⚠️ Error verificando/aplicando migración 010:', err.message);
     }

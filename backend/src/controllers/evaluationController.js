@@ -1492,34 +1492,32 @@ exports.submitExamAnswersByToken = async (req, res) => {
     for (const [questionIndexStr, answerData] of Object.entries(answers)) {
       const questionIndex = parseInt(questionIndexStr, 10);
       const questionId = Math.floor(parseFloat(answerData.questionId || answerData.id) || 0);
-      const optionId = Math.floor(parseFloat(answerData.optionId || answerData.selected) || 0);
+      const answerValue = answerData.selected || answerData.optionId || answerData.answer || '';
       const timeSpent = Math.floor(parseFloat(answerData.timeSpent) || 0);
 
-      console.log(`Answer data for question ${questionId}:`, JSON.stringify(answerData));
-
-      if (!questionId || !optionId) {
-        console.warn(`Skipping answer: missing questionId (${questionId}) or optionId (${optionId})`);
+      if (!questionId || !answerValue) {
+        console.warn(`Skipping answer: missing questionId (${questionId}) or answerValue`);
         continue;
       }
 
-      // Obtener puntaje - diferente para preguntas normales y ortografía
+      // Obtener puntaje - solo para preguntas normales con IDs numéricos
       let score = 0;
+      const numericAnswerId = Math.floor(parseFloat(answerValue) || 0);
 
-      // Intentar obtener de question_options (preguntas normales)
-      try {
-        const scoreResult = await pool.query(
-          'SELECT score FROM question_options WHERE id = $1 AND question_id = $2',
-          [optionId, questionId]
-        );
+      if (numericAnswerId > 0) {
+        try {
+          const scoreResult = await pool.query(
+            'SELECT score FROM question_options WHERE id = $1 AND question_id = $2',
+            [numericAnswerId, questionId]
+          );
 
-        if (scoreResult.rows.length > 0) {
-          score = parseFloat(scoreResult.rows[0].score) || 0;
-          totalScore += score;
+          if (scoreResult.rows.length > 0) {
+            score = parseFloat(scoreResult.rows[0].score) || 0;
+            totalScore += score;
+          }
+        } catch (scoreError) {
+          console.debug(`Score lookup failed for question ${questionId}, assuming spelling question`);
         }
-      } catch (scoreError) {
-        // Si falla, podría ser una pregunta de ortografía
-        // Para ortografía, asumimos 100 puntos si la respuesta es correcta
-        console.debug(`Score lookup failed for question ${questionId}, might be spelling question`);
       }
 
       // Guardar respuesta - usar DELETE + INSERT para mayor confiabilidad
@@ -1531,7 +1529,7 @@ exports.submitExamAnswersByToken = async (req, res) => {
 
         const insertResult = await pool.query(
           'INSERT INTO exam_answers (candidate_id, exam_id, question_id, answer_value, time_spent_seconds) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-          [candidateId, examId, questionId, optionId, timeSpent]
+          [candidateId, examId, questionId, String(answerValue), timeSpent]
         );
 
         if (insertResult.rows.length > 0) {

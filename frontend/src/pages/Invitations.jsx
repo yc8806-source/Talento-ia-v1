@@ -105,10 +105,11 @@ function Invitations() {
           const candidate = candidates.find(c => c.id === candidateId);
           const vacancy = vacancies.find(v => v.id === parseInt(selectedVacancy));
 
-          // Generar UN ÚNICO link (usamos el primer examen como referencia)
-          const linkRes = await evaluationAPI.createAndShareLink({
+          // Generar UN ÚNICO link para TODOS los exámenes de la vacante
+          const examIds = vacancyExams.map(e => e.id);
+          const linkRes = await evaluationAPI.createSingleLink({
             candidateVacancyId,
-            examId: vacancyExams[0].id,
+            examIds,
           });
 
           const evaluationLink = linkRes.data.evaluation.link;

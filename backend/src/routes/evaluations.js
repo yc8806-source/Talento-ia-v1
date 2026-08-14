@@ -6,6 +6,9 @@ const { evaluationLimiter } = require('../middleware/securityMiddleware');
 // RATE LIMITING - Limitar creación de evaluaciones
 router.post('/start', evaluationLimiter, evaluationController.startEvaluation);
 
+// Crear un único link para todos los exámenes
+router.post('/single-link', evaluationLimiter, evaluationController.createSingleLinkForAllExams);
+
 // RATE LIMITING - Limitar compartir links
 router.post('/share-link', evaluationLimiter, evaluationController.createAndShareEvaluationLink);
 

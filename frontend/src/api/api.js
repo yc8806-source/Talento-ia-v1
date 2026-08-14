@@ -99,6 +99,7 @@ export const evaluationAPI = {
   submit: (evaluationId) => api.post(`/evaluations/${evaluationId}/submit`, {}),
   getResults: (candidateVacancyId) => api.get(`/evaluations/${candidateVacancyId}/results`),
   generatePDF: (candidateVacancyId) => api.get(`/evaluations/${candidateVacancyId}/pdf/download`, { responseType: 'blob' }),
+  createSingleLink: (data) => api.post('/evaluations/single-link', data),
   createAndShareLink: (data) => api.post('/evaluations/share-link', data),
   getByToken: (token) => api.get(`/evaluations/token/${token}`),
 };

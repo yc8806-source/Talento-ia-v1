@@ -1572,3 +1572,46 @@ exports.submitExamAnswersByToken = async (req, res) => {
     });
   }
 };
+
+// CREAR UN ÚNICO LINK PARA TODOS LOS EXÁMENES
+exports.createSingleLinkForAllExams = async (req, res) => {
+  try {
+    const { candidateVacancyId, examIds } = req.body;
+
+    if (!candidateVacancyId || !examIds || !Array.isArray(examIds) || examIds.length === 0) {
+      return res.status(400).json({
+        error: 'candidateVacancyId y examIds (array) son requeridos'
+      });
+    }
+
+    // Generar token único para todas las evaluaciones
+    const token = crypto.randomBytes(32).toString('hex');
+
+    // Crear una evaluación para cada examen CON EL MISMO TOKEN
+    for (const examId of examIds) {
+      await pool.query(
+        'INSERT INTO evaluations (candidate_vacancy_id, exam_id, status, access_token, started_at) VALUES ($1, $2, $3, $4, NOW())',
+        [candidateVacancyId, parseInt(examId), 'pending', token]
+      );
+    }
+
+    // UN ÚNICO link con el mismo token para acceder a todos los exámenes
+    const baseUrl = process.env.FRONTEND_URL || 'https://talento-ia-v1-frontend.onrender.com';
+    const evaluationLink = `${baseUrl}/evaluation?token=${token}`;
+
+    res.status(201).json({
+      message: 'Link de evaluación creado exitosamente',
+      evaluation: {
+        token,
+        link: evaluationLink,
+        examsCount: examIds.length
+      }
+    });
+  } catch (error) {
+    console.error('Error creando link único:', error);
+    res.status(500).json({
+      error: 'Error al crear link',
+      details: error.message
+    });
+  }
+};

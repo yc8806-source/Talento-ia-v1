@@ -55,7 +55,6 @@ function Navbar({ onLogout }) {
               <NavLink to="/reportes" icon={FiBarChart2} label="Reportes" />
               {role === 'admin' && (
                 <>
-                  <NavLink to="/invitaciones" icon={FiMail} label="Invitaciones" />
                   <NavLink to="/permisos" icon={FiLock} label="Permisos" />
                   <NavLink to="/admin" icon={FiSettings} label="Admin" />
                 </>
@@ -101,7 +100,6 @@ function Navbar({ onLogout }) {
               <NavLink to="/reportes" icon={FiBarChart2} label="Reportes" />
               {role === 'admin' && (
                 <>
-                  <NavLink to="/invitaciones" icon={FiMail} label="Invitaciones" />
                   <NavLink to="/permisos" icon={FiLock} label="Permisos" />
                   <NavLink to="/admin" icon={FiSettings} label="Admin" />
                 </>

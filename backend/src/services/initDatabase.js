@@ -113,6 +113,34 @@ async function initDatabase() {
       } else {
         console.log('✅ Migración 010 ya aplicada (typing_test_id column exists)');
       }
+
+      // Auto-asignar typing_test_id a exams de tipo 'typing' que sean NULL
+      const nullExams = await pool.query(
+        `SELECT id FROM exams WHERE type = 'typing' AND typing_test_id IS NULL`
+      );
+
+      if (nullExams.rows.length > 0) {
+        console.log(`🔧 Encontrados ${nullExams.rows.length} exams de typing sin typing_test_id`);
+
+        // Obtener el primer typing_test disponible
+        const typingTests = await pool.query(`SELECT id FROM typing_tests ORDER BY id ASC LIMIT 1`);
+
+        if (typingTests.rows.length > 0) {
+          const typingTestId = typingTests.rows[0].id;
+
+          // Actualizar todos los exams de typing null
+          const updateResult = await pool.query(
+            `UPDATE exams SET typing_test_id = $1 WHERE type = 'typing' AND typing_test_id IS NULL`,
+            [typingTestId]
+          );
+
+          console.log(`✅ Actualizados ${updateResult.rowCount} exams de typing con typing_test_id = ${typingTestId}`);
+        } else {
+          console.warn('⚠️ No hay typing_tests disponibles para asignar');
+        }
+      } else {
+        console.log('✅ Todos los exams de typing ya tienen typing_test_id asignado');
+      }
     } catch (err) {
       console.error('⚠️ Error verificando/aplicando migración 010:', err.message);
     }

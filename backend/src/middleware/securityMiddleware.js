@@ -32,7 +32,7 @@ const apiLimiter = rateLimit({
 // RATE LIMITING - Limitar evaluaciones (evitar spam)
 const evaluationLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hora
-  max: 10, // máximo 10 evaluaciones por hora
+  max: 100, // máximo 100 evaluaciones por hora (increased for testing)
   message: 'Límite de evaluaciones excedido. Por favor intenta más tarde.',
   standardHeaders: true,
   legacyHeaders: false,

@@ -719,20 +719,52 @@ exports.generatePDFOnDemand = async (req, res) => {
     const candidate = info.rows[0];
     const candidateId = candidate.candidate_id;
 
-    // Obtener respuestas TPL-80 (examen ID 27)
-    const answers = await pool.query(
-      `SELECT eq.question_order, q.id, q.is_inverse, CAST(qo.score AS FLOAT) as score
-       FROM exam_answers ea
-       INNER JOIN questions q ON ea.question_id = q.id
-       INNER JOIN exam_questions eq ON q.id = eq.question_id AND eq.exam_id = 27
-       INNER JOIN question_options qo ON ea.answer_value = qo.id
-       WHERE ea.candidate_id = $1 AND ea.exam_id = 27
-       ORDER BY eq.question_order`,
+    // Buscar el examen TPL-80
+    console.log(`🔍 Buscando TPL-80 para candidateId=${candidateId}`);
+
+    const examCheck = await pool.query(
+      `SELECT DISTINCT e.id FROM exams e
+       INNER JOIN exam_answers ea ON e.id = ea.exam_id
+       WHERE ea.candidate_id = $1 AND e.name ILIKE '%TPL-80%'
+       LIMIT 1`,
       [candidateId]
     );
 
+    console.log(`📊 Resultados búsqueda TPL-80:`, examCheck.rows);
+
+    if (examCheck.rows.length === 0) {
+      // Intentar buscar por cualquier examen que tenga respuestas
+      const anyExam = await pool.query(
+        `SELECT DISTINCT e.id, e.name FROM exams e
+         INNER JOIN exam_answers ea ON e.id = ea.exam_id
+         WHERE ea.candidate_id = $1
+         LIMIT 1`,
+        [candidateId]
+      );
+      console.log(`📋 Exámenes disponibles para este candidato:`, anyExam.rows);
+
+      return res.status(404).json({
+        error: 'No hay respuestas del TPL-80 para este candidato',
+        availableExams: anyExam.rows
+      });
+    }
+
+    const tpl80ExamId = examCheck.rows[0].id;
+    console.log(`✅ TPL-80 encontrado con ID=${tpl80ExamId}`);
+
+    // Obtener respuestas TPL-80 (answer_value ya contiene la puntuación 1-5)
+    const answers = await pool.query(
+      `SELECT eq.question_order, q.id, q.is_inverse, CAST(ea.answer_value AS FLOAT) as score
+       FROM exam_answers ea
+       INNER JOIN questions q ON ea.question_id = q.id
+       INNER JOIN exam_questions eq ON q.id = eq.question_id AND eq.exam_id = $2
+       WHERE ea.candidate_id = $1 AND ea.exam_id = $2
+       ORDER BY eq.question_order`,
+      [candidateId, tpl80ExamId]
+    );
+
     if (answers.rows.length === 0) {
-      return res.status(404).json({ error: 'Sin respuestas' });
+      return res.status(404).json({ error: 'Sin respuestas en el TPL-80' });
     }
 
     // Calcular competencias (8 preguntas por competencia)

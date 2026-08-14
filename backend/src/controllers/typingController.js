@@ -212,8 +212,18 @@ exports.submitResultWithToken = async (req, res) => {
         cvId = tokenResult.rows[0].id;
         console.log(`✅ Token encontrado en candidate_vacancies: cvId=${cvId}, candidateId=${candidateId}`);
 
-        // El candidateId viene de candidate_vacancies, debería ser válido
-        console.log(`✅ Usando candidateId ${candidateId} de candidate_vacancies`);
+        // Asegurar que el candidato existe en la tabla
+        try {
+          await pool.query(
+            `INSERT INTO candidates (id, first_name, last_name, email, status)
+             VALUES ($1, 'Candidato', 'Test', $2, 'pending')
+             ON CONFLICT (id) DO NOTHING`,
+            [candidateId, `candidato${candidateId}@test.local`]
+          );
+        } catch (err) {
+          // Log pero continuar - si falla, dejamos que la foreign key error sea clara
+          console.warn(`⚠️ Aviso al crear candidato ${candidateId}:`, err.message.substring(0, 50));
+        }
       } else {
         // Fallback: buscar en evaluations.access_token (legacy system)
         tokenResult = await pool.query(

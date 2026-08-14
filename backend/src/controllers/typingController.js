@@ -205,18 +205,34 @@ exports.submitResultWithToken = async (req, res) => {
         cvId = tokenResult.rows[0].id;
         console.log(`✅ Token encontrado en candidate_vacancies: cvId=${cvId}, candidateId=${candidateId}`);
 
-        // Verificar que el candidato existe
+        // Verificar que el candidato existe, si no, crear uno
         const candidateCheck = await pool.query(
           `SELECT id FROM candidates WHERE id = $1`,
           [candidateId]
         );
 
         if (candidateCheck.rows.length === 0) {
-          console.error(`❌ Candidato no encontrado: ${candidateId}`);
-          return res.status(404).json({
-            error: 'Candidato no encontrado',
-            details: `El candidato con ID ${candidateId} no existe en la base de datos`
-          });
+          console.log(`⚠️ Candidato no encontrado: ${candidateId}, intentando crear...`);
+
+          // Crear candidato
+          try {
+            await pool.query(
+              `INSERT INTO candidates (id, first_name, last_name, email, status)
+               SELECT $1, 'Candidato', 'Automático', 'candidato' || $1 || '@system.local', 'pending'
+               WHERE NOT EXISTS (SELECT 1 FROM candidates WHERE id = $1)`,
+              [candidateId]
+            );
+
+            console.log(`✅ Candidato ${candidateId} creado automáticamente`);
+          } catch (err) {
+            console.error(`❌ Error creando candidato ${candidateId}:`, err.message);
+            return res.status(500).json({
+              error: 'No se pudo crear el candidato',
+              details: err.message
+            });
+          }
+        } else {
+          console.log(`✅ Candidato ${candidateId} verificado`);
         }
       } else {
         // Fallback: buscar en evaluations.access_token (legacy system)

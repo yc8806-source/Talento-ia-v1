@@ -1541,10 +1541,17 @@ exports.submitExamAnswersByToken = async (req, res) => {
     }
 
     // Actualizar estado de evaluation a 'completed'
-    await pool.query(
-      'UPDATE evaluations SET status = $1, completed_at = NOW() WHERE id = $2',
-      ['completed', evaluation.id]
-    );
+    console.log(`Updating evaluation ${evaluation.id} to completed`);
+    try {
+      const updateResult = await pool.query(
+        'UPDATE evaluations SET status = $1, completed_at = NOW() WHERE id = $2',
+        ['completed', evaluation.id]
+      );
+      console.log(`Update result: ${updateResult.rowCount} rows updated`);
+    } catch (updateError) {
+      console.error('Error updating evaluation status:', updateError.message);
+      throw updateError;
+    }
 
     res.status(201).json({
       message: 'Respuestas guardadas exitosamente',

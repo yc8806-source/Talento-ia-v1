@@ -82,8 +82,8 @@ function Invitations() {
   };
 
   const handleSendInvitations = async () => {
-    if (!selectedVacancy || selectedCandidates.length === 0) {
-      alert('Por favor selecciona candidatos y vacante');
+    if (!selectedVacancy || vacancyExams.length === 0 || selectedCandidates.length === 0) {
+      alert('Por favor completa todos los pasos');
       return;
     }
 
@@ -214,13 +214,13 @@ function Invitations() {
           <div className="space-y-8">
             {/* Title */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-1">Enviar Invitaciones a Candidatos</h2>
-              <p className="text-gray-600">Los exámenes se asignan automáticamente según la vacante</p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-1">Paso 1: Selecciona Candidatos</h2>
+              <p className="text-gray-600">Busca y selecciona los candidatos a invitar</p>
             </div>
 
             {/* Progress Steps */}
             <div className="flex items-center justify-between bg-white rounded-lg p-6 shadow-sm">
-              {[1, 2].map((s) => (
+              {[1, 2, 3, 4].map((s) => (
                 <div key={s} className="flex items-center flex-1">
                   <button
                     onClick={() => setStep(s)}
@@ -234,7 +234,7 @@ function Invitations() {
                   >
                     {s < step ? <FiCheck /> : s}
                   </button>
-                  {s < 2 && (
+                  {s < 4 && (
                     <div
                       className={`h-1 flex-1 mx-2 transition-all ${
                         s < step ? 'bg-green-500' : 'bg-gray-200'
@@ -246,7 +246,7 @@ function Invitations() {
             </div>
 
             {/* Step Labels */}
-            <div className="grid grid-cols-2 gap-4 text-center text-sm">
+            <div className="grid grid-cols-4 gap-4 text-center text-sm">
               <div>
                 <p className={`font-semibold ${step === 1 ? 'text-purple-600' : 'text-gray-600'}`}>
                   Candidatos
@@ -254,7 +254,17 @@ function Invitations() {
               </div>
               <div>
                 <p className={`font-semibold ${step === 2 ? 'text-purple-600' : 'text-gray-600'}`}>
-                  Vacante & Enviar
+                  Vacante
+                </p>
+              </div>
+              <div>
+                <p className={`font-semibold ${step === 3 ? 'text-purple-600' : 'text-gray-600'}`}>
+                  Revisar
+                </p>
+              </div>
+              <div>
+                <p className={`font-semibold ${step === 4 ? 'text-purple-600' : 'text-gray-600'}`}>
+                  Enviar
                 </p>
               </div>
             </div>
@@ -380,12 +390,12 @@ function Invitations() {
               </div>
             )}
 
-            {/* Step 2: Review & Send */}
-            {step === 2 && (
+            {/* Step 3: Review */}
+            {step === 3 && (
               <div className="bg-white rounded-xl shadow-md p-8 space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Resumen de Invitación</h2>
-                  <p className="text-gray-600">Revisa los datos antes de enviar</p>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Revisar Invitación</h2>
+                  <p className="text-gray-600">Verifica los datos antes de enviar</p>
                 </div>
 
                 <div className="space-y-4">
@@ -437,12 +447,13 @@ function Invitations() {
                 ← Anterior
               </button>
 
-              {step < 2 ? (
+              {step < 4 ? (
                 <button
                   onClick={() => setStep(step + 1)}
                   disabled={
                     (step === 1 && selectedCandidates.length === 0) ||
-                    (step === 2 && !selectedVacancy)
+                    (step === 2 && !selectedVacancy) ||
+                    (step === 3 && vacancyExams.length === 0)
                   }
                   className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
@@ -451,7 +462,7 @@ function Invitations() {
               ) : (
                 <button
                   onClick={handleSendInvitations}
-                  disabled={sending || !selectedVacancy}
+                  disabled={sending}
                   className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
                   {sending ? (
@@ -462,7 +473,7 @@ function Invitations() {
                   ) : (
                     <>
                       <FiMessageCircle />
-                      Enviar Invitaciones
+                      Generar Enlaces
                     </>
                   )}
                 </button>

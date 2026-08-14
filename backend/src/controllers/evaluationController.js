@@ -1323,8 +1323,8 @@ exports.getVacancyEvaluationByToken = async (req, res) => {
             id: 1,
             name: 'Prueba de Tipeo',
             description: 'Prueba de velocidad de mecanografía',
-            type: 'typing_test',
-            max_time_minutes: 1,
+            type: 'typing',
+            maxTimeMinutes: 1,
             completed: typingCompleted
           }
         ]

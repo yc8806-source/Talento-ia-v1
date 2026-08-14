@@ -656,7 +656,7 @@ exports.createAndShareEvaluationLink = async (req, res) => {
     );
 
     const evaluation = result.rows[0];
-    const evaluationLink = `${process.env.FRONTEND_URL || 'http://localhost:3001'}/evaluacion/${accessToken}`;
+    const evaluationLink = `${process.env.FRONTEND_URL || 'http://localhost:3001'}/evaluacion?token=${accessToken}`;
 
     // Enviar email con link
     const { sendInvitationEmail } = require('../services/emailService');

@@ -1478,14 +1478,14 @@ exports.submitExamAnswersByToken = async (req, res) => {
       });
     }
 
-    // Buscar evaluation: primero por candidate_vacancies.token (nuevo sistema), luego por evaluations.access_token (legacy)
+    // Buscar evaluation: primero por candidate_vacancies.token (nuevo sistema)
     let evalResult = await pool.query(
-      `SELECT e.id, e.candidate_vacancy_id, cv.candidate_id
+      `SELECT e.id, e.candidate_vacancy_id, cv.candidate_id, cv.id as cv_id
        FROM evaluations e
        JOIN candidate_vacancies cv ON e.candidate_vacancy_id = cv.id
-       WHERE cv.token = $1 AND e.exam_id = $2
+       WHERE cv.token = $1
        LIMIT 1`,
-      [token, examId]
+      [token]
     );
 
     // Si no encuentra por candidate_vacancies.token, buscar por evaluations.access_token (compatibilidad)
@@ -1494,43 +1494,42 @@ exports.submitExamAnswersByToken = async (req, res) => {
         `SELECT e.id, e.candidate_vacancy_id, cv.candidate_id
          FROM evaluations e
          JOIN candidate_vacancies cv ON e.candidate_vacancy_id = cv.id
-         WHERE e.access_token = $1 AND e.exam_id = $2
+         WHERE e.access_token = $1
          LIMIT 1`,
-        [token, examId]
+        [token]
       );
     }
 
+    // Si aún no hay evaluación, buscar la candidate_vacancy y crear evaluación
     let evaluation;
     let candidateVacancyId;
     let candidateId;
 
     if (evalResult.rows.length === 0) {
-      // La evaluación no existe - CREARLA AUTOMÁTICAMENTE
-      console.log(`📝 Creando evaluación automáticamente para token=${token}, examId=${examId}`);
+      console.log(`📝 No hay evaluación existente. Buscando candidate_vacancy con token=${token}`);
 
-      // Encontrar el candidate_vacancy_id y candidate_id del token
+      // Buscar candidate_vacancy por token
       const cvResult = await pool.query(
-        `SELECT cv.id, cv.candidate_id FROM candidate_vacancies WHERE token = $1`,
+        `SELECT id, candidate_id FROM candidate_vacancies WHERE token = $1`,
         [token]
       );
 
       if (cvResult.rows.length === 0) {
         console.error(`❌ Token no encontrado en candidate_vacancies: ${token}`);
         return res.status(404).json({
-          error: 'Token inválido'
+          error: 'Token inválido',
+          message: 'No se encontró candidate_vacancy para este token'
         });
       }
 
       candidateVacancyId = cvResult.rows[0].id;
       candidateId = cvResult.rows[0].candidate_id;
-      console.log(`  ✅ Encontrado CV: id=${candidateVacancyId}, candidateId=${candidateId}`);
+      console.log(`✅ Encontrado CV: id=${candidateVacancyId}, candidateId=${candidateId}`);
 
-      // Generar un token único para la evaluación (requerido por la tabla)
+      // Crear evaluación automáticamente
+      console.log(`📝 Creando evaluación para examId=${examId}`);
       const accessToken = crypto.randomBytes(32).toString('hex');
-      console.log(`  🔐 Generado access_token: ${accessToken.substring(0, 16)}...`);
 
-      // Crear la evaluación
-      console.log(`  📊 Insertando: candidateVacancyId=${candidateVacancyId}, examId=${examId}, status='in_progress'`);
       const createResult = await pool.query(
         `INSERT INTO evaluations (candidate_vacancy_id, exam_id, status, access_token, started_at)
          VALUES ($1, $2, 'in_progress', $3, NOW())
@@ -1538,8 +1537,8 @@ exports.submitExamAnswersByToken = async (req, res) => {
         [candidateVacancyId, examId, accessToken]
       );
 
-      if (!createResult.rows[0]) {
-        throw new Error('No se pudo obtener el ID de la evaluación creada');
+      if (createResult.rows.length === 0) {
+        throw new Error('Failed to create evaluation - no rows returned');
       }
 
       evaluation = {
@@ -1548,7 +1547,7 @@ exports.submitExamAnswersByToken = async (req, res) => {
         candidate_id: candidateId
       };
 
-      console.log(`✅ Evaluación creada automáticamente: id=${evaluation.id}`);
+      console.log(`✅ Evaluación creada: id=${evaluation.id}`);
     } else {
       evaluation = evalResult.rows[0];
       candidateVacancyId = evaluation.candidate_vacancy_id;

@@ -1608,46 +1608,53 @@ exports.createSingleLinkForAllExams = async (req, res) => {
       });
     }
 
-    // Eliminar evaluaciones antiguas del mismo candidateVacancyId
-    const deleteResult = await pool.query(
-      'DELETE FROM evaluations WHERE candidate_vacancy_id = $1',
-      [candidateVacancyId]
-    );
-    console.log(`Deleted ${deleteResult.rowCount} old evaluations for candidateVacancyId ${candidateVacancyId}`);
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    // Generar token único para todas las evaluaciones
-    const token = crypto.randomBytes(32).toString('hex');
-    console.log(`Generated token for candidateVacancyId ${candidateVacancyId}: ${token.substring(0, 16)}...`);
+      // Eliminar evaluaciones antiguas del mismo candidateVacancyId
+      const deleteResult = await client.query(
+        'DELETE FROM evaluations WHERE candidate_vacancy_id = $1',
+        [candidateVacancyId]
+      );
+      console.log(`Deleted ${deleteResult.rowCount} old evaluations for candidateVacancyId ${candidateVacancyId}`);
 
-    // Crear una evaluación para cada examen CON EL MISMO TOKEN
-    for (const examId of examIds) {
-      try {
-        await pool.query(
+      // Generar token único para todas las evaluaciones - usar candidateVacancyId para garantizar unicidad
+      const token = `cv-${candidateVacancyId}-${crypto.randomBytes(16).toString('hex')}`;
+      console.log(`Generated token for candidateVacancyId ${candidateVacancyId}: ${token.substring(0, 30)}...`);
+
+      // Crear una evaluación para cada examen CON EL MISMO TOKEN
+      for (const examId of examIds) {
+        await client.query(
           'INSERT INTO evaluations (candidate_vacancy_id, exam_id, status, access_token, started_at) VALUES ($1, $2, $3, $4, NOW())',
           [candidateVacancyId, parseInt(examId), 'pending', token]
         );
         console.log(`Created evaluation for candidateVacancyId ${candidateVacancyId}, examId ${examId}`);
-      } catch (examError) {
-        console.error(`Failed to create evaluation for examId ${examId}:`, examError.message);
-        throw examError;
       }
+
+      await client.query('COMMIT');
+
+      // UN ÚNICO link con el mismo token para acceder a todos los exámenes
+      const baseUrl = process.env.FRONTEND_URL || 'https://talento-ia-v1-frontend.onrender.com';
+      const evaluationLink = `${baseUrl}/evaluation?token=${token}`;
+
+      return res.status(201).json({
+        message: 'Link de evaluación creado exitosamente',
+        evaluation: {
+          token,
+          link: evaluationLink,
+          examsCount: examIds.length
+        }
+      });
+    } catch (txnError) {
+      await client.query('ROLLBACK');
+      throw txnError;
+    } finally {
+      client.release();
     }
-
-    // UN ÚNICO link con el mismo token para acceder a todos los exámenes
-    const baseUrl = process.env.FRONTEND_URL || 'https://talento-ia-v1-frontend.onrender.com';
-    const evaluationLink = `${baseUrl}/evaluation?token=${token}`;
-
-    res.status(201).json({
-      message: 'Link de evaluación creado exitosamente',
-      evaluation: {
-        token,
-        link: evaluationLink,
-        examsCount: examIds.length
-      }
-    });
   } catch (error) {
     console.error('Error creando link único:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Error al crear link',
       details: error.message
     });

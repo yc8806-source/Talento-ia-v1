@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { candidateAPI, vacancyAPI, examAPI, evaluationAPI } from '../api/api';
-import { FiMessageCircle, FiCheck, FiAlertCircle, FiCopy, FiChevronRight, FiUsers, FiFileText, FiBook } from 'react-icons/fi';
+import { FiMessageCircle, FiCheck, FiAlertCircle, FiCopy, FiChevronRight, FiUsers, FiFileText, FiBook, FiMail } from 'react-icons/fi';
 
 function Invitations() {
   const [step, setStep] = useState(1);

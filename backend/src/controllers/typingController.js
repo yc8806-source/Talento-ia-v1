@@ -25,9 +25,9 @@ exports.getTypingTestByToken = async (req, res) => {
 
     const candidateVacancy = cvResult.rows[0];
 
-    // Verificar que hay un typing test asignado a esta vacante
+    // Obtener el typing test vinculado al exam asignado a esta vacante
     const examCheck = await pool.query(
-      `SELECT e.id FROM vacancy_exams ve
+      `SELECT e.id, e.typing_test_id FROM vacancy_exams ve
        INNER JOIN exams e ON ve.exam_id = e.id
        WHERE ve.vacancy_id = $1 AND e.type = 'typing'
        LIMIT 1`,
@@ -40,16 +40,26 @@ exports.getTypingTestByToken = async (req, res) => {
       });
     }
 
-    // Obtener un typing test disponible (usar el primero)
+    const examRow = examCheck.rows[0];
+    const typingTestId = examRow.typing_test_id;
+
+    if (!typingTestId) {
+      return res.status(404).json({
+        error: 'El exam de typing no tiene un typing_test vinculado'
+      });
+    }
+
+    // Obtener el typing test específico
     const testResult = await pool.query(
       `SELECT id, title, description, text, difficulty, duration_seconds, word_count
        FROM typing_tests
-       LIMIT 1`
+       WHERE id = $1`,
+      [typingTestId]
     );
 
     if (testResult.rows.length === 0) {
       return res.status(404).json({
-        error: 'No hay typing tests disponibles'
+        error: 'Typing test no encontrado'
       });
     }
 

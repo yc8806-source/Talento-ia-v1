@@ -1478,15 +1478,27 @@ exports.submitExamAnswersByToken = async (req, res) => {
       });
     }
 
-    // Buscar evaluation con el token (access_token)
-    const evalResult = await pool.query(
+    // Buscar evaluation: primero por candidate_vacancies.token (nuevo sistema), luego por evaluations.access_token (legacy)
+    let evalResult = await pool.query(
       `SELECT e.id, e.candidate_vacancy_id, cv.candidate_id
        FROM evaluations e
        JOIN candidate_vacancies cv ON e.candidate_vacancy_id = cv.id
-       WHERE e.access_token = $1
+       WHERE cv.token = $1
        LIMIT 1`,
       [token]
     );
+
+    // Si no encuentra por candidate_vacancies.token, buscar por evaluations.access_token (compatibilidad)
+    if (evalResult.rows.length === 0) {
+      evalResult = await pool.query(
+        `SELECT e.id, e.candidate_vacancy_id, cv.candidate_id
+         FROM evaluations e
+         JOIN candidate_vacancies cv ON e.candidate_vacancy_id = cv.id
+         WHERE e.access_token = $1
+         LIMIT 1`,
+        [token]
+      );
+    }
 
     if (evalResult.rows.length === 0) {
       return res.status(404).json({

@@ -181,14 +181,19 @@ async function initDatabase() {
             const cid = row.candidate_id;
             console.log(`📝 Creando candidato faltante con ID ${cid}...`);
 
-            await pool.query(
-              `INSERT INTO candidates (id, first_name, last_name, email, status)
-               VALUES ($1, 'Candidato', 'Importado', 'candidato' || $1 || '@system.local', 'pending')
-               ON CONFLICT (id) DO NOTHING`,
-              [cid]
-            );
+            try {
+              // Usar INSERT con WHERE NOT EXISTS para evitar errores de conflicto
+              await pool.query(
+                `INSERT INTO candidates (id, first_name, last_name, email, status)
+                 SELECT $1, 'Candidato', 'Importado', 'candidato' || $1 || '@system.local', 'pending'
+                 WHERE NOT EXISTS (SELECT 1 FROM candidates WHERE id = $1)`,
+                [cid]
+              );
 
-            console.log(`✅ Candidato ${cid} creado/verificado`);
+              console.log(`✅ Candidato ${cid} creado/verificado`);
+            } catch (err) {
+              console.error(`⚠️ Error creando candidato ${cid}:`, err.message);
+            }
           }
         } else {
           console.log('✅ No hay candidate_vacancies huérfanas');

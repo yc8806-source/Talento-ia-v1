@@ -105,29 +105,20 @@ function Invitations() {
           const candidate = candidates.find(c => c.id === candidateId);
           const vacancy = vacancies.find(v => v.id === parseInt(selectedVacancy));
 
-          // Crear links de evaluación para cada examen de la vacante
-          const evaluationLinks = [];
-          for (const exam of vacancyExams) {
-            try {
-              const linkRes = await evaluationAPI.createAndShareLink({
-                candidateVacancyId,
-                examId: exam.id,
-              });
-              evaluationLinks.push(linkRes.data.evaluation.link);
-            } catch (err) {
-              console.error(`Error creando link para examen ${exam.id}:`, err);
-            }
-          }
+          // Crear UN ÚNICO link para todos los exámenes de la vacante
+          const examIds = vacancyExams.map(e => e.id);
+          const linkRes = await evaluationAPI.createMultiExamLink({
+            candidateId,
+            candidateVacancyId,
+            examIds,
+          });
 
-          if (evaluationLinks.length === 0) {
-            throw new Error('No se pudieron crear los links de evaluación');
-          }
-
+          const evaluationLink = linkRes.data.evaluation.link;
           const candidatePhone = (candidate.phone || '').replace(/\D/g, ''); // Solo dígitos
           const examNames = vacancyExams.map(e => e.name).join(', ');
 
           // Texto predefinido profesional para WhatsApp
-          const whatsappMessage = `¡Hola ${candidate.first_name}! 👋\n\nTe invitamos a participar en evaluaciones de ${vacancy.title} en IMPULSA TALENTO.\n\nExámenes: ${examNames}\n\nAccede a los siguientes enlaces:\n\n${evaluationLinks.map((link, idx) => `${idx + 1}. ${link}`).join('\n\n')}\n\n¡Mucho éxito! 🚀`;
+          const whatsappMessage = `¡Hola ${candidate.first_name}! 👋\n\nTe invitamos a participar en evaluaciones de ${vacancy.title} en IMPULSA TALENTO.\n\nExámenes:\n${vacancyExams.map(e => `• ${e.name}`).join('\n')}\n\nAccede aquí:\n${evaluationLink}\n\n¡Mucho éxito! 🚀`;
 
           // Crear link de WhatsApp Web
           const whatsappLink = candidatePhone
@@ -139,10 +130,11 @@ function Invitations() {
             candidateName: `${candidate.first_name} ${candidate.last_name}`,
             candidateEmail: candidate.email,
             candidatePhone: candidate.phone,
-            links: evaluationLinks,
+            evaluationLink: evaluationLink,
             whatsappLink: whatsappLink,
             whatsappMessage: whatsappMessage,
-            message: 'Links de evaluación generados exitosamente',
+            examNames: examNames,
+            message: 'Link de evaluación generado exitosamente',
           });
         } catch (error) {
           const candidate = candidates.find(c => c.id === candidateId);
@@ -546,39 +538,33 @@ function Invitations() {
                         </div>
                         <p className="text-sm text-gray-600 mb-3">{result.candidateEmail}</p>
 
-                        {result.success && result.links && (
-                          <div className="bg-white p-4 rounded border border-gray-300 space-y-4">
-                            {/* Links de Evaluación */}
+                        {result.success && result.evaluationLink && (
+                          <div className="bg-white p-4 rounded border border-green-300 space-y-4">
+                            {/* Link de Evaluación Único */}
                             <div>
-                              <p className="text-xs font-semibold text-gray-600 mb-2">🔗 Links de Evaluación:</p>
-                              <div className="space-y-2">
-                                {result.links.map((link, idx) => (
-                                  <div key={idx} className="flex items-center justify-between gap-2 bg-gray-50 p-2 rounded">
-                                    <div className="flex-1">
-                                      <p className="text-xs text-gray-600 font-semibold mb-1">
-                                        {vacancyExams[idx]?.name || `Examen ${idx + 1}`}
-                                      </p>
-                                      <code className="text-xs text-gray-700 break-all">
-                                        {link}
-                                      </code>
-                                    </div>
-                                    <button
-                                      onClick={() => copyToClipboard(link)}
-                                      className="flex-shrink-0 p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
-                                      title="Copiar"
-                                    >
-                                      <FiCopy className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                ))}
+                              <p className="text-xs font-semibold text-gray-600 mb-2">🔗 Link de Evaluación:</p>
+                              <p className="text-xs text-gray-600 mb-2">
+                                Contiene: <strong>{result.examNames}</strong>
+                              </p>
+                              <div className="flex items-center justify-between gap-2 bg-gray-50 p-3 rounded border border-gray-300">
+                                <code className="text-xs text-gray-700 break-all flex-1">
+                                  {result.evaluationLink}
+                                </code>
+                                <button
+                                  onClick={() => copyToClipboard(result.evaluationLink)}
+                                  className="flex-shrink-0 p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                                  title="Copiar"
+                                >
+                                  <FiCopy className="w-4 h-4" />
+                                </button>
                               </div>
                             </div>
 
                             {/* Mensaje de WhatsApp */}
                             {result.whatsappMessage && (
                               <div>
-                                <p className="text-xs font-semibold text-gray-600 mb-2">💬 Mensaje de WhatsApp:</p>
-                                <div className="bg-green-50 p-3 rounded border border-green-200 text-xs text-gray-700 whitespace-pre-wrap break-words max-h-32 overflow-y-auto">
+                                <p className="text-xs font-semibold text-gray-600 mb-2">💬 Mensaje WhatsApp:</p>
+                                <div className="bg-green-50 p-3 rounded border border-green-200 text-xs text-gray-700 whitespace-pre-wrap break-words max-h-40 overflow-y-auto">
                                   {result.whatsappMessage}
                                 </div>
                               </div>
@@ -587,7 +573,7 @@ function Invitations() {
                             {/* Advertencia sobre envío uno a uno */}
                             <div className="bg-blue-50 border border-blue-200 rounded p-3">
                               <p className="text-xs text-blue-900">
-                                ℹ️ Para evitar que WhatsApp bloquee el número por spam, los mensajes se deben enviar <strong>uno a la vez</strong> con una pausa entre cada uno.
+                                ℹ️ Para evitar que WhatsApp bloquee por spam, envía <strong>un candidato a la vez</strong> con pausa entre mensajes.
                               </p>
                             </div>
 
@@ -595,15 +581,15 @@ function Invitations() {
                             {result.whatsappLink ? (
                               <button
                                 onClick={() => window.open(result.whatsappLink, '_blank')}
-                                className="w-full px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded font-semibold flex items-center justify-center gap-2 transition-colors"
+                                className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded font-semibold flex items-center justify-center gap-2 transition-colors"
                               >
                                 <FiMessageCircle className="w-5 h-5" />
-                                📱 Enviar este candidato por WhatsApp
+                                📱 Enviar por WhatsApp
                               </button>
                             ) : (
                               <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
                                 <p className="text-xs text-yellow-800">
-                                  ⚠️ El candidato no tiene número de teléfono registrado. Copia los links y comparte manualmente.
+                                  ⚠️ Número de teléfono no registrado. Comparte el link manualmente.
                                 </p>
                               </div>
                             )}

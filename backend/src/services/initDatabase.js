@@ -21,21 +21,21 @@ async function initDatabase() {
     if (!tableExists) {
       console.log('📋 Tables missing - initializing database schema...');
 
-      // Check if initRailway.sql file exists
-      const scriptPath = path.join(__dirname, '../../scripts/initRailway.sql');
-      console.log(`🔎 Looking for SQL file at: ${scriptPath}`);
+      // Check if migration file exists
+      const migrationPath = path.join(__dirname, '../../migrations/001_create_invitations_tables.sql');
+      console.log(`🔎 Looking for migration file at: ${migrationPath}`);
 
-      if (!fs.existsSync(scriptPath)) {
-        console.error(`❌ SQL file not found at ${scriptPath}`);
+      if (!fs.existsSync(migrationPath)) {
+        console.error(`❌ Migration file not found at ${migrationPath}`);
         return;
       }
 
-      // Read and execute initRailway.sql
-      const initScript = fs.readFileSync(scriptPath, 'utf8');
-      console.log(`📖 SQL file loaded (${initScript.length} bytes)`);
+      // Read and execute migration
+      const migrationScript = fs.readFileSync(migrationPath, 'utf8');
+      console.log(`📖 Migration file loaded (${migrationScript.length} bytes)`);
 
       // Split by statements and execute
-      const statements = initScript
+      const statements = migrationScript
         .split(';')
         .map(stmt => {
           // Remove comments and trim

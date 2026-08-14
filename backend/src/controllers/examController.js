@@ -96,46 +96,68 @@ exports.getExamById = async (req, res) => {
     }
 
     const exam = examResult.rows[0];
+    let questionsWithOptions = [];
 
-    // Obtener preguntas del examen con sus opciones
-    const questionsResult = await pool.query(
-      `SELECT q.id, q.title, q.type, q.competency_id, eq.question_order
-       FROM questions q
-       INNER JOIN exam_questions eq ON q.id = eq.question_id
-       WHERE eq.exam_id = $1
-       ORDER BY eq.question_order`,
-      [id]
-    );
+    // Verificar si es un examen de ortografía y gramática
+    if (exam.name && exam.name.toLowerCase().includes('ortografía') || exam.name && exam.name.toLowerCase().includes('gramatica')) {
+      // Obtener preguntas de spelling_grammar
+      const spellingResult = await pool.query(
+        `SELECT id, question_text as title, 'spelling' as type, correct_answer
+         FROM spelling_grammar_questions
+         WHERE test_id IN (SELECT id FROM spelling_grammar_tests WHERE name ILIKE '%ortografía%' OR name ILIKE '%gramatica%')
+         ORDER BY id`
+      );
 
-    // Para cada pregunta, obtener sus opciones
-    const questionsWithOptions = await Promise.all(
-      questionsResult.rows.map(async (question) => {
-        const optionsResult = await pool.query(
-          'SELECT id, text, score, option_order FROM question_options WHERE question_id = $1 ORDER BY option_order',
-          [question.id]
-        );
+      questionsWithOptions = spellingResult.rows.map((q, idx) => ({
+        id: q.id,
+        title: q.question_text || q.title,
+        type: 'spelling',
+        correctAnswer: q.correct_answer,
+        order: idx + 1,
+        options: []
+      }));
+    } else {
+      // Obtener preguntas del examen regulares con sus opciones
+      const questionsResult = await pool.query(
+        `SELECT q.id, q.title, q.type, q.competency_id, eq.question_order
+         FROM questions q
+         INNER JOIN exam_questions eq ON q.id = eq.question_id
+         WHERE eq.exam_id = $1
+         ORDER BY eq.question_order`,
+        [id]
+      );
 
-        return {
-          id: question.id,
-          title: question.title,
-          type: question.type,
-          competencyId: question.competency_id,
-          order: question.question_order,
-          options: optionsResult.rows.map(o => ({
-            id: o.id,
-            text: o.text,
-            score: o.score,
-            order: o.option_order
-          }))
-        };
-      })
-    );
+      // Para cada pregunta, obtener sus opciones
+      questionsWithOptions = await Promise.all(
+        questionsResult.rows.map(async (question) => {
+          const optionsResult = await pool.query(
+            'SELECT id, text, score, option_order FROM question_options WHERE question_id = $1 ORDER BY option_order',
+            [question.id]
+          );
+
+          return {
+            id: question.id,
+            title: question.title,
+            type: question.type,
+            competencyId: question.competency_id,
+            order: question.question_order,
+            options: optionsResult.rows.map(o => ({
+              id: o.id,
+              text: o.text,
+              score: o.score,
+              order: o.option_order
+            }))
+          };
+        })
+      );
+    }
 
     res.json({
       id: exam.id,
       name: exam.name,
       description: exam.description,
       maxTimeMinutes: exam.max_time_minutes,
+      type: exam.name && (exam.name.toLowerCase().includes('ortografía') || exam.name.toLowerCase().includes('gramatica')) ? 'spelling' : 'standard',
       minScore: exam.min_score,
       totalQuestions: questionsWithOptions.length,
       questions: questionsWithOptions,

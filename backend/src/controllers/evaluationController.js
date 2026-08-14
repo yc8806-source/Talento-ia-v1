@@ -860,10 +860,16 @@ exports.generatePDFOnDemand = async (req, res) => {
       }
     });
 
+    doc.on('error', (err) => {
+      console.error('PDF stream error:', err);
+      res.status(500).json({ error: 'PDF generation failed: ' + err.message });
+    });
+
     doc.end();
 
   } catch (error) {
     console.error('PDF Generation Error:', error);
+    console.error('Stack:', error.stack);
     res.status(500).json({ error: error.message });
   }
 };

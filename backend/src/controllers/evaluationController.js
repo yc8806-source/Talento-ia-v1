@@ -1527,9 +1527,11 @@ exports.submitExamAnswersByToken = async (req, res) => {
           [candidateId, examId, questionId]
         );
 
-        const insertResult = await pool.query(
+        const answerValueInt = Math.floor(parseFloat(answerValue) || 0);
+
+      const insertResult = await pool.query(
           'INSERT INTO exam_answers (candidate_id, exam_id, question_id, answer_value, time_spent_seconds) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-          [candidateId, examId, questionId, String(answerValue), timeSpent]
+          [candidateId, examId, questionId, answerValueInt, timeSpent]
         );
 
         if (insertResult.rows.length > 0) {

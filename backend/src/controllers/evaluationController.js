@@ -1577,10 +1577,12 @@ exports.submitExamAnswersByToken = async (req, res) => {
 exports.createSingleLinkForAllExams = async (req, res) => {
   try {
     const { candidateVacancyId, examIds } = req.body;
+    console.log('DEBUG createSingleLinkForAllExams:', { candidateVacancyId, examIds, isArray: Array.isArray(examIds), length: examIds?.length });
 
     if (!candidateVacancyId || !examIds || !Array.isArray(examIds) || examIds.length === 0) {
       return res.status(400).json({
-        error: 'candidateVacancyId y examIds (array) son requeridos'
+        error: 'candidateVacancyId y examIds (array) son requeridos',
+        received: { candidateVacancyId, examIds, isArray: Array.isArray(examIds) }
       });
     }
 

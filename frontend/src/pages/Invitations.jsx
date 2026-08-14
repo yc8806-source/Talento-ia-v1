@@ -107,6 +107,7 @@ function Invitations() {
 
           // Generar UN ÚNICO link para TODOS los exámenes de la vacante
           const examIds = vacancyExams.map(e => e.id);
+          console.log('DEBUG createSingleLink:', { candidateVacancyId, examIds, vacancyExams });
           const linkRes = await evaluationAPI.createSingleLink({
             candidateVacancyId,
             examIds,

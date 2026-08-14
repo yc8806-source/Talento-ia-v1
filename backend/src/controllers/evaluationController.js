@@ -1612,24 +1612,27 @@ exports.createSingleLinkForAllExams = async (req, res) => {
     try {
       await client.query('BEGIN');
 
-      // Eliminar evaluaciones antiguas del mismo candidateVacancyId
+      // Primero: Eliminar evaluaciones antiguas del mismo candidateVacancyId
       const deleteResult = await client.query(
         'DELETE FROM evaluations WHERE candidate_vacancy_id = $1',
         [candidateVacancyId]
       );
       console.log(`Deleted ${deleteResult.rowCount} old evaluations for candidateVacancyId ${candidateVacancyId}`);
 
-      // Generar token único para todas las evaluaciones - usar candidateVacancyId para garantizar unicidad
-      const token = `cv-${candidateVacancyId}-${crypto.randomBytes(16).toString('hex')}`;
-      console.log(`Generated token for candidateVacancyId ${candidateVacancyId}: ${token.substring(0, 30)}...`);
+      // Generar token único usando timestamp + random
+      const timestamp = Date.now();
+      const random = crypto.randomBytes(8).toString('hex');
+      const token = `${timestamp}-${random}`;
+      console.log(`Generated token: ${token}`);
 
-      // Crear una evaluación para cada examen CON EL MISMO TOKEN
+      // Crear evaluaciones para cada examen CON EL MISMO TOKEN
       for (const examId of examIds) {
+        const parsedExamId = parseInt(examId);
         await client.query(
           'INSERT INTO evaluations (candidate_vacancy_id, exam_id, status, access_token, started_at) VALUES ($1, $2, $3, $4, NOW())',
-          [candidateVacancyId, parseInt(examId), 'pending', token]
+          [candidateVacancyId, parsedExamId, 'pending', token]
         );
-        console.log(`Created evaluation for candidateVacancyId ${candidateVacancyId}, examId ${examId}`);
+        console.log(`Created evaluation for candidateVacancyId ${candidateVacancyId}, examId ${examId}, token: ${token}`);
       }
 
       await client.query('COMMIT');

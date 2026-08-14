@@ -117,23 +117,53 @@ async function initDatabase() {
       // Aplicar migración 011: Cambiar tamaño de columnas WPM en typing_results
       console.log('🔄 Verificando migración 011 (typing_results WPM columns)...');
       try {
-        // Alterar columnas de typing_results para soportar números más grandes
-        await pool.query(`
-          ALTER TABLE typing_results
-          ALTER COLUMN wpm TYPE DECIMAL(10,2),
-          ALTER COLUMN accuracy TYPE DECIMAL(10,2),
-          ALTER COLUMN gross_wpm TYPE DECIMAL(10,2),
-          ALTER COLUMN net_wpm TYPE DECIMAL(10,2);
-        `);
+        // Primero verificar si la tabla existe
+        const tableExists = await pool.query(
+          `SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'typing_results')`
+        );
 
-        console.log('✅ Migración 011 aplicada (WPM columns updated)');
-      } catch (err) {
-        // Si falla es porque ya está actualizado o hay otro error
-        if (err.message.includes('column type') && err.message.includes('already')) {
-          console.log('✅ Migración 011 ya aplicada (WPM columns already correct)');
+        if (!tableExists.rows[0].exists) {
+          console.log('⚠️ Tabla typing_results no existe - se creará con DECIMAL(10,2)');
         } else {
-          console.warn('⚠️ Nota sobre migración 011:', err.message.substring(0, 100));
+          // Verificar el tipo de dato actual de la columna wpm
+          const columnInfo = await pool.query(`
+            SELECT data_type, numeric_precision, numeric_scale
+            FROM information_schema.columns
+            WHERE table_name = 'typing_results' AND column_name = 'wpm'
+          `);
+
+          if (columnInfo.rows.length > 0) {
+            const current = columnInfo.rows[0];
+            console.log(`📊 Columna wpm actual: ${current.data_type}(${current.numeric_precision},${current.numeric_scale})`);
+
+            // Si es DECIMAL(5,2), necesita actualización
+            if (current.numeric_precision === 5 && current.numeric_scale === 2) {
+              console.log('📝 Aplicando migración 011: Actualizando DECIMAL(5,2) → DECIMAL(10,2)...');
+
+              // Ejecutar ALTER TABLE en cada columna por separado para mejor manejo de errores
+              const columns = ['wpm', 'accuracy', 'gross_wpm', 'net_wpm'];
+              for (const col of columns) {
+                try {
+                  await pool.query(`ALTER TABLE typing_results ALTER COLUMN ${col} TYPE DECIMAL(10,2);`);
+                  console.log(`  ✅ ${col}: DECIMAL(5,2) → DECIMAL(10,2)`);
+                } catch (colErr) {
+                  console.error(`  ❌ Error actualizando ${col}:`, colErr.message);
+                }
+              }
+
+              console.log('✅ Migración 011 completada');
+            } else {
+              console.log(`✅ Migración 011 ya aplicada (columnas ya son ${current.data_type}(${current.numeric_precision},${current.numeric_scale}))`);
+            }
+          }
         }
+      } catch (err) {
+        console.error('❌ Error en migración 011:', err.message);
+        console.error('💡 Sugerencia: Si los datos en typing_results exceden 999.99, ejecutar manualmente:');
+        console.error('   ALTER TABLE typing_results ALTER COLUMN wpm TYPE DECIMAL(10,2);');
+        console.error('   ALTER TABLE typing_results ALTER COLUMN accuracy TYPE DECIMAL(10,2);');
+        console.error('   ALTER TABLE typing_results ALTER COLUMN gross_wpm TYPE DECIMAL(10,2);');
+        console.error('   ALTER TABLE typing_results ALTER COLUMN net_wpm TYPE DECIMAL(10,2);');
       }
 
       // Auto-asignar typing_test_id a exams de tipo 'typing' que sean NULL

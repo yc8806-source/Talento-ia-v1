@@ -43,19 +43,26 @@ exports.getTypingTestByToken = async (req, res) => {
     const examRow = examCheck.rows[0];
     const typingTestId = examRow.typing_test_id;
 
-    if (!typingTestId) {
-      return res.status(404).json({
-        error: 'El exam de typing no tiene un typing_test vinculado'
-      });
-    }
+    let testResult;
 
-    // Obtener el typing test específico
-    const testResult = await pool.query(
-      `SELECT id, title, description, text, difficulty, duration_seconds, word_count
-       FROM typing_tests
-       WHERE id = $1`,
-      [typingTestId]
-    );
+    if (typingTestId) {
+      // Si hay typing_test_id vinculado, usar ese
+      testResult = await pool.query(
+        `SELECT id, title, description, text, difficulty, duration_seconds, word_count
+         FROM typing_tests
+         WHERE id = $1`,
+        [typingTestId]
+      );
+    } else {
+      // Si no hay typing_test_id (exams antiguos), usar el primero disponible
+      console.log(`⚠️ Exam ${examRow.id} no tiene typing_test_id, usando el primero disponible`);
+      testResult = await pool.query(
+        `SELECT id, title, description, text, difficulty, duration_seconds, word_count
+         FROM typing_tests
+         ORDER BY id ASC
+         LIMIT 1`
+      );
+    }
 
     if (testResult.rows.length === 0) {
       return res.status(404).json({

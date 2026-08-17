@@ -17,9 +17,6 @@ function EvaluationTest() {
   const [evaluationId, setEvaluationId] = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [isSpellingTest, setIsSpellingTest] = useState(false);
-  const [spellingTest, setSpellingTest] = useState(null);
-  const [startTime] = useState(Date.now());
 
   useEffect(() => {
     if (!token || !examId) {
@@ -50,17 +47,6 @@ function EvaluationTest() {
       // Si es un typing test, redirigir a la página de typing test
       if (examStatus.type === 'typing') {
         navigate(`/typing-test/${token}?typingTestId=1`);
-        return;
-      }
-
-      // Si es un spelling test, cargar directamente
-      if (examStatus.type === 'spelling') {
-        setIsSpellingTest(true);
-        const testResponse = await axios.get(`${API_URL}/spelling-grammar/tests/1`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        setSpellingTest(testResponse.data);
-        setLoading(false);
         return;
       }
 
@@ -224,128 +210,6 @@ function EvaluationTest() {
           >
             Volver a Exámenes
           </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Renderizar spelling test
-  if (isSpellingTest && spellingTest) {
-    const question = spellingTest.questions[currentQuestionIndex];
-    const isAnswered = answers[question.id] !== undefined && answers[question.id] !== '';
-    const progress = ((currentQuestionIndex + 1) / spellingTest.questions.length) * 100;
-
-    const handleSpellingAnswer = (value) => {
-      setAnswers({
-        ...answers,
-        [question.id]: value
-      });
-    };
-
-    const handleSpellingSubmit = async () => {
-      try {
-        const answersData = {};
-        spellingTest.questions.forEach(q => {
-          answersData[q.id] = answers[q.id] || '';
-        });
-
-        const API_URL = 'https://talento-ia-backend.onrender.com/api';
-        await axios.post(`${API_URL}/spelling-grammar/results/submit`, {
-          testId: 1,
-          answers: answersData,
-          timeSeconds: Math.floor((Date.now() - startTime) / 1000),
-          startedAt: new Date(startTime).toISOString()
-        });
-
-        setCompleted(true);
-      } catch (error) {
-        console.error('Error sumitiendo respuestas:', error);
-        alert('Error al enviar respuestas');
-      }
-    };
-
-    if (completed) {
-      return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow p-8 text-center max-w-md">
-            <div className="text-5xl mb-4">✅</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">¡Prueba Completada!</h1>
-            <p className="text-gray-600 mb-8">Tus respuestas han sido registradas exitosamente.</p>
-            <button
-              onClick={() => navigate(`/evaluacion?token=${token}`)}
-              className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg"
-            >
-              Volver
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="bg-white rounded-lg shadow-lg p-8 max-w-2xl mx-auto">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">{spellingTest.title || 'Prueba de Ortografía y Gramática'}</h2>
-        </div>
-
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-semibold text-gray-700">
-              Pregunta {currentQuestionIndex + 1} de {spellingTest.questions.length}
-            </span>
-            <span className="text-sm font-semibold text-gray-700">{Math.round(progress)}%</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-blue-600 h-2 rounded-full transition-all" style={{ width: `${progress}%` }}></div>
-          </div>
-        </div>
-
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
-          <p className="text-lg font-semibold text-gray-900 mb-4">{question.text}</p>
-
-          {question.options ? (
-            <div className="space-y-3">
-              {question.options.map((option, idx) => (
-                <label key={idx} className="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 transition">
-                  <input
-                    type="radio"
-                    name={`question-${question.id}`}
-                    value={option}
-                    checked={answers[question.id] === option}
-                    onChange={(e) => handleSpellingAnswer(e.target.value)}
-                    className="w-4 h-4 text-blue-600"
-                  />
-                  <span className="ml-3 text-gray-800">{option}</span>
-                </label>
-              ))}
-            </div>
-          ) : null}
-        </div>
-
-        <div className="flex gap-3 mb-6">
-          <button
-            onClick={() => currentQuestionIndex > 0 && setCurrentQuestionIndex(currentQuestionIndex - 1)}
-            disabled={currentQuestionIndex === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white font-semibold rounded-lg"
-          >
-            ← Anterior
-          </button>
-
-          {currentQuestionIndex < spellingTest.questions.length - 1 ? (
-            <button
-              onClick={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
-              className="flex items-center gap-2 ml-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg"
-            >
-              Siguiente →
-            </button>
-          ) : (
-            <button
-              onClick={handleSpellingSubmit}
-              className="ml-auto px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg"
-            >
-              Enviar y Ver Resultados
-            </button>
-          )}
         </div>
       </div>
     );

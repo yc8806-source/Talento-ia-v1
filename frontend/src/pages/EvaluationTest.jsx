@@ -50,6 +50,12 @@ function EvaluationTest() {
         return;
       }
 
+      // Si es un spelling test, redirigir a la página de spelling test
+      if (examStatus.type === 'spelling') {
+        navigate(`/spelling-test/${token}?testId=1`);
+        return;
+      }
+
       if (examStatus.completed) {
         setCompleted(true);
         setLoading(false);

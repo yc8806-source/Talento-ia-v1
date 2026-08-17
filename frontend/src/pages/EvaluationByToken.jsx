@@ -167,6 +167,8 @@ export default function EvaluationByToken() {
                     if (!exam.completed) {
                       if (exam.type === 'typing') {
                         navigate(`/typing-test/${token}?typingTestId=${exam.id}`);
+                      } else if (exam.type === 'spelling') {
+                        navigate(`/spelling-test/${token}?testId=${exam.id}`);
                       } else {
                         navigate(`/evaluacion/${token}?examId=${exam.id}`);
                       }

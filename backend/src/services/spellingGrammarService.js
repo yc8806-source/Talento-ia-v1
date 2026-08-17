@@ -42,7 +42,7 @@ class SpellingGrammarService {
       const test = testResult.rows[0];
 
       const questionsResult = await pool.query(
-        `SELECT id, question_type, question_text, explanation, options, difficulty, order_number
+        `SELECT id, question_type, question_text, correct_answer, explanation, options, difficulty, order_number
          FROM spelling_grammar_questions
          WHERE test_id = $1
          ORDER BY order_number ASC`,
@@ -56,6 +56,7 @@ class SpellingGrammarService {
           id: q.id,
           type: q.question_type,
           text: q.question_text,
+          correctAnswer: q.correct_answer,
           options: q.options ? JSON.parse(q.options) : null,
           difficulty: q.difficulty,
           explanation: q.explanation,

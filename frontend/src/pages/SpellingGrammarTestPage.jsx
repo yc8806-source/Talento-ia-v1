@@ -29,12 +29,12 @@ function SpellingGrammarTestPage() {
         ? 'http://localhost:3000/api'
         : 'https://talento-ia-backend.onrender.com/api';
 
-      // Verificar que el candidato tiene acceso a esta prueba
+      // Verificar que el candidato tiene acceso a una prueba de spelling
       const statusResponse = await axios.get(`${API_URL}/evaluations/vacancy-by-token/${token}`);
-      const examStatus = statusResponse.data.exams.find(e => e.id === parseInt(testId, 10));
+      const examStatus = statusResponse.data.exams.find(e => e.type === 'spelling');
 
       if (!examStatus) {
-        throw new Error('Prueba no asignada');
+        throw new Error('Prueba de Ortografía no asignada');
       }
 
       if (examStatus.completed) {

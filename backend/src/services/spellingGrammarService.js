@@ -304,6 +304,67 @@ class SpellingGrammarService {
       throw error;
     }
   }
+
+  /**
+   * Seed el test por defecto (id=1) con las preguntas de ortografía y gramática
+   * Se ejecuta automáticamente si el test no existe
+   */
+  static async seedDefaultTest() {
+    try {
+      const questions = [
+        { numero: 1, pregunta: "¿Cuál es la forma correcta de conjugar el verbo \"haber\" en presente?", opciones: ["ha", "ave", "haya", "aya"], respuestaCorrecta: "ha", dificultad: "medium" },
+        { numero: 2, pregunta: "¿Cuál de estas palabras está correctamente acentuada?", opciones: ["teléfono", "música", "crímen", "exámen"], respuestaCorrecta: "teléfono", dificultad: "medium" },
+        { numero: 3, pregunta: "¿Qué palabra es un sinónimo de \"perplejo\"?", opciones: ["claro", "confundido", "directo", "obvio"], respuestaCorrecta: "claro", dificultad: "medium" },
+        { numero: 4, pregunta: "¿Cuál oración usa correctamente el subjuntivo?", opciones: ["Creo que viene mañana", "Espero que venga mañana", "Vino mañana", "Viene mañana"], respuestaCorrecta: "Espero que venga mañana", dificultad: "medium" },
+        { numero: 5, pregunta: "¿Cuál es la forma correcta del plural de \"luz\"?", opciones: ["luces", "lucez", "luz", "lucis"], respuestaCorrecta: "luces", dificultad: "medium" },
+        { numero: 6, pregunta: "¿Qué palabra tiene una b y no una v?", opciones: ["civico", "actividad", "absoluto", "negatividad"], respuestaCorrecta: "absoluto", dificultad: "medium" },
+        { numero: 7, pregunta: "¿Cuál es la acentuación correcta de esta palabra?", opciones: ["rápido", "rapido", "rápi", "raido"], respuestaCorrecta: "rápido", dificultad: "medium" },
+        { numero: 8, pregunta: "¿Cuál oración tiene puntuación correcta?", opciones: ["Hola, ¿cómo estás?", "Hola ¿cómo estás", "hola como estás", "Hola como estás?"], respuestaCorrecta: "Hola, ¿cómo estás?", dificultad: "medium" },
+        { numero: 9, pregunta: "¿Qué palabra se escribe con j?", opciones: ["jota", "gato", "joven", "viejo"], respuestaCorrecta: "jota", dificultad: "medium" },
+        { numero: 10, pregunta: "¿Cuál es el participio regular del verbo \"hablar\"?", opciones: ["hablado", "hablando", "habla", "hablé"], respuestaCorrecta: "hablado", dificultad: "medium" }
+      ];
+
+      // Crear test
+      const testResult = await pool.query(
+        `INSERT INTO spelling_grammar_tests
+         (id, title, description, difficulty, test_type, language)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (id) DO NOTHING
+         RETURNING id`,
+        [1, 'Ortografía y Gramática', 'Prueba de ortografía y gramática', 'medium', 'multiple_choice', 'es']
+      );
+
+      if (testResult.rows.length === 0) {
+        console.log('✅ Test id=1 ya existe');
+        return 1;
+      }
+
+      // Insertar preguntas
+      for (const q of questions) {
+        await pool.query(
+          `INSERT INTO spelling_grammar_questions
+           (test_id, question_type, question_text, correct_answer, explanation, options, difficulty, order_number)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [
+            1,
+            'multiple_choice',
+            q.pregunta,
+            q.respuestaCorrecta,
+            'Respuesta correcta',
+            JSON.stringify({ options: q.opciones }),
+            q.dificultad,
+            q.numero
+          ]
+        );
+      }
+
+      console.log('✅ Test id=1 sembrado exitosamente con 10 preguntas');
+      return 1;
+    } catch (error) {
+      console.error('Error sembrando test por defecto:', error.message);
+      throw error;
+    }
+  }
 }
 
 module.exports = SpellingGrammarService;

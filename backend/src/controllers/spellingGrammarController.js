@@ -38,7 +38,19 @@ exports.getTest = async (req, res) => {
       testId = '1';
     }
 
-    const test = await SpellingGrammarService.getTestWithQuestions(testId);
+    let test = await SpellingGrammarService.getTestWithQuestions(testId);
+
+    // Si el test no existe y es el test id=1, intentar sembrar datos
+    if (!test && testId === '1') {
+      console.log('📝 Test id=1 no existe. Intentando sembrar datos...');
+      try {
+        await SpellingGrammarService.seedDefaultTest();
+        test = await SpellingGrammarService.getTestWithQuestions(testId);
+      } catch (seedError) {
+        console.error('Error sembrando test:', seedError.message);
+        // Continuar aunque falle el seeding
+      }
+    }
 
     if (!test) {
       return res.status(404).json({

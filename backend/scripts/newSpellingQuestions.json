@@ -1,0 +1,442 @@
+[
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra está escrita correctamente?",
+    "options": ["Excepción", "Exepción", "Excepción", "Ecepción"],
+    "correct_answer": "Excepción",
+    "explanation": "La forma correcta es 'Excepción' con 'x' inicial",
+    "difficulty": "easy"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál oración usa correctamente la tilde?",
+    "options": ["Él llegó temprano.", "El llegó temprano.", "Él llego temprano.", "El llego temprano."],
+    "correct_answer": "Él llegó temprano.",
+    "explanation": "El pronombre 'él' lleva tilde, y el verbo 'llegó' también",
+    "difficulty": "easy"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál es el plural correcto de «régimen»?",
+    "options": ["Regímenes", "Régimens", "Régimenes", "Regímeneses"],
+    "correct_answer": "Regímenes",
+    "explanation": "El plural de 'régimen' es 'regímenes'",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra debe llevar tilde?",
+    "options": ["Árbol", "Mesa", "Casa", "Papel"],
+    "correct_answer": "Árbol",
+    "explanation": "'Árbol' es una palabra esdrújula y siempre lleva tilde",
+    "difficulty": "easy"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál opción está correctamente escrita?",
+    "options": ["Hervir", "Ervir", "Hervír", "Hervirrr"],
+    "correct_answer": "Hervir",
+    "explanation": "La forma correcta es 'hervir' sin tilde ni letras repetidas",
+    "difficulty": "easy"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra es aguda?",
+    "options": ["Canción", "Árbol", "Lápiz", "Médico"],
+    "correct_answer": "Canción",
+    "explanation": "'Canción' es una palabra aguda con el acento en la última sílaba",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra es grave o llana?",
+    "options": ["Mesa", "Camión", "Café", "Teléfono"],
+    "correct_answer": "Mesa",
+    "explanation": "'Mesa' es una palabra grave con el acento en la penúltima sílaba",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra es esdrújula?",
+    "options": ["Música", "Pared", "Cantar", "Reloj"],
+    "correct_answer": "Música",
+    "explanation": "'Música' es una palabra esdrújula con acento en la antepenúltima sílaba",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra es sobresdrújula?",
+    "options": ["Dígamelo", "Camino", "Cárcel", "Papel"],
+    "correct_answer": "Dígamelo",
+    "explanation": "'Dígamelo' es una palabra sobresdrújula con acento anterior a la antepenúltima",
+    "difficulty": "hard"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál oración tiene puntuación correcta?",
+    "options": ["María, ven aquí, por favor.", "María ven aquí por favor.", "María, ven aquí por favor", "María ven aquí, por favor."],
+    "correct_answer": "María, ven aquí, por favor.",
+    "explanation": "Los vocativos se separan con comas y la oración termina con punto",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál signo debe cerrar una pregunta?",
+    "options": ["?", "!", ";", ":"],
+    "correct_answer": "?",
+    "explanation": "Las preguntas se cierran con un signo de interrogación",
+    "difficulty": "easy"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál opción usa correctamente los dos puntos?",
+    "options": ["Necesito tres cosas: pan, leche y huevos.", "Necesito tres cosas, pan: leche y huevos.", "Necesito: tres cosas pan, leche y huevos.", "Necesito tres cosas; pan, leche y huevos."],
+    "correct_answer": "Necesito tres cosas: pan, leche y huevos.",
+    "explanation": "Los dos puntos se usan para introducir enumeraciones",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál oración usa correctamente el punto y coma?",
+    "options": ["Estudié toda la tarde; sin embargo, no terminé.", "Estudié toda la tarde, sin embargo; no terminé.", "Estudié toda la tarde: sin embargo, no terminé.", "Estudié toda la tarde sin embargo; no terminé."],
+    "correct_answer": "Estudié toda la tarde; sin embargo, no terminé.",
+    "explanation": "El punto y coma se usa antes de conectores como 'sin embargo'",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra completa correctamente: «No sé ___ no viniste»?",
+    "options": ["por qué", "porque", "porqué", "por que"],
+    "correct_answer": "por qué",
+    "explanation": "'Por qué' (dos palabras) se usa en preguntas indirectas",
+    "difficulty": "hard"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra completa correctamente: «No fui ___ estaba enferma»?",
+    "options": ["porque", "por qué", "porqué", "por que"],
+    "correct_answer": "porque",
+    "explanation": "'Porque' (una palabra) se usa para indicar causa",
+    "difficulty": "hard"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál opción es correcta?",
+    "options": ["A ver qué sucede.", "Haber qué sucede.", "Aver qué sucede.", "Haber qué susede."],
+    "correct_answer": "A ver qué sucede.",
+    "explanation": "'A ver' (dos palabras) significa 'veamos', mientras que 'haber' es el verbo auxiliar",
+    "difficulty": "hard"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál oración usa correctamente «hay»?",
+    "options": ["Hay muchas personas aquí.", "Ay muchas personas aquí.", "Ahí muchas personas aquí.", "Hay muchas personas allí."],
+    "correct_answer": "Hay muchas personas aquí.",
+    "explanation": "'Hay' del verbo 'haber' expresa existencia",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál oración usa correctamente «ahí»?",
+    "options": ["El libro está ahí.", "El libro está hay.", "El libro está ay.", "El libro está ahíi."],
+    "correct_answer": "El libro está ahí.",
+    "explanation": "'Ahí' es un adverbio de lugar que indica una ubicación específica",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál expresión es correcta?",
+    "options": ["¡Ay, qué dolor!", "¡Hay, qué dolor!", "¡Ahí, qué dolor!", "¡Ay qué dolor!"],
+    "correct_answer": "¡Ay, qué dolor!",
+    "explanation": "'Ay' es una interjección que expresa dolor o sorpresa",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra está correctamente escrita?",
+    "options": ["Viajero", "Biagero", "Viajerro", "Viajéro"],
+    "correct_answer": "Viajero",
+    "explanation": "'Viajero' se escribe con 'v' y 'j', sin tilde en la penúltima sílaba",
+    "difficulty": "easy"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra está correctamente escrita?",
+    "options": ["Convivencia", "Convivensia", "Combivencia", "Convivenssia"],
+    "correct_answer": "Convivencia",
+    "explanation": "'Convivencia' se escribe con 'c' y 'v'",
+    "difficulty": "easy"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra está correctamente escrita?",
+    "options": ["Necesario", "Nesesario", "Necezario", "Necesareo"],
+    "correct_answer": "Necesario",
+    "explanation": "'Necesario' se escribe con 'c' y 's'",
+    "difficulty": "easy"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra está correctamente escrita?",
+    "options": ["Decisión", "Desición", "Decisión", "Decicion"],
+    "correct_answer": "Decisión",
+    "explanation": "'Decisión' se escribe con 'c', 'i' y acento en la última sílaba",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra está correctamente escrita?",
+    "options": ["Precisión", "Presición", "Precisión", "Precisión"],
+    "correct_answer": "Precisión",
+    "explanation": "'Precisión' se escribe con 'p', 'r', 'e', 'c' e 'i'",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra está correctamente escrita?",
+    "options": ["Absorber", "Abzorber", "Absorver", "Avsorber"],
+    "correct_answer": "Absorber",
+    "explanation": "'Absorber' se escribe con 'b' y 'r' al final",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra está correctamente escrita?",
+    "options": ["Exhausto", "Exausto", "Exhauxto", "Esausto"],
+    "correct_answer": "Exhausto",
+    "explanation": "'Exhausto' se escribe con 'ex', 'h', 'a', 'u', 's', 't', 'o'",
+    "difficulty": "hard"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra está correctamente escrita?",
+    "options": ["Transacción", "Transacción", "Tranzacción", "Transaccionn"],
+    "correct_answer": "Transacción",
+    "explanation": "'Transacción' se escribe con 't', 'r', 'a', 'n', 's', 'a', 'c', 'c', 'i', 'ó', 'n'",
+    "difficulty": "hard"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál opción presenta correctamente el verbo «haber»?",
+    "options": ["Ha terminado el trabajo.", "A terminado el trabajo.", "Ah terminado el trabajo.", "Ha terminadó el trabajo."],
+    "correct_answer": "Ha terminado el trabajo.",
+    "explanation": "'Ha' es la conjugación correcta del verbo 'haber' en tercera persona",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál opción presenta correctamente el verbo «hacer»?",
+    "options": ["Hizo la tarea.", "Iso la tarea.", "Hicó la tarea.", "Hizo la taria."],
+    "correct_answer": "Hizo la tarea.",
+    "explanation": "'Hizo' es la conjugación correcta del verbo 'hacer' en pretérito",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál oración está correctamente escrita?",
+    "options": ["Hubo muchas personas en la reunión.", "Hubieron muchas personas en la reunión.", "Ubo muchas personas en la reunión.", "Hubo muchas personas en la reunion."],
+    "correct_answer": "Hubo muchas personas en la reunión.",
+    "explanation": "'Hubo' es la forma correcta de 'haber' en pretérito y siempre es singular",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál es el sujeto de «Los estudiantes prepararon el examen»?",
+    "options": ["Los estudiantes", "Prepararon", "El examen", "Los"],
+    "correct_answer": "Los estudiantes",
+    "explanation": "El sujeto es quien realiza la acción del verbo",
+    "difficulty": "easy"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "En «Ana compró un libro», ¿cuál es el complemento directo?",
+    "options": ["un libro", "Ana", "compró", "Ana compró"],
+    "correct_answer": "un libro",
+    "explanation": "El complemento directo recibe directamente la acción del verbo",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál oración está en voz pasiva?",
+    "options": ["El informe fue elaborado por Laura.", "Laura elaboró el informe.", "Laura elabora el informe.", "Laura elaborará el informe."],
+    "correct_answer": "El informe fue elaborado por Laura.",
+    "explanation": "La voz pasiva se forma con el verbo 'ser' + participio",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál es el verbo en «Pedro estudia todos los días»?",
+    "options": ["estudia", "Pedro", "todos", "días"],
+    "correct_answer": "estudia",
+    "explanation": "El verbo es la palabra que expresa la acción",
+    "difficulty": "easy"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál es el adjetivo en «La casa grande está vacía»?",
+    "options": ["grande", "casa", "está", "vacía"],
+    "correct_answer": "grande",
+    "explanation": "Los adjetivos son palabras que califican al sustantivo",
+    "difficulty": "easy"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál es el adverbio en «Llegó rápidamente»?",
+    "options": ["rápidamente", "llegó", "llegó rápidamente", "ninguno"],
+    "correct_answer": "rápidamente",
+    "explanation": "Los adverbios modifican verbos y terminan generalmente en '-mente'",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál pronombre personal completa correctamente: «___ iremos mañana»?",
+    "options": ["Nosotros", "Nos", "Nuestro", "Nuestras"],
+    "correct_answer": "Nosotros",
+    "explanation": "'Nosotros' es el pronombre personal sujeto para la primera persona plural",
+    "difficulty": "easy"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál oración usa correctamente el pronombre?",
+    "options": ["Ella me llamó ayer.", "Ella yo llamó ayer.", "Ella mí llamó ayer.", "Ella me llamé ayer."],
+    "correct_answer": "Ella me llamó ayer.",
+    "explanation": "'me' es la forma correcta del pronombre en objeto indirecto",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál es el tiempo verbal de «habíamos terminado»?",
+    "options": ["Pretérito pluscuamperfecto de indicativo", "Pretérito perfecto simple", "Presente de indicativo", "Futuro simple"],
+    "correct_answer": "Pretérito pluscuamperfecto de indicativo",
+    "explanation": "El pluscuamperfecto expresa una acción pasada anterior a otra",
+    "difficulty": "hard"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál es el tiempo verbal de «comeremos»?",
+    "options": ["Futuro simple", "Presente", "Pretérito imperfecto", "Condicional simple"],
+    "correct_answer": "Futuro simple",
+    "explanation": "El futuro simple se forma con la raíz + terminaciones de futuro",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál oración está en pretérito imperfecto?",
+    "options": ["Cuando era niño, jugaba mucho.", "Ayer jugué mucho.", "Mañana jugaré mucho.", "He jugado mucho."],
+    "correct_answer": "Cuando era niño, jugaba mucho.",
+    "explanation": "El pretérito imperfecto expresa acciones habituales del pasado",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál oración usa correctamente el subjuntivo?",
+    "options": ["Espero que vengas mañana.", "Espero que vienes mañana.", "Espero que vendrás mañana.", "Espero que viniste mañana."],
+    "correct_answer": "Espero que vengas mañana.",
+    "explanation": "El subjuntivo se usa después de verbos que expresan deseo, duda o emoción",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál opción contiene un sustantivo abstracto?",
+    "options": ["Libertad", "Mesa", "Zapato", "Árbol"],
+    "correct_answer": "Libertad",
+    "explanation": "Los sustantivos abstractos designan conceptos, ideas o sentimientos",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál opción contiene un sustantivo colectivo?",
+    "options": ["Rebaño", "Oveja", "Perro", "Casa"],
+    "correct_answer": "Rebaño",
+    "explanation": "Los sustantivos colectivos designan grupos o conjuntos en singular",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra es un sinónimo de «rápido»?",
+    "options": ["Veloz", "Lento", "Pesado", "Débil"],
+    "correct_answer": "Veloz",
+    "explanation": "'Veloz' tiene el mismo significado que 'rápido'",
+    "difficulty": "easy"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra es un antónimo de «abundante»?",
+    "options": ["Escaso", "Numeroso", "Excesivo", "Copioso"],
+    "correct_answer": "Escaso",
+    "explanation": "'Escaso' tiene significado opuesto a 'abundante'",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál oración presenta concordancia correcta?",
+    "options": ["Las niñas pequeñas juegan.", "Las niñas pequeño juegan.", "La niñas pequeñas juega.", "Las niña pequeña juegan."],
+    "correct_answer": "Las niñas pequeñas juegan.",
+    "explanation": "La concordancia requiere que artículos, sustantivos y adjetivos coincidan en género y número",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál opción usa correctamente «sino»?",
+    "options": ["No quiero té, sino café.", "No quiero té, si no café.", "No quiero té, sinó café.", "No quiero té sino, café."],
+    "correct_answer": "No quiero té, sino café.",
+    "explanation": "'Sino' (una palabra) se usa para expresar contraste o corrección",
+    "difficulty": "hard"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál opción usa correctamente «también»?",
+    "options": ["Yo también iré.", "Yo tan bien iré.", "Yo tambien iré.", "Yo tambiém iré."],
+    "correct_answer": "Yo también iré.",
+    "explanation": "'También' (una palabra con acento) expresa suma o adición",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál oración está correctamente escrita?",
+    "options": ["Aún no he terminado.", "Aun no he terminado.", "Aún no e terminado.", "Aun no he terminadó."],
+    "correct_answer": "Aún no he terminado.",
+    "explanation": "'Aún' (con tilde) significa 'todavía', mientras que 'aun' (sin tilde) significa 'incluso'",
+    "difficulty": "hard"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra lleva tilde diacrítica en esta oración: «___ quieres, puedes venir»?",
+    "options": ["Sí", "Sí", "Sì", "Si"],
+    "correct_answer": "Sí",
+    "explanation": "'Sí' (con tilde) es afirmación, mientras que 'si' (sin tilde) es condicional",
+    "difficulty": "hard"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál oración usa correctamente «tú»?",
+    "options": ["Tú tienes mi libro.", "Tu tienes mi libro.", "Tú tienes mí libro.", "Tu tienes mí libro."],
+    "correct_answer": "Tú tienes mi libro.",
+    "explanation": "'Tú' (con tilde) es pronombre personal, mientras que 'tu' (sin tilde) es posesivo",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál opción está correctamente escrita?",
+    "options": ["Asimismo, presentó el informe.", "Así mismo, presentó el informe.", "Asímismo, presentó el informe.", "Asimismo presentó, el informe."],
+    "correct_answer": "Asimismo, presentó el informe.",
+    "explanation": "'Asimismo' (una palabra) es un adverbio que significa 'también' o 'del mismo modo'",
+    "difficulty": "hard"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál palabra está correctamente escrita?",
+    "options": ["Beneficio", "Veneficio", "Benefisio", "Benefício"],
+    "correct_answer": "Beneficio",
+    "explanation": "'Beneficio' se escribe con 'b', 'e', 'n', 'e', 'f', 'i', 'c', 'i', 'o'",
+    "difficulty": "medium"
+  },
+  {
+    "question_type": "multiple_choice",
+    "question_text": "¿Cuál oración presenta uso correcto de mayúsculas?",
+    "options": ["La Paz es una ciudad de Bolivia.", "la Paz es una ciudad de Bolivia.", "La paz es una ciudad de Bolivia.", "La Paz es una Ciudad de Bolivia."],
+    "correct_answer": "La Paz es una ciudad de Bolivia.",
+    "explanation": "Los nombres propios y el inicio de oración llevan mayúscula; las ciudades sin ser propias llevan minúscula",
+    "difficulty": "medium"
+  }
+]

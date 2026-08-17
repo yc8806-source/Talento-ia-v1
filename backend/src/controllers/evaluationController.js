@@ -697,7 +697,7 @@ exports.createAndShareEvaluationLink = async (req, res) => {
 
 // GENERAR PDF DE RESULTADOS
 // Generate PDF ON-DEMAND para TPL-80 evaluation
-// FORCE RENDER DEPLOY - Updated percentage calculations to use toFixed(2)
+// CRITICAL FIX - PDF score calculation now uses question_options lookup
 exports.generatePDFOnDemand = async (req, res) => {
   try {
     const { candidateVacancyId } = req.params;

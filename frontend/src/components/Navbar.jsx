@@ -41,8 +41,12 @@ function Navbar({ onLogout }) {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             {/* Logo */}
-            <Link to="/dashboard" className="flex items-center">
-              <img src="/impulsa-talento-logo.png" alt="IMPULSA TALENTO" className="h-12 w-12" />
+            <Link to="/dashboard" className="flex items-center gap-3">
+              <img src="/impulsa-talento-logo.png" alt="IMPULSA TALENTO" className="h-16 w-16" />
+              <div className="hidden sm:flex flex-col">
+                <span className="text-lg font-bold text-gray-900">IMPULSA</span>
+                <span className="text-xs font-semibold text-purple-600">TALENTO</span>
+              </div>
             </Link>
 
             {/* Desktop Menu */}

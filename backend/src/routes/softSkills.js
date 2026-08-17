@@ -17,6 +17,19 @@ router.post('/:examId/answers', async (req, res) => {
       });
     }
 
+    // Verificar si la pregunta es de Ortografía y Gramática
+    const isSpellingQuestion = await pool.query(
+      'SELECT id FROM spelling_grammar_questions WHERE id = $1',
+      [questionId]
+    );
+
+    if (isSpellingQuestion.rows.length > 0) {
+      return res.status(400).json({
+        error: 'Esta pregunta es de Ortografía y Gramática. Use el endpoint correcto: POST /spelling-grammar/results/submit',
+        details: 'Las respuestas de Ortografía deben guardarse usando el servicio de Ortografía y Gramática'
+      });
+    }
+
     // Validar que answerValue está entre 1-5
     if (answerValue < 1 || answerValue > 5) {
       return res.status(400).json({

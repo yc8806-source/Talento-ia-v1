@@ -30,7 +30,14 @@ exports.getAllTests = async (req, res) => {
 // OBTENER TEST CON PREGUNTAS
 exports.getTest = async (req, res) => {
   try {
-    const { testId } = req.params;
+    let { testId } = req.params;
+
+    // Soporte para ambos: testId (1) y examId (29)
+    // Si se intenta acceder con testId=29 (exam.id), redirigir a testId=1 (el test real)
+    if (testId === '29') {
+      testId = '1';
+    }
+
     const test = await SpellingGrammarService.getTestWithQuestions(testId);
 
     if (!test) {

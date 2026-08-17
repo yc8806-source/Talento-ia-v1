@@ -63,7 +63,35 @@ app.use(express.urlencoded({ limit: '10mb', extended: false }));
 app.use(sanitizeMiddleware);
 app.use(auditLogger);
 app.use('/api/', apiLimiter);
-app.use(tokenValidator);
+
+// Excluir rutas públicas del tokenValidator
+const publicRoutes = [
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+  '/api/evaluations/token/',
+  '/api/evaluations/vacancy-by-token/',
+  '/api/evaluations/status/',
+  '/api/evaluations/',
+  '/api/spelling-grammar/tests/',
+  '/api/typing/test/',
+  '/api/health',
+  '/api/debug-db',
+  '/api/test-db'
+];
+
+const shouldSkipTokenValidator = (req) => {
+  return publicRoutes.some(route => req.path.startsWith(route));
+};
+
+app.use((req, res, next) => {
+  if (!shouldSkipTokenValidator(req)) {
+    tokenValidator(req, res, next);
+  } else {
+    next();
+  }
+});
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/pdfs', express.static(path.join(__dirname, 'pdfs')));

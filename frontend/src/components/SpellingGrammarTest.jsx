@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiCheck, FiX, FiChevronRight, FiChevronLeft, FiRotateCcw } from 'react-icons/fi';
+import { spellingGrammarAPI } from '../api/api';
 
 function SpellingGrammarTest({ testId, testTitle, testType, onComplete }) {
   const [test, setTest] = useState(null);
@@ -16,12 +17,7 @@ function SpellingGrammarTest({ testId, testTitle, testType, onComplete }) {
 
   const loadTest = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/api/spelling-grammar/tests/${testId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      const data = await response.json();
+      const data = await spellingGrammarAPI.getTest(testId);
       setTest(data);
       setLoading(false);
     } catch (error) {
@@ -58,26 +54,18 @@ function SpellingGrammarTest({ testId, testTitle, testType, onComplete }) {
         answersData[q.id] = answers[q.id] || '';
       });
 
-      const response = await fetch('http://localhost:3000/api/spelling-grammar/results/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          testId,
-          answers: answersData,
-          timeSeconds,
-          startedAt: new Date(startTime).toISOString()
-        })
+      const response = await spellingGrammarAPI.submitResult({
+        testId,
+        answers: answersData,
+        timeSeconds,
+        startedAt: new Date(startTime).toISOString()
       });
 
-      const data = await response.json();
-      setResults(data.result);
+      setResults(response.result);
       setShowResults(true);
 
       if (onComplete) {
-        onComplete(data.result);
+        onComplete(response.result);
       }
     } catch (error) {
       console.error('Error enviando respuestas:', error);

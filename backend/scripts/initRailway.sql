@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   email VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
-  firstName VARCHAR(100),
-  lastName VARCHAR(100),
+  first_name VARCHAR(100),
+  last_name VARCHAR(100),
   role VARCHAR(50) DEFAULT 'candidato',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -165,8 +165,8 @@ CREATE INDEX IF NOT EXISTS idx_evaluations_status ON evaluations(status);
 CREATE INDEX IF NOT EXISTS idx_evaluations_token ON evaluations(access_token);
 
 -- Insertar usuario admin
-INSERT INTO users (email, password_hash, firstName, lastName, role)
-VALUES ('admin@talent-ia.com', '$2a$10$8YJbmhW3hkVqBpYaJOQGe.A8KqQ5XELZKdVHEqmCNvT8l6qZ/YA0i', 'Admin', 'Talent IA', 'administrador')
+INSERT INTO users (email, password_hash, first_name, last_name, role)
+VALUES ('admin@talent-ia.com', '$2a$10$8YJbmhW3hkVqBpYaJOQGe.A8KqQ5XELZKdVHEqmCNvT8l6qZ/YA0i', 'Admin', 'Talent IA', 'admin')
 ON CONFLICT (email) DO NOTHING;
 
 SELECT 'Tablas creadas y admin insertado' AS status;

@@ -33,16 +33,7 @@ router.post('/:token/exam-answers', evaluationController.submitExamAnswersByToke
 // Obtener resultados
 router.get('/:candidateVacancyId/results', evaluationController.getEvaluationResults);
 
-// Generar PDF ON-DEMAND (nuevo - funciona garantizado)
+// Generar PDF profesional (ÚNICO ENDPOINT - nuevo formato con IMPULSA TALENTO branding)
 router.get('/:candidateVacancyId/pdf-download', evaluationController.generatePDFOnDemand);
-
-// Generar PDF de resultados (legacy)
-router.get('/:candidateVacancyId/pdf', evaluationController.generatePDF);
-
-// Descargar PDF (acceso directo al archivo)
-router.get('/:candidateVacancyId/pdf/download', evaluationController.downloadPDF);
-
-// DEBUG: PDF data sin generar archivo
-router.get('/:candidateVacancyId/pdf/debug', evaluationController.debugPDF);
 
 module.exports = router;

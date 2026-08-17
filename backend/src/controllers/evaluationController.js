@@ -775,12 +775,13 @@ exports.generatePDFOnDemand = async (req, res) => {
     const examName = examCheck.rows[0].name;
     console.log(`✅ Examen encontrado: ID=${tpl80ExamId}, Nombre="${examName}"`);
 
-    // Obtener respuestas TPL-80 (answer_value ya contiene la puntuación 1-5)
+    // Obtener respuestas TPL-80 (buscar score en question_options)
     const answers = await pool.query(
-      `SELECT eq.question_order, q.id, q.is_inverse, CAST(ea.answer_value AS FLOAT) as score
+      `SELECT eq.question_order, q.id, q.is_inverse, COALESCE(qo.score, CAST(ea.answer_value AS FLOAT)) as score
        FROM exam_answers ea
        INNER JOIN questions q ON ea.question_id = q.id
        INNER JOIN exam_questions eq ON q.id = eq.question_id AND eq.exam_id = $2
+       LEFT JOIN question_options qo ON qo.id = ea.answer_value AND qo.question_id = q.id
        WHERE ea.candidate_id = $1 AND ea.exam_id = $2
        ORDER BY eq.question_order`,
       [candidateId, tpl80ExamId]

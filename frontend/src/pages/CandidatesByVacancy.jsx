@@ -382,22 +382,20 @@ export default function CandidatesByVacancy() {
                           </button>
                         </>
                       )}
-                      {(candidate.status === 'completed' || candidate.status === 'apto' || candidate.status === 'rechazado') && (
-                        <button
-                          onClick={() => handleDownloadPDF(candidate.candidateVacancyId)}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: '#007bff',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '0.85em'
-                          }}
-                        >
-                          📄 PDF
-                        </button>
-                      )}
+                      <button
+                        onClick={() => handleDownloadPDF(candidate.candidateVacancyId)}
+                        style={{
+                          padding: '6px 12px',
+                          backgroundColor: '#007bff',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.85em'
+                        }}
+                      >
+                        📄 PDF
+                      </button>
                     </div>
                   </td>
                 </tr>

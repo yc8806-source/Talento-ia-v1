@@ -42,7 +42,7 @@ function Navbar({ onLogout }) {
           <div className="flex justify-between items-center">
             {/* Logo */}
             <Link to="/dashboard" className="flex items-center">
-              <img src="/impulsa-talento-logo.png" alt="IMPULSA TALENTO" className="h-16 w-16" />
+              <img src="/impulsa-talento-logo.png" alt="IMPULSA TALENTO" className="h-24 w-24" />
             </Link>
 
             {/* Desktop Menu */}

@@ -843,9 +843,9 @@ exports.generatePDFOnDemand = async (req, res) => {
 
       competencies.push({
         name: comp.name,
-        score: Math.round(score * 100) / 100,
+        score: parseFloat(score.toFixed(2)),
         maxScore: maxScore,
-        percentage: Math.round(percentage * 100) / 100,
+        percentage: parseFloat(percentage.toFixed(2)),
         level: level
       });
 
@@ -885,8 +885,10 @@ exports.generatePDFOnDemand = async (req, res) => {
                         overallLevel === 'Alto' ? '#2E7D32' :
                         overallLevel === 'Medio' ? '#F57F17' : '#D84315';
     doc.rect(50, yPos - 5, 500, 45).fill(overallColor).fillColor('#FFF');
-    doc.fontSize(24).font('Helvetica-Bold').text(Math.round(overallPercentage * 100) / 100 + '%', 70, yPos + 5);
-    doc.fontSize(11).font('Helvetica').text(Math.round(totalScore * 100) / 100 + '/' + maxScore + ' pts', 70, yPos + 35);
+    const displayPercentage = overallPercentage.toFixed(2);
+    const displayScore = totalScore.toFixed(2);
+    doc.fontSize(24).font('Helvetica-Bold').text(displayPercentage + '%', 70, yPos + 5);
+    doc.fontSize(11).font('Helvetica').text(displayScore + '/' + maxScore + ' pts', 70, yPos + 35);
     doc.fontSize(11).text('Nivel: ' + overallLevel, 300, yPos + 5);
     yPos += 60;
 
@@ -1033,9 +1035,9 @@ exports.generatePDF = async (req, res) => {
 
       competencies.push({
         name: comp.name,
-        score: Math.round(score * 100) / 100,
+        score: parseFloat(score.toFixed(2)),
         maxScore: maxScore,
-        percentage: Math.round(percentage * 100) / 100,
+        percentage: parseFloat(percentage.toFixed(2)),
         level: level
       });
 
@@ -1073,8 +1075,10 @@ exports.generatePDF = async (req, res) => {
 
     const overallColor = overallLevel === 'Muy Alto' ? '#1B5E20' : overallLevel === 'Alto' ? '#2E7D32' : overallLevel === 'Medio' ? '#F57F17' : '#D84315';
     doc.rect(50, yPos - 5, 500, 45).fill(overallColor).fillColor('#FFF');
-    doc.fontSize(24).font('Helvetica-Bold').text(Math.round(overallPercentage * 100) / 100 + '%', 70, yPos + 5);
-    doc.fontSize(11).font('Helvetica').text(Math.round(totalScore * 100) / 100 + '/' + maxScore + ' pts', 70, yPos + 35);
+    const displayOverallPercentage = overallPercentage.toFixed(2);
+    const displayTotalScore = totalScore.toFixed(2);
+    doc.fontSize(24).font('Helvetica-Bold').text(displayOverallPercentage + '%', 70, yPos + 5);
+    doc.fontSize(11).font('Helvetica').text(displayTotalScore + '/' + maxScore + ' pts', 70, yPos + 35);
     doc.fontSize(11).text('Nivel: ' + overallLevel, 300, yPos + 5);
     yPos += 60;
 

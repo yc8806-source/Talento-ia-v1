@@ -23,6 +23,7 @@ import SkillsAssessmentTest from './components/SkillsAssessmentTest';
 import SoftSkillsTest from './components/SoftSkillsTest';
 import AdminEvaluationResults from './components/AdminEvaluationResults';
 import NotificationCenter from './components/NotificationCenter';
+import SpellingGrammarTestPage from './pages/SpellingGrammarTestPage';
 import { connectNotificationSocket, disconnectNotificationSocket } from './services/notificationService';
 
 // Typing test routes enabled - v1.0.1
@@ -65,6 +66,7 @@ function App() {
         <Route path="/evaluacion" element={<EvaluationByToken />} />
         <Route path="/evaluacion/:token" element={<EvaluationTest />} />
         <Route path="/typing-test/:token" element={<TypingTestPage />} />
+        <Route path="/spelling-test/:token" element={<SpellingGrammarTestPage />} />
         <Route path="/exams/:examId" element={<SoftSkillsTest />} />
         <Route path="/skills-assessment" element={<SkillsAssessmentsPage />} />
         <Route path="/skills-assessment/:assessmentId" element={<SkillsAssessmentTest />} />

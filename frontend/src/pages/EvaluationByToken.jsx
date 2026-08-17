@@ -168,7 +168,8 @@ export default function EvaluationByToken() {
                       if (exam.type === 'typing') {
                         navigate(`/typing-test/${token}?typingTestId=${exam.id}`);
                       } else if (exam.type === 'spelling') {
-                        navigate(`/spelling-test/${token}?testId=${exam.id}`);
+                        // Para pruebas de Ortografía, usar testId=1 (es el test_id en spelling_grammar_tests)
+                        navigate(`/spelling-test/${token}?testId=1`);
                       } else {
                         navigate(`/evaluacion/${token}?examId=${exam.id}`);
                       }

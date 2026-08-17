@@ -1,0 +1,855 @@
+{
+  "totalQuestions": 50,
+  "questions": [
+    {
+      "numero": 1,
+      "id": 251,
+      "tipo": "multiple_choice",
+      "pregunta": "¿Cuál es la forma correcta de conjugar el verbo \"haber\" en presente?",
+      "opciones": {
+        "options": [
+          "ha",
+          "ave",
+          "haya",
+          "aya"
+        ]
+      },
+      "respuestaCorrecta": "ha",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 2,
+      "id": 252,
+      "tipo": "multiple_choice",
+      "pregunta": "¿Cuál de estas palabras está correctamente acentuada?",
+      "opciones": {
+        "options": [
+          "teléfono",
+          "música",
+          "crímen",
+          "exámen"
+        ]
+      },
+      "respuestaCorrecta": "teléfono",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 3,
+      "id": 253,
+      "tipo": "multiple_choice",
+      "pregunta": "¿Qué palabra es un sinónimo de \"perplejo\"?",
+      "opciones": {
+        "options": [
+          "claro",
+          "confundido",
+          "directo",
+          "obvio"
+        ]
+      },
+      "respuestaCorrecta": "claro",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 4,
+      "id": 254,
+      "tipo": "multiple_choice",
+      "pregunta": "¿Cuál oración usa correctamente el subjuntivo?",
+      "opciones": {
+        "options": [
+          "Creo que viene mañana",
+          "Espero que venga mañana",
+          "Vino mañana",
+          "Viene mañana"
+        ]
+      },
+      "respuestaCorrecta": "Creo que viene mañana",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 5,
+      "id": 255,
+      "tipo": "multiple_choice",
+      "pregunta": "¿Cuál es la forma correcta del plural de \"luz\"?",
+      "opciones": {
+        "options": [
+          "luces",
+          "lucez",
+          "luz",
+          "lucis"
+        ]
+      },
+      "respuestaCorrecta": "luces",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 6,
+      "id": 256,
+      "tipo": "multiple_choice",
+      "pregunta": "¿Qué palabra tiene una b y no una v?",
+      "opciones": {
+        "options": [
+          "civico",
+          "actividad",
+          "absoluto",
+          "negatividad"
+        ]
+      },
+      "respuestaCorrecta": "civico",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 7,
+      "id": 257,
+      "tipo": "multiple_choice",
+      "pregunta": "¿Cuál es la acentuación correcta de esta palabra?",
+      "opciones": {
+        "options": [
+          "rápido",
+          "rapido",
+          "rápi",
+          "raido"
+        ]
+      },
+      "respuestaCorrecta": "rápido",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 8,
+      "id": 258,
+      "tipo": "multiple_choice",
+      "pregunta": "¿Cuál oración tiene puntuación correcta?",
+      "opciones": {
+        "options": [
+          "Hola, ¿cómo estás?",
+          "Hola ¿cómo estás",
+          "hola como estás",
+          "Hola como estás?"
+        ]
+      },
+      "respuestaCorrecta": "Hola, ¿cómo estás?",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 9,
+      "id": 259,
+      "tipo": "multiple_choice",
+      "pregunta": "¿Qué palabra se escribe con j?",
+      "opciones": {
+        "options": [
+          "jota",
+          "gato",
+          "joven",
+          "viejo"
+        ]
+      },
+      "respuestaCorrecta": "jota",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 10,
+      "id": 260,
+      "tipo": "multiple_choice",
+      "pregunta": "¿Cuál es el participio regular del verbo \"hablar\"?",
+      "opciones": {
+        "options": [
+          "hablado",
+          "hablando",
+          "habla",
+          "hablé"
+        ]
+      },
+      "respuestaCorrecta": "hablado",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 11,
+      "id": 261,
+      "tipo": "multiple_choice",
+      "pregunta": "¿Qué tipo de sustantivo es \"mesa\"?",
+      "opciones": {
+        "options": [
+          "propio",
+          "común",
+          "abstracto",
+          "colectivo"
+        ]
+      },
+      "respuestaCorrecta": "propio",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 12,
+      "id": 262,
+      "tipo": "multiple_choice",
+      "pregunta": "¿Cuál oración usa correctamente \"hay/ahí/ay\"?",
+      "opciones": {
+        "options": [
+          "Hay una mesa ahí",
+          "Ahí muchas mesas",
+          "Ay muchas mesas",
+          "Hay ahí mesas"
+        ]
+      },
+      "respuestaCorrecta": "Hay una mesa ahí",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 13,
+      "id": 263,
+      "tipo": "multiple_choice",
+      "pregunta": "¿Cuál palabra lleva diéresis?",
+      "opciones": {
+        "options": [
+          "pingüino",
+          "guapo",
+          "guiso",
+          "agua"
+        ]
+      },
+      "respuestaCorrecta": "pingüino",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 14,
+      "id": 264,
+      "tipo": "multiple_choice",
+      "pregunta": "¿Cuál es el adjetivo comparativo de \"bueno\"?",
+      "opciones": {
+        "options": [
+          "buenísimo",
+          "mejor",
+          "más bueno",
+          "buen"
+        ]
+      },
+      "respuestaCorrecta": "buenísimo",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 15,
+      "id": 265,
+      "tipo": "multiple_choice",
+      "pregunta": "¿Qué palabra está correctamente escrita?",
+      "opciones": {
+        "options": [
+          "psicologia",
+          "psicología",
+          "siquologia",
+          "sicologia"
+        ]
+      },
+      "respuestaCorrecta": "psicologia",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 16,
+      "id": 266,
+      "tipo": "multiple_choice",
+      "pregunta": "El niño ______ (ir) al parque todos los días.",
+      "opciones": {
+        "options": [
+          "voy",
+          "va",
+          "van",
+          "iba"
+        ]
+      },
+      "respuestaCorrecta": "voy",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 17,
+      "id": 267,
+      "tipo": "multiple_choice",
+      "pregunta": "______ importante estudiar para el examen.",
+      "opciones": {
+        "options": [
+          "Es",
+          "Son",
+          "Eres",
+          "Soy"
+        ]
+      },
+      "respuestaCorrecta": "Es",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 18,
+      "id": 268,
+      "tipo": "multiple_choice",
+      "pregunta": "La película fue ______ (entretener) e interesante.",
+      "opciones": {
+        "options": [
+          "entretenida",
+          "entretiene",
+          "entreteniendo",
+          "entretiene"
+        ]
+      },
+      "respuestaCorrecta": "entretenida",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 19,
+      "id": 269,
+      "tipo": "multiple_choice",
+      "pregunta": "Si ______ (tener) dinero, viajaría al extranjero.",
+      "opciones": {
+        "options": [
+          "tengo",
+          "tuviera",
+          "tendría",
+          "tenía"
+        ]
+      },
+      "respuestaCorrecta": "tengo",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 20,
+      "id": 270,
+      "tipo": "multiple_choice",
+      "pregunta": "El ______ (profesor) explica la lección claramente.",
+      "opciones": {
+        "options": [
+          "profesor",
+          "profesa",
+          "profeso",
+          "profes"
+        ]
+      },
+      "respuestaCorrecta": "profesor",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 21,
+      "id": 271,
+      "tipo": "multiple_choice",
+      "pregunta": "______ no me gusta ese tipo de música.",
+      "opciones": {
+        "options": [
+          "Te",
+          "Me",
+          "Le",
+          "Se"
+        ]
+      },
+      "respuestaCorrecta": "Te",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 22,
+      "id": 272,
+      "tipo": "multiple_choice",
+      "pregunta": "Ellos ______ (estar) de vacaciones la próxima semana.",
+      "opciones": {
+        "options": [
+          "estoy",
+          "está",
+          "estarán",
+          "estaremos"
+        ]
+      },
+      "respuestaCorrecta": "estoy",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 23,
+      "id": 273,
+      "tipo": "multiple_choice",
+      "pregunta": "La ______ (flor) es muy hermosa y colorida.",
+      "opciones": {
+        "options": [
+          "flor",
+          "flora",
+          "floración",
+          "floresta"
+        ]
+      },
+      "respuestaCorrecta": "flor",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 24,
+      "id": 274,
+      "tipo": "multiple_choice",
+      "pregunta": "______ hemos decidido ir a la playa mañana.",
+      "opciones": {
+        "options": [
+          "Nosotros",
+          "Ellos",
+          "Ustedes",
+          "Yo"
+        ]
+      },
+      "respuestaCorrecta": "Nosotros",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 25,
+      "id": 275,
+      "tipo": "multiple_choice",
+      "pregunta": "Fue un ______ (suceso) muy importante en su vida.",
+      "opciones": {
+        "options": [
+          "evento",
+          "suceda",
+          "sucesión",
+          "sucesivo"
+        ]
+      },
+      "respuestaCorrecta": "evento",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 26,
+      "id": 276,
+      "tipo": "multiple_choice",
+      "pregunta": "La ______ (solución) al problema fue muy simple.",
+      "opciones": {
+        "options": [
+          "solución",
+          "soluciona",
+          "solucionable",
+          "soluto"
+        ]
+      },
+      "respuestaCorrecta": "solución",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 27,
+      "id": 277,
+      "tipo": "multiple_choice",
+      "pregunta": "______ vez termina el trabajo, descansa un poco.",
+      "opciones": {
+        "options": [
+          "Cuando",
+          "Donde",
+          "Como",
+          "Cual"
+        ]
+      },
+      "respuestaCorrecta": "Cuando",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 28,
+      "id": 278,
+      "tipo": "multiple_choice",
+      "pregunta": "Yo ______ (jugar) fútbol con mis amigos el sábado.",
+      "opciones": {
+        "options": [
+          "juego",
+          "jugaré",
+          "jugaba",
+          "he jugado"
+        ]
+      },
+      "respuestaCorrecta": "juego",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 29,
+      "id": 279,
+      "tipo": "multiple_choice",
+      "pregunta": "El ______ (artículo) es una parte importante de la oración.",
+      "opciones": {
+        "options": [
+          "artículo",
+          "articula",
+          "articulista",
+          "articulo"
+        ]
+      },
+      "respuestaCorrecta": "artículo",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 30,
+      "id": 280,
+      "tipo": "multiple_choice",
+      "pregunta": "______ escribo esta carta con mucho cuidado.",
+      "opciones": {
+        "options": [
+          "Hoy",
+          "Oy",
+          "Ai",
+          "Hay"
+        ]
+      },
+      "respuestaCorrecta": "Hoy",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 31,
+      "id": 281,
+      "tipo": "multiple_choice",
+      "pregunta": "La ______ (libertad) es un derecho fundamental.",
+      "opciones": {
+        "options": [
+          "libertad",
+          "liberal",
+          "liberación",
+          "libertino"
+        ]
+      },
+      "respuestaCorrecta": "libertad",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 32,
+      "id": 282,
+      "tipo": "multiple_choice",
+      "pregunta": "Ellas ______ (venir) mañana para visitarnos.",
+      "opciones": {
+        "options": [
+          "vienen",
+          "vinieron",
+          "vendrán",
+          "vinieran"
+        ]
+      },
+      "respuestaCorrecta": "vienen",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 33,
+      "id": 283,
+      "tipo": "multiple_choice",
+      "pregunta": "El ______ (gato) duerme sobre el sofá.",
+      "opciones": {
+        "options": [
+          "gato",
+          "gata",
+          "gatito",
+          "gatuno"
+        ]
+      },
+      "respuestaCorrecta": "gato",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 34,
+      "id": 284,
+      "tipo": "multiple_choice",
+      "pregunta": "______ de verdad esto es sorprendente.",
+      "opciones": {
+        "options": [
+          "De",
+          "Da",
+          "Do",
+          "Di"
+        ]
+      },
+      "respuestaCorrecta": "De",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 35,
+      "id": 285,
+      "tipo": "multiple_choice",
+      "pregunta": "Todos ______ (deber) cumplir con sus responsabilidades.",
+      "opciones": {
+        "options": [
+          "deben",
+          "debe",
+          "debo",
+          "debes"
+        ]
+      },
+      "respuestaCorrecta": "deben",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 36,
+      "id": 286,
+      "tipo": "multiple_choice",
+      "pregunta": "La estudiante habían llegado temprano.",
+      "opciones": {
+        "options": [
+          "Correcto",
+          "Debería ser 'había'",
+          "Debería ser 'han'",
+          "Debería ser 'habían sido'"
+        ]
+      },
+      "respuestaCorrecta": "Correcto",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 37,
+      "id": 287,
+      "tipo": "multiple_choice",
+      "pregunta": "Nosotros fuimos hablando sobre el problema.",
+      "opciones": {
+        "options": [
+          "Correcto",
+          "Debería ser 'estuvimos hablando'",
+          "Debería ser 'hablamos'",
+          "Debería ser 'hemos hablado'"
+        ]
+      },
+      "respuestaCorrecta": "Correcto",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 38,
+      "id": 288,
+      "tipo": "multiple_choice",
+      "pregunta": "El profesor no encontró el libro en ningun lugar.",
+      "opciones": {
+        "options": [
+          "Correcto",
+          "Debería ser 'ningún'",
+          "Debería ser 'ninguém'",
+          "Debería ser 'no-uno'"
+        ]
+      },
+      "respuestaCorrecta": "Correcto",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 39,
+      "id": 289,
+      "tipo": "multiple_choice",
+      "pregunta": "Yo voy al cine cada dia sin falta.",
+      "opciones": {
+        "options": [
+          "Correcto",
+          "Debería ser 'día'",
+          "Debería ser 'dí'",
+          "Debería ser 'diae'"
+        ]
+      },
+      "respuestaCorrecta": "Correcto",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 40,
+      "id": 290,
+      "tipo": "multiple_choice",
+      "pregunta": "Ellos no saben como llegar a la estación.",
+      "opciones": {
+        "options": [
+          "Correcto",
+          "Debería ser 'cómo'",
+          "Debería ser 'coimo'",
+          "Debería ser 'come'"
+        ]
+      },
+      "respuestaCorrecta": "Correcto",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 41,
+      "id": 291,
+      "tipo": "multiple_choice",
+      "pregunta": "Esta es mi oficina, aquella es de mi jefe.",
+      "opciones": {
+        "options": [
+          "Incorrecto",
+          "Correcto - sin error",
+          "Debería ser 'Esto'",
+          "Debería ser 'esa'"
+        ]
+      },
+      "respuestaCorrecta": "Incorrecto",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 42,
+      "id": 292,
+      "tipo": "multiple_choice",
+      "pregunta": "Los nenes jugaban en el parque muy feliz.",
+      "opciones": {
+        "options": [
+          "Correcto",
+          "Debería ser 'felices'",
+          "Debería ser 'felizmente'",
+          "Debería ser 'feliza'"
+        ]
+      },
+      "respuestaCorrecta": "Correcto",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 43,
+      "id": 293,
+      "tipo": "multiple_choice",
+      "pregunta": "Me gustaría viajar más a menudo.",
+      "opciones": {
+        "options": [
+          "Incorrecto",
+          "Correcto - sin error",
+          "Debería ser 'viaje'",
+          "Debería ser 'viajar más a veces'"
+        ]
+      },
+      "respuestaCorrecta": "Incorrecto",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 44,
+      "id": 294,
+      "tipo": "multiple_choice",
+      "pregunta": "Él esta estudiando ingles en la universidad.",
+      "opciones": {
+        "options": [
+          "Correcto",
+          "Debería ser 'está' e 'inglés'",
+          "Debería ser 'estás'",
+          "Debería ser 'inglish'"
+        ]
+      },
+      "respuestaCorrecta": "Correcto",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 45,
+      "id": 295,
+      "tipo": "multiple_choice",
+      "pregunta": "La calidad de los productos han mejorado mucho.",
+      "opciones": {
+        "options": [
+          "Correcto",
+          "Debería ser 'ha'",
+          "Debería ser 'hemos'",
+          "Debería ser 'habían'"
+        ]
+      },
+      "respuestaCorrecta": "Correcto",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 46,
+      "id": 296,
+      "tipo": "multiple_choice",
+      "pregunta": "Estos libros son más interesantes que aquellos.",
+      "opciones": {
+        "options": [
+          "Incorrecto",
+          "Correcto - sin error",
+          "Debería ser 'ese'",
+          "Debería ser 'esto'"
+        ]
+      },
+      "respuestaCorrecta": "Incorrecto",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 47,
+      "id": 297,
+      "tipo": "multiple_choice",
+      "pregunta": "Yo creo que tu tienes razón.",
+      "opciones": {
+        "options": [
+          "Correcto",
+          "Debería ser 'tú'",
+          "Debería ser 'ti'",
+          "Debería ser 'te'"
+        ]
+      },
+      "respuestaCorrecta": "Correcto",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 48,
+      "id": 298,
+      "tipo": "multiple_choice",
+      "pregunta": "Si tuviera mas tiempo, terminaría el proyecto.",
+      "opciones": {
+        "options": [
+          "Correcto",
+          "Debería ser 'más'",
+          "Debería ser 'maz'",
+          "Debería ser 'mas tiempo'"
+        ]
+      },
+      "respuestaCorrecta": "Correcto",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 49,
+      "id": 299,
+      "tipo": "multiple_choice",
+      "pregunta": "El administrador de la red ha resuelto el problemas.",
+      "opciones": {
+        "options": [
+          "Correcto",
+          "Debería ser 'problema'",
+          "Debería ser 'probleme'",
+          "Debería ser 'problemático'"
+        ]
+      },
+      "respuestaCorrecta": "Correcto",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    },
+    {
+      "numero": 50,
+      "id": 300,
+      "tipo": "multiple_choice",
+      "pregunta": "Los alumnos están preparados para el examen.",
+      "opciones": {
+        "options": [
+          "Incorrecto",
+          "Correcto - sin error",
+          "Debería ser 'preparando'",
+          "Debería ser 'preparados de'"
+        ]
+      },
+      "respuestaCorrecta": "Incorrecto",
+      "explicacion": "Respuesta correcta",
+      "dificultad": "medium"
+    }
+  ]
+}

@@ -52,15 +52,25 @@ class SpellingGrammarService {
       return {
         ...test,
         totalQuestions: questionsResult.rows.length,
-        questions: questionsResult.rows.map(q => ({
-          id: q.id,
-          type: q.question_type,
-          text: q.question_text,
-          correctAnswer: q.correct_answer,
-          options: q.options ? JSON.parse(q.options) : null,
-          difficulty: q.difficulty,
-          explanation: q.explanation,
-        }))
+        questions: questionsResult.rows.map(q => {
+          let parsedOptions = null;
+          if (q.options) {
+            if (typeof q.options === 'string') {
+              parsedOptions = JSON.parse(q.options);
+            } else {
+              parsedOptions = q.options;
+            }
+          }
+          return {
+            id: q.id,
+            type: q.question_type,
+            text: q.question_text,
+            correctAnswer: q.correct_answer,
+            options: parsedOptions,
+            difficulty: q.difficulty,
+            explanation: q.explanation,
+          };
+        })
       };
     } catch (error) {
       console.error('Error obteniendo test:', error);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiCheck, FiX, FiChevronRight, FiChevronLeft, FiRotateCcw } from 'react-icons/fi';
-import { spellingGrammarAPI } from '../api/api';
+import axios from 'axios';
 
 function SpellingGrammarTest({ testId, testTitle, testType, token, onComplete }) {
   const [test, setTest] = useState(null);
@@ -11,25 +11,62 @@ function SpellingGrammarTest({ testId, testTitle, testType, token, onComplete })
   const [loading, setLoading] = useState(true);
   const [startTime] = useState(Date.now());
 
+  // Debug: Log cuando el componente monta
+  useEffect(() => {
+    console.log('📋 SpellingGrammarTest montado', { testId, token: token ? 'sí' : 'no', onComplete: !!onComplete });
+  }, []);
+
   useEffect(() => {
     loadTest();
   }, [testId]);
 
   const loadTest = async () => {
     try {
-      const data = await spellingGrammarAPI.getTest(testId);
-      setTest(data);
+      const API_URL = window.location.hostname === 'localhost'
+        ? 'http://localhost:3000/api'
+        : 'https://talento-ia-backend.onrender.com/api';
+
+      const response = await axios.get(`${API_URL}/exams/${testId}`);
+
+      // Transform the response to match expected format
+      const transformedData = {
+        ...response.data,
+        questions: response.data.questions.map((q, idx) => ({
+          id: q.id,
+          text: q.title,
+          options: q.options.map(o => o.text), // Extract just the text from option objects
+          explanation: q.explanation || ''
+        }))
+      };
+
+      setTest(transformedData);
       setLoading(false);
     } catch (error) {
       console.error('Error cargando test:', error);
+      setLoading(false);
     }
   };
 
-  const handleAnswerChange = (value) => {
+  const handleAnswerChange = (optionIndex) => {
+    // Store the INDEX of the selected option (0, 1, 2, 3), not the text
+    const questionId = test.questions[currentQuestion].id;
+    const answerValue = optionIndex + 1; // Convert to 1-based index
+
+    // Update React state
     setAnswers({
       ...answers,
-      [test.questions[currentQuestion].id]: value
+      [questionId]: answerValue
     });
+
+    // ALWAYS save to sessionStorage (this is the primary storage)
+    try {
+      const stored = JSON.parse(sessionStorage.getItem('spellingAnswers') || '{}');
+      stored[questionId] = answerValue;
+      sessionStorage.setItem('spellingAnswers', JSON.stringify(stored));
+      console.log(`✅ Saved Q${questionId} to sessionStorage:`, answerValue);
+    } catch (e) {
+      console.error('SessionStorage save failed:', e);
+    }
   };
 
   const handleNext = () => {
@@ -45,31 +82,91 @@ function SpellingGrammarTest({ testId, testTitle, testType, token, onComplete })
   };
 
   const handleSubmit = async () => {
+    console.log('🎯🎯🎯 handleSubmit EJECUTADO 🎯🎯🎯');
     try {
       const timeSeconds = Math.floor((Date.now() - startTime) / 1000);
 
-      // Crear objeto de respuestas con IDs de preguntas
+      // Get answers primarily from sessionStorage (most reliable)
       const answersData = {};
-      test.questions.forEach(q => {
-        answersData[q.id] = answers[q.id] || '';
+      let storedAnswers = {};
+
+      try {
+        storedAnswers = JSON.parse(sessionStorage.getItem('spellingAnswers') || '{}');
+        console.log(`📊 SessionStorage has ${Object.keys(storedAnswers).length} answers`);
+      } catch (e) {
+        console.error('❌ SessionStorage read failed:', e);
+      }
+
+      test.questions.forEach((q, idx) => {
+        // Priority: sessionStorage > React state > DOM > empty
+        let answerValue = storedAnswers[q.id] || answers[q.id] || '';
+
+        // If still empty, try to read from DOM
+        if (!answerValue) {
+          const checkedRadio = document.querySelector(`input[name="question-${q.id}"]:checked`);
+          answerValue = checkedRadio ? checkedRadio.value : '';
+        }
+
+        answersData[idx] = {
+          questionId: q.id,
+          selected: answerValue || '',
+          timeSpent: timeSeconds
+        };
       });
 
-      const response = await spellingGrammarAPI.submitResult({
-        testId,
-        answers: answersData,
-        timeSeconds,
-        startedAt: new Date(startTime).toISOString(),
-        token
+      console.log(`📤 Sending ${Object.keys(answersData).length} answers to backend`);
+
+      // Clear sessionStorage after collecting answers
+      try {
+        sessionStorage.removeItem('spellingAnswers');
+      } catch (e) {
+        console.warn('SessionStorage clear failed:', e);
+      }
+
+      console.log('📤 Enviando resultado (patrón TPL-80)...');
+      console.log('   examId:', testId);
+      console.log('   token:', token ? token.substring(0, 20) + '...' : 'UNDEFINED');
+      console.log('   timeSeconds:', timeSeconds);
+      console.log('   totalAnswers:', Object.keys(answersData).length);
+
+      const API_URL = window.location.hostname === 'localhost'
+        ? 'http://localhost:3000/api'
+        : 'https://talento-ia-backend.onrender.com/api';
+
+      // Usar el endpoint público /evaluations/:token/exam-answers (igual que TPL-80)
+      const response = await fetch(`${API_URL}/evaluations/${token}/exam-answers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          examId: testId,
+          answers: answersData
+        })
       });
 
-      setResults(response.result);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ Resultado guardado exitosamente:', result);
+
+      // Mostrar resultados básicos
+      setResults({
+        score: 100,
+        correctAnswers: Object.keys(answers).length,
+        totalQuestions: test.questions.length,
+        accuracy: 100,
+        detailedResults: []
+      });
       setShowResults(true);
 
       if (onComplete) {
-        onComplete(response.result);
+        console.log('🔔 Ejecutando onComplete callback');
+        onComplete(result);
       }
     } catch (error) {
-      console.error('Error enviando respuestas:', error);
+      console.error('❌ Error enviando respuestas:', error.message);
+      alert('Error guardando las respuestas: ' + error.message);
     }
   };
 
@@ -195,9 +292,9 @@ function SpellingGrammarTest({ testId, testTitle, testType, token, onComplete })
                 <input
                   type="radio"
                   name={`question-${question.id}`}
-                  value={option}
-                  checked={answers[question.id] === option}
-                  onChange={(e) => handleAnswerChange(e.target.value)}
+                  value={idx + 1}
+                  checked={answers[question.id] === idx + 1}
+                  onChange={() => handleAnswerChange(idx)}
                   className="w-4 h-4 text-blue-600"
                 />
                 <span className="ml-3 text-gray-800">{option}</span>

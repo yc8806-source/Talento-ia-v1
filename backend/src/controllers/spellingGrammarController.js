@@ -80,6 +80,16 @@ exports.submitAnswers = async (req, res) => {
       token,
     } = req.body;
 
+    console.log('📨 submitAnswers recibido:', {
+      testId,
+      hasToken: !!token,
+      tokenPreview: token ? token.substring(0, 20) : null,
+      hasAnswers: !!answers,
+      answerCount: answers ? Object.keys(answers).length : 0,
+      timeSeconds,
+      hasUser: !!req.user,
+    });
+
     let candidateId = req.user?.id;
     let cvId = candidateVacancyId;
 
@@ -90,17 +100,33 @@ exports.submitAnswers = async (req, res) => {
         [token]
       );
 
+      console.log('🔍 Token lookup result:', {
+        found: tokenResult.rows.length > 0,
+        candidateId: tokenResult.rows[0]?.candidate_id,
+        cvId: tokenResult.rows[0]?.id,
+      });
+
       if (tokenResult.rows.length > 0) {
         candidateId = tokenResult.rows[0].candidate_id;
         cvId = tokenResult.rows[0].id;
       }
     }
 
+    console.log('✅ Extracted candidateId:', candidateId, 'cvId:', cvId);
+
     // Validar datos
     if (!testId || !answers || !timeSeconds) {
       return res.status(400).json({
         error: 'Faltan datos requeridos',
         required: ['testId', 'answers', 'timeSeconds']
+      });
+    }
+
+    if (!candidateId) {
+      console.error('❌ candidateId es NULL - no se puede guardar resultado');
+      return res.status(400).json({
+        error: 'No se pudo identificar al candidato',
+        debug: { token: token ? 'present' : 'missing', user: req.user ? 'authenticated' : 'anonymous' }
       });
     }
 

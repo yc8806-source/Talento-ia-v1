@@ -1139,7 +1139,13 @@ exports.submitExamAnswersByToken = async (req, res) => {
     const { token } = req.params;
     const { examId, answers } = req.body;
 
+    console.log('🔷 submitExamAnswersByToken INICIADO');
+    console.log('   Token:', token ? token.substring(0, 20) + '...' : 'NULL');
+    console.log('   ExamId:', examId);
+    console.log('   Answers count:', Object.keys(answers).length);
+
     if (!token || !examId || !answers || Object.keys(answers).length === 0) {
+      console.log('❌ Validación fallida');
       return res.status(400).json({
         error: 'Token, examId y answers son requeridos'
       });
@@ -1226,16 +1232,20 @@ exports.submitExamAnswersByToken = async (req, res) => {
     let totalScore = 0;
     let savedCount = 0;
 
+    console.log(`🔄 Iniciando guardado de respuestas (${Object.keys(answers).length} respuestas)`);
+
     for (const [questionIndexStr, answerData] of Object.entries(answers)) {
       const questionIndex = parseInt(questionIndexStr, 10);
       const questionId = Math.floor(parseFloat(answerData.questionId || answerData.id) || 0);
       const answerValue = answerData.selected || answerData.optionId || answerData.answer || '';
       const timeSpent = Math.floor(parseFloat(answerData.timeSpent) || 0);
 
-      if (!questionId || !answerValue) {
-        console.warn(`Skipping answer: missing questionId (${questionId}) or answerValue`);
+      if (!questionId) {
+        console.warn(`⚠️  Skipping answer ${questionIndex}: missing questionId`);
         continue;
       }
+
+      console.log(`   Q${questionId}: answer=${answerValue}, candidateId=${candidateId}, examId=${examId}`);
 
       // Obtener puntaje - solo para preguntas normales con IDs numéricos
       let score = 0;

@@ -53,6 +53,9 @@ function SpellingGrammarTestPage() {
   };
 
   const handleComplete = (result) => {
+    // Debug: Verificar que se ejecutó
+    console.log('✅ handleComplete ejecutado, navegando...');
+    // Navegar de vuelta a la página de exámenes
     navigate(`/evaluacion?token=${token}`);
   };
 

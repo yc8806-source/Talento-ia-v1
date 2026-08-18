@@ -97,89 +97,46 @@ exports.getExamById = async (req, res) => {
     const exam = examResult.rows[0];
     let questionsWithOptions = [];
 
-    // Verificar si es un examen de ortografía y gramática
-    const isSpellingExam = exam.name && (exam.name.toLowerCase().includes('ortografía') || exam.name.toLowerCase().includes('gramatica'));
-    if (isSpellingExam) {
-      try {
-        // Obtener preguntas de spelling_grammar - buscar por el ID del test en la tabla de exámenes o nombre similar
-        const spellingResult = await pool.query(
-          `SELECT id, question_text, correct_answer, explanation, options, difficulty
-           FROM spelling_grammar_questions
-           WHERE test_id IN (SELECT id FROM spelling_grammar_tests WHERE title ILIKE '%ortografía%' OR title ILIKE '%gramática%' OR title ILIKE '%gramatica%')
-           ORDER BY order_number, id`
+    // Obtener preguntas del examen con sus opciones (funciona para todos los tipos)
+    const questionsResult = await pool.query(
+      `SELECT q.id, q.title, q.text as question_text, q.type, q.competency_id, eq.question_order
+       FROM questions q
+       INNER JOIN exam_questions eq ON q.id = eq.question_id
+       WHERE eq.exam_id = $1
+       ORDER BY eq.question_order`,
+      [id]
+    );
+
+    // Para cada pregunta, obtener sus opciones
+    questionsWithOptions = await Promise.all(
+      questionsResult.rows.map(async (question) => {
+        const optionsResult = await pool.query(
+          'SELECT id, text, score, option_order FROM question_options WHERE question_id = $1 ORDER BY option_order',
+          [question.id]
         );
 
-        questionsWithOptions = spellingResult.rows.map((q, idx) => {
-          // Extract options array from JSONB structure
-          let optionsArray = [];
-          if (q.options) {
-            if (Array.isArray(q.options)) {
-              optionsArray = q.options;
-            } else if (q.options.options && Array.isArray(q.options.options)) {
-              optionsArray = q.options.options;
-            }
-          }
-
-          return {
-            id: q.id,
-            title: q.question_text,
-            type: 'spelling',
-            correctAnswer: q.correct_answer,
-            explanation: q.explanation,
-            options: optionsArray.map(opt => ({
-              text: typeof opt === 'string' ? opt : opt.text || opt,
-              id: Math.random(),
-              correct: opt === q.correct_answer || (typeof opt === 'object' && opt.text === q.correct_answer)
-            })),
-            order: idx + 1
-          };
-        });
-      } catch (err) {
-        console.error('Error loading spelling questions:', err.message);
-        questionsWithOptions = [];
-      }
-    } else {
-      // Obtener preguntas del examen regulares con sus opciones
-      const questionsResult = await pool.query(
-        `SELECT q.id, q.title, q.type, q.competency_id, eq.question_order
-         FROM questions q
-         INNER JOIN exam_questions eq ON q.id = eq.question_id
-         WHERE eq.exam_id = $1
-         ORDER BY eq.question_order`,
-        [id]
-      );
-
-      // Para cada pregunta, obtener sus opciones
-      questionsWithOptions = await Promise.all(
-        questionsResult.rows.map(async (question) => {
-          const optionsResult = await pool.query(
-            'SELECT id, text, score, option_order FROM question_options WHERE question_id = $1 ORDER BY option_order',
-            [question.id]
-          );
-
-          return {
-            id: question.id,
-            title: question.title,
-            type: question.type,
-            competencyId: question.competency_id,
-            order: question.question_order,
-            options: optionsResult.rows.map(o => ({
-              id: o.id,
-              text: o.text,
-              score: o.score,
-              order: o.option_order
-            }))
-          };
-        })
-      );
-    }
+        return {
+          id: question.id,
+          title: question.title || question.question_text,
+          type: question.type,
+          competencyId: question.competency_id,
+          order: question.question_order,
+          options: optionsResult.rows.map(o => ({
+            id: o.id,
+            text: o.text,
+            score: o.score,
+            order: o.option_order
+          }))
+        };
+      })
+    );
 
     res.json({
       id: exam.id,
       name: exam.name,
       description: exam.description,
       maxTimeMinutes: exam.max_time_minutes,
-      type: isSpellingExam ? 'spelling' : 'standard',
+      type: exam.type || 'standard',
       totalQuestions: questionsWithOptions.length,
       questions: questionsWithOptions,
       createdAt: exam.created_at

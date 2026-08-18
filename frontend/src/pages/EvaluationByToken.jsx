@@ -87,8 +87,14 @@ export default function EvaluationByToken() {
     );
   }
 
+
   return (
     <div style={{ padding: '40px', maxWidth: '900px', margin: '0 auto' }}>
+      {/* DEBUG: Log exam types */}
+      {data && data.exams && (
+        console.log('📋 Exams data:', data.exams.map(e => ({ id: e.id, name: e.name, type: e.type })))
+      )}
+
       {/* Información del Candidato */}
       <div style={{
         backgroundColor: '#f0f4ff',
@@ -164,13 +170,20 @@ export default function EvaluationByToken() {
                 </div>
                 <button
                   onClick={() => {
+                    console.log('🔘 Button clicked for exam:', { id: exam.id, type: exam.type, completed: exam.completed });
                     if (!exam.completed) {
-                      if (exam.type === 'typing') {
+                      // Routing based on exam ID and type
+                      if (exam.id === 28 || exam.type === 'typing') {
+                        // Typing test: id=28
+                        console.log('➡️ Routing to typing test');
                         navigate(`/typing-test/${token}?typingTestId=${exam.id}`);
-                      } else if (exam.type === 'spelling') {
-                        // Para pruebas de Ortografía, usar testId=1 (es el test_id en spelling_grammar_tests)
-                        navigate(`/spelling-test/${token}?testId=1`);
+                      } else if (exam.id === 29 || exam.type === 'spelling' || exam.type === 'spelling_grammar') {
+                        // Spelling test: id=29 - navigate to SpellingGrammarTestPage
+                        console.log('➡️ Routing to spelling test:', exam.id);
+                        navigate(`/spelling-test/${token}?testId=${exam.id}`);
                       } else {
+                        // Other exams (TPL-80, personality tests, etc.)
+                        console.log('➡️ Routing to evaluation test');
                         navigate(`/evaluacion/${token}?examId=${exam.id}`);
                       }
                     }

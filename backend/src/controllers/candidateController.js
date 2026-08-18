@@ -144,10 +144,13 @@ exports.getCandidatesByVacancy = async (req, res) => {
         cv.id as candidate_vacancy_id,
         cv.status,
         cv.token,
-        cv.created_at
+        cv.created_at,
+        COALESCE(MAX(e.status), cv.status) as evaluation_status
       FROM candidates c
       INNER JOIN candidate_vacancies cv ON c.id = cv.candidate_id
+      LEFT JOIN evaluations e ON cv.id = e.candidate_vacancy_id
       WHERE cv.vacancy_id = $1
+      GROUP BY c.id, cv.id
       ORDER BY cv.created_at DESC
       `,
       [vacancyId]
@@ -161,7 +164,7 @@ exports.getCandidatesByVacancy = async (req, res) => {
       email: row.email,
       phone: row.phone,
       cvUrl: row.cv_url,
-      status: row.status,
+      status: row.evaluation_status,
       token: row.token,
       appliedAt: row.created_at
     }));

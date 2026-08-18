@@ -47,6 +47,7 @@ export const candidateAPI = {
     };
     return api.put(`/candidates/${id}`, data, config);
   },
+  delete: (id) => api.delete(`/candidates/${id}`),
   invite: (data) => api.post('/candidates/invite', data),
   getByVacancy: (vacancyId) => api.get(`/candidates/vacancy/${vacancyId}`),
   assignVacancy: (data) => api.post('/candidates/assign-vacancy', data),

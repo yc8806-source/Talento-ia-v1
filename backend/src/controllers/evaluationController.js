@@ -795,7 +795,8 @@ exports.generatePDFOnDemand = async (req, res) => {
       const comp = compMap[compId];
       const score = comp.total;
       const maxScore = comp.scores.length * 5;
-      const percentage = (score / maxScore) * 100;
+      // Evitar división por cero
+      const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
 
       let level;
       if (percentage >= 80) level = 'Muy Alto';

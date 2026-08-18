@@ -99,7 +99,7 @@ exports.getExamById = async (req, res) => {
 
     // Obtener preguntas del examen con sus opciones (funciona para todos los tipos)
     const questionsResult = await pool.query(
-      `SELECT q.id, q.title, q.text as question_text, q.type, q.competency_id, eq.question_order
+      `SELECT q.id, q.title, q.description, q.type, q.competency_id, eq.question_order
        FROM questions q
        INNER JOIN exam_questions eq ON q.id = eq.question_id
        WHERE eq.exam_id = $1
@@ -117,7 +117,8 @@ exports.getExamById = async (req, res) => {
 
         return {
           id: question.id,
-          title: question.title || question.question_text,
+          title: question.title,
+          description: question.description,
           type: question.type,
           competencyId: question.competency_id,
           order: question.question_order,

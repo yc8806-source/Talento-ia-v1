@@ -38,4 +38,7 @@ router.get('/:id', candidateController.getCandidateById);
 // Actualizar perfil de candidato (con opción de subir CV) - REQUIERE AUTENTICACIÓN
 router.put('/:id', verifyToken, upload.single('cv'), handleUploadError, candidateController.updateCandidateProfile);
 
+// Eliminar candidato
+router.delete('/:id', candidateController.deleteCandidate);
+
 module.exports = router;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { candidateAPI, vacancyAPI } from '../api/api';
-import { FiSearch, FiPlus, FiFilter, FiChevronLeft, FiChevronRight, FiDownload, FiGitBranch } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiFilter, FiChevronLeft, FiChevronRight, FiDownload, FiGitBranch, FiTrash2 } from 'react-icons/fi';
 import BulkActionsModal from '../components/BulkActionsModal';
 
 function Candidates() {
@@ -32,6 +32,8 @@ function Candidates() {
   const [sortBy, setSortBy] = useState('name');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showBulkActionsModal, setShowBulkActionsModal] = useState(false);
+  const [candidateToDelete, setCandidateToDelete] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const itemsPerPage = 10;
 
@@ -112,6 +114,20 @@ function Candidates() {
       alert('Candidatos importados exitosamente');
     } catch (error) {
       alert('Error: ' + (error.response?.data?.error || 'No se pudo importar CSV'));
+    }
+  };
+
+  const handleDeleteCandidate = async () => {
+    if (!candidateToDelete) return;
+
+    try {
+      await candidateAPI.delete(candidateToDelete.id);
+      setCandidates(candidates.filter(c => c.id !== candidateToDelete.id));
+      setShowDeleteConfirm(false);
+      setCandidateToDelete(null);
+      alert('Candidato eliminado exitosamente');
+    } catch (error) {
+      alert('Error: ' + (error.response?.data?.error || 'No se pudo eliminar candidato'));
     }
   };
 
@@ -341,6 +357,9 @@ function Candidates() {
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                       CV
                     </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                      Acciones
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -374,6 +393,19 @@ function Candidates() {
                         ) : (
                           <span className="text-gray-400">—</span>
                         )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => {
+                            setCandidateToDelete(candidate);
+                            setShowDeleteConfirm(true);
+                          }}
+                          className="text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
+                          title="Eliminar candidato"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                          Eliminar
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -411,7 +443,38 @@ function Candidates() {
         </div>
       )}
 
-      {/* Modal de Invitación */}
+      {/* Modal de Confirmación de Eliminar */}
+      {showDeleteConfirm && candidateToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">
+              Eliminar Candidato
+            </h3>
+            <p className="text-gray-600 mb-6">
+              ¿Está seguro de que desea eliminar a <strong>{candidateToDelete.firstName} {candidateToDelete.lastName}</strong>?
+              <br />
+              <span className="text-sm text-gray-500">Esta acción no se puede deshacer.</span>
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setCandidateToDelete(null);
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteCandidate}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

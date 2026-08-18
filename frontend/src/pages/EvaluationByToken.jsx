@@ -27,8 +27,12 @@ export default function EvaluationByToken() {
         ? 'http://localhost:3000/api'
         : 'https://talento-ia-backend.onrender.com/api';
 
+      console.log('📡 EvaluationByToken: Fetching vacancy data for token:', token?.substring(0, 20) + '...');
+
       // Obtener vacante e exámenes
       const vacancyRes = await axios.get(`${API_URL}/evaluations/vacancy-by-token/${token}`);
+
+      console.log('✅ EvaluationByToken: Received exams:', vacancyRes.data.exams);
 
       // Usar datos tal como vienen, sin validación de estado por ahora
       setData(vacancyRes.data);
@@ -172,18 +176,18 @@ export default function EvaluationByToken() {
                   onClick={() => {
                     console.log('🔘 Button clicked for exam:', { id: exam.id, type: exam.type, completed: exam.completed });
                     if (!exam.completed) {
-                      // Routing based on exam ID and type
-                      if (exam.id === 28 || exam.type === 'typing') {
-                        // Typing test: id=28
-                        console.log('➡️ Routing to typing test');
+                      // Routing based on exam type (more reliable than ID)
+                      if (exam.type === 'typing') {
+                        // Typing test
+                        console.log('➡️ Routing to typing test:', exam.id);
                         navigate(`/typing-test/${token}?typingTestId=${exam.id}`);
-                      } else if (exam.id === 29 || exam.type === 'spelling' || exam.type === 'spelling_grammar') {
-                        // Spelling test: id=29 - navigate to SpellingGrammarTestPage
-                        console.log('➡️ Routing to spelling test:', exam.id);
+                      } else if (exam.type === 'spelling' || exam.type === 'spelling_grammar') {
+                        // Spelling test - navigate directly to SpellingGrammarTestPage
+                        console.log('✅ Routing directly to spelling test:', exam.id);
                         navigate(`/spelling-test/${token}?testId=${exam.id}`);
                       } else {
                         // Other exams (TPL-80, personality tests, etc.)
-                        console.log('➡️ Routing to evaluation test');
+                        console.log('➡️ Routing to evaluation test:', exam.id);
                         navigate(`/evaluacion/${token}?examId=${exam.id}`);
                       }
                     }

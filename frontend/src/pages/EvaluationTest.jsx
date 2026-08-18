@@ -29,6 +29,10 @@ function EvaluationTest() {
 
   const fetchExamData = async () => {
     try {
+      console.log('🔍 fetchExamData INICIADO');
+      console.log('   token:', token ? token.substring(0, 20) + '...' : 'UNDEFINED');
+      console.log('   examId:', examId);
+
       const examIdNum = parseInt(examId, 10);
       if (!examIdNum) {
         throw new Error('Exam ID inválido');
@@ -38,13 +42,20 @@ function EvaluationTest() {
         ? 'http://localhost:3000/api'
         : 'https://talento-ia-backend.onrender.com/api';
 
+      console.log('📡 Llamando endpoint:', `${API_URL}/evaluations/vacancy-by-token/${token}`);
+
       // Primero verificar si el examen ya fue completado y obtener su tipo
       const statusResponse = await axios.get(`${API_URL}/evaluations/vacancy-by-token/${token}`);
+      console.log('📊 Response:', statusResponse.data);
+
       const examStatus = statusResponse.data.exams.find(e => e.id === examIdNum);
+      console.log('✅ examStatus:', examStatus);
 
       if (!examStatus) {
         throw new Error('Examen no encontrado');
       }
+
+      console.log(`🎯 Exam type: ${examStatus.type}`);
 
       // Si es un typing test, redirigir a la página de typing test
       if (examStatus.type === 'typing') {

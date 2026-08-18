@@ -737,3 +737,68 @@ exports.importCSV = async (req, res) => {
     });
   }
 };
+
+// Eliminar un candidato
+exports.deleteCandidate = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ error: 'ID de candidato requerido' });
+    }
+
+    // Verificar que el candidato existe
+    const candidateRes = await pool.query(
+      'SELECT id FROM candidates WHERE id = $1',
+      [id]
+    );
+
+    if (candidateRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Candidato no encontrado' });
+    }
+
+    // Eliminar en cascada:
+    // 1. Eliminar respuestas de examen
+    await pool.query(
+      'DELETE FROM exam_answers WHERE candidate_id = $1',
+      [id]
+    );
+
+    // 2. Eliminar evaluaciones
+    const cvRes = await pool.query(
+      'SELECT id FROM candidate_vacancies WHERE candidate_id = $1',
+      [id]
+    );
+
+    for (const cv of cvRes.rows) {
+      await pool.query(
+        'DELETE FROM evaluations WHERE candidate_vacancy_id = $1',
+        [cv.id]
+      );
+    }
+
+    // 3. Eliminar asignaciones candidate_vacancy
+    await pool.query(
+      'DELETE FROM candidate_vacancies WHERE candidate_id = $1',
+      [id]
+    );
+
+    // 4. Eliminar candidato
+    await pool.query(
+      'DELETE FROM candidates WHERE id = $1',
+      [id]
+    );
+
+    res.json({
+      message: 'Candidato eliminado exitosamente',
+      candidateId: id
+    });
+
+  } catch (error) {
+    console.error('Error eliminando candidato:', error);
+    res.status(500).json({
+      error: 'Error al eliminar candidato',
+      details: error.message
+    });
+  }
+};

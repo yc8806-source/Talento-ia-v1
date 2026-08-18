@@ -1030,11 +1030,11 @@ exports.getVacancyEvaluationByToken = async (req, res) => {
             [candidateVacancy.candidate_id]
           );
           completed = typingResult.rows[0].count > 0;
-        } else if (exam.type === 'spelling') {
-          // Verificar si hay resultados de spelling test para este candidato
+        } else if (exam.type === 'spelling' || exam.type === 'spelling_grammar') {
+          // Verificar si hay respuestas en exam_answers para el spelling test
           const spellingResult = await pool.query(
-            'SELECT COUNT(*) as count FROM spelling_grammar_results WHERE candidate_id = $1',
-            [candidateVacancy.candidate_id]
+            'SELECT COUNT(*) as count FROM exam_answers WHERE candidate_id = $1 AND exam_id = $2',
+            [candidateVacancy.candidate_id, exam.id]
           );
           completed = spellingResult.rows[0].count > 0;
         }

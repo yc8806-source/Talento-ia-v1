@@ -52,7 +52,8 @@ function EvaluationTest() {
 
       // Si es un spelling test, redirigir a la página de spelling test
       if (examStatus.type === 'spelling' || examStatus.type === 'spelling_grammar') {
-        navigate(`/spelling-test/${token}?testId=1`);
+        console.log(`🔀 REDIRECCIONING TO SPELLING TEST: testId=${examIdNum}`);
+        navigate(`/spelling-test/${token}?testId=${examIdNum}`);
         return;
       }
 

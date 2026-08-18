@@ -6,6 +6,8 @@ export default function Vacantes() {
   const [vacancies, setVacancies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [vacancyToDelete, setVacancyToDelete] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -57,6 +59,20 @@ export default function Vacantes() {
       await vacancyAPI.update(vacancyId, { status: newStatus });
       fetchVacancies();
       alert(`Vacante ${newStatus === 'open' ? 'reabierta' : 'cerrada'} exitosamente`);
+    } catch (error) {
+      alert('Error: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
+  const handleDeleteVacancy = async () => {
+    if (!vacancyToDelete) return;
+
+    try {
+      await vacancyAPI.delete(vacancyToDelete.id);
+      setShowDeleteConfirm(false);
+      setVacancyToDelete(null);
+      fetchVacancies();
+      alert('Vacante eliminada exitosamente');
     } catch (error) {
       alert('Error: ' + (error.response?.data?.error || error.message));
     }
@@ -153,6 +169,64 @@ export default function Vacantes() {
         </form>
       )}
 
+      {/* Modal de Confirmación de Eliminación */}
+      {showDeleteConfirm && vacancyToDelete && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '5px',
+            padding: '20px',
+            maxWidth: '500px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+          }}>
+            <h3 style={{ marginTop: 0 }}>Eliminar Vacante</h3>
+            <p>¿Está seguro de que desea eliminar la vacante <strong>{vacancyToDelete.title}</strong>?</p>
+            <p style={{ fontSize: '0.9em', color: '#666' }}>Esta acción no se puede deshacer y eliminará todos los datos asociados.</p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setVacancyToDelete(null);
+                }}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#e9ecef',
+                  color: '#333',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteVacancy}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold'
+                }}
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
         {vacancies.length === 0 ? (
           <p>No hay vacantes registradas</p>
@@ -172,7 +246,7 @@ export default function Vacantes() {
               <p><strong>Estado:</strong> <span style={{ color: vacancy.status === 'open' ? 'green' : 'red' }}>{vacancy.status === 'open' ? 'Abierta' : 'Cerrada'}</span></p>
               <p><strong>Vacantes:</strong> {vacancy.filledPositions || 0}/{vacancy.availablePositions || 1} ocupadas</p>
               <p>{vacancy.description}</p>
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
                 <button
                   onClick={() => navigate(`/vacantes/${vacancy.id}/candidatos`)}
                   style={{
@@ -219,6 +293,24 @@ export default function Vacantes() {
                   {vacancy.status === 'open' ? 'Cerrar' : 'Reabrir'}
                 </button>
               </div>
+              <button
+                onClick={() => {
+                  setVacancyToDelete(vacancy);
+                  setShowDeleteConfirm(true);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  fontSize: '0.9em'
+                }}
+              >
+                🗑️ Eliminar Vacante
+              </button>
             </div>
           ))
         )}

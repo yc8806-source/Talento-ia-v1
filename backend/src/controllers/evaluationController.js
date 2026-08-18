@@ -1019,7 +1019,7 @@ exports.getVacancyEvaluationByToken = async (req, res) => {
       [candidateVacancy.vacancy_id, candidateVacancy.candidate_id]
     );
 
-    // Verificar estado completado para typing tests también
+    // Verificar estado completado para typing y spelling tests también
     const examsWithTypingStatus = await Promise.all(
       examsResult.rows.map(async (exam) => {
         let completed = exam.completed;
@@ -1030,6 +1030,13 @@ exports.getVacancyEvaluationByToken = async (req, res) => {
             [candidateVacancy.candidate_id]
           );
           completed = typingResult.rows[0].count > 0;
+        } else if (exam.type === 'spelling') {
+          // Verificar si hay resultados de spelling test para este candidato
+          const spellingResult = await pool.query(
+            'SELECT COUNT(*) as count FROM spelling_grammar_results WHERE candidate_id = $1',
+            [candidateVacancy.candidate_id]
+          );
+          completed = spellingResult.rows[0].count > 0;
         }
 
         return {

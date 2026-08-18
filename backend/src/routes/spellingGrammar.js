@@ -20,8 +20,8 @@ router.get('/tests', spellingGrammarController.getAllTests);
 // OBTENER TEST CON PREGUNTAS (público - solo devuelve preguntas)
 router.get('/tests/:testId', spellingGrammarController.getTest);
 
-// ENVIAR RESPUESTAS (requiere autenticación)
-router.post('/results/submit', verifyToken, spellingGrammarController.submitAnswers);
+// ENVIAR RESPUESTAS (permite token de candidato o JWT)
+router.post('/results/submit', spellingGrammarController.submitAnswers);
 
 // OBTENER RESULTADOS DE UN CANDIDATO (protegido)
 router.get('/results/candidate/:candidateId', verifyToken, spellingGrammarController.getCandidateResults);

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiCheck, FiX, FiChevronRight, FiChevronLeft, FiRotateCcw } from 'react-icons/fi';
 import { spellingGrammarAPI } from '../api/api';
 
-function SpellingGrammarTest({ testId, testTitle, testType, onComplete }) {
+function SpellingGrammarTest({ testId, testTitle, testType, token, onComplete }) {
   const [test, setTest] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -58,7 +58,8 @@ function SpellingGrammarTest({ testId, testTitle, testType, onComplete }) {
         testId,
         answers: answersData,
         timeSeconds,
-        startedAt: new Date(startTime).toISOString()
+        startedAt: new Date(startTime).toISOString(),
+        token
       });
 
       setResults(response.result);

@@ -105,6 +105,7 @@ function SpellingGrammarTestPage() {
           testId={parseInt(testId, 10)}
           testTitle={exam.name}
           testType="spelling"
+          token={token}
           onComplete={handleComplete}
         />
       </div>

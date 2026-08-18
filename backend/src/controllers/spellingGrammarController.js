@@ -77,9 +77,24 @@ exports.submitAnswers = async (req, res) => {
       timeSeconds,
       startedAt,
       candidateVacancyId,
+      token,
     } = req.body;
 
-    const candidateId = req.user?.id;
+    let candidateId = req.user?.id;
+    let cvId = candidateVacancyId;
+
+    // Si no hay candidateId, intentar obtenerlo del token
+    if (!candidateId && token) {
+      const tokenResult = await pool.query(
+        'SELECT id, candidate_id FROM candidate_vacancies WHERE token = $1',
+        [token]
+      );
+
+      if (tokenResult.rows.length > 0) {
+        candidateId = tokenResult.rows[0].candidate_id;
+        cvId = tokenResult.rows[0].id;
+      }
+    }
 
     // Validar datos
     if (!testId || !answers || !timeSeconds) {
@@ -95,7 +110,7 @@ exports.submitAnswers = async (req, res) => {
     // Guardar resultado
     const result = await SpellingGrammarService.saveResult({
       candidateId,
-      candidateVacancyId: candidateVacancyId || null,
+      candidateVacancyId: cvId || null,
       testId,
       totalQuestions: validation.totalQuestions,
       correctAnswers: validation.correctAnswers,

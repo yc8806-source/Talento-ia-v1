@@ -41,8 +41,8 @@ function Navbar({ onLogout }) {
               className="hover:opacity-90 transition-opacity duration-300"
             >
               <div className="font-bold text-2xl font-heading flex items-center gap-1">
-                <span style={{ color: '#5B3FA0' }}>IMPULSA</span>
-                <span style={{ color: '#00d4ff' }}>TALENTO</span>
+                <span style={{ color: '#5B3FA0', textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)' }}>IMPULSA</span>
+                <span style={{ color: '#00d4ff', textShadow: '0 2px 4px rgba(0, 0, 0, 0.4)' }}>TALENTO</span>
               </div>
             </Link>
 

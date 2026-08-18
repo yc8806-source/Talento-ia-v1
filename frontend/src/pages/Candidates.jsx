@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { candidateAPI, vacancyAPI } from '../api/api';
-import { FiSearch, FiPlus, FiFilter, FiChevronLeft, FiChevronRight, FiDownload, FiGitBranch, FiTrash2 } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiFilter, FiChevronLeft, FiChevronRight, FiDownload, FiGitBranch, FiTrash2, FiUsers } from 'react-icons/fi';
 import BulkActionsModal from '../components/BulkActionsModal';
 
 function Candidates() {
@@ -167,12 +167,25 @@ function Candidates() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900">Candidatos</h1>
-          <p className="text-gray-600 mt-1">Gestiona y evalúa postulantes</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+        <div className="px-8 py-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-lg">
+              <FiUsers className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Candidatos</h1>
+              <p className="text-sm text-gray-600">Gestiona y evalúa postulantes</p>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <div className="p-8 space-y-6">
+      <div className="flex justify-between items-center">
+        <div></div>
         <div className="flex gap-2">
           <button
             onClick={() => setShowBulkActionsModal(true)}
@@ -475,6 +488,7 @@ function Candidates() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

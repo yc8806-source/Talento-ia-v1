@@ -101,13 +101,27 @@ function CustomizableDashboard({ data = {} }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900">Dashboard Personalizable</h1>
-          <p className="text-gray-600 mt-1">Configura tu panel según tus necesidades</p>
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+        <div className="px-8 py-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+              <p className="text-sm text-gray-600">Resumen de métricas y desempeño</p>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <div className="p-8">
+      {/* Header Controls */}
+      <div className="flex justify-between items-center mb-6">
 
         <div className="flex gap-2">
           {isEditMode && (
@@ -257,6 +271,7 @@ function CustomizableDashboard({ data = {} }) {
           Haz clic en "Listo" cuando termines.
         </div>
       )}
+      </div>
     </div>
   );
 }

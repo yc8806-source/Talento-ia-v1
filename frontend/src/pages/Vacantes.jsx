@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { vacancyAPI } from '../api/api';
+import { FiBriefcase, FiPlus, FiTrash2 } from 'react-icons/fi';
 
 export default function Vacantes() {
   const [vacancies, setVacancies] = useState([]);
@@ -17,7 +18,6 @@ export default function Vacantes() {
   });
   const navigate = useNavigate();
 
-  // Cargar vacantes
   useEffect(() => {
     fetchVacancies();
   }, []);
@@ -79,146 +79,207 @@ export default function Vacantes() {
   };
 
   if (loading) {
-    return <div style={{ textAlign: 'center', padding: '40px' }}>Cargando vacantes...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando vacantes...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div style={{ padding: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1>Vacantes</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}
-        >
-          {showForm ? 'Cancelar' : '+ Nueva Vacante'}
-        </button>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+        <div className="px-8 py-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+              <FiBriefcase className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Vacantes</h1>
+              <p className="text-sm text-gray-600">Gestiona las posiciones disponibles</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            backgroundColor: '#f8f9fa',
-            padding: '20px',
-            borderRadius: '5px',
-            marginBottom: '20px'
-          }}
-        >
-          <input
-            type="text"
-            name="title"
-            placeholder="Título de la vacante"
-            value={formData.title}
-            onChange={handleChange}
-            required
-            style={{ display: 'block', width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ddd' }}
-          />
-          <textarea
-            name="description"
-            placeholder="Descripción"
-            value={formData.description}
-            onChange={handleChange}
-            style={{ display: 'block', width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ddd', minHeight: '100px' }}
-          />
-          <input
-            type="text"
-            name="department"
-            placeholder="Departamento"
-            value={formData.department}
-            onChange={handleChange}
-            style={{ display: 'block', width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ddd' }}
-          />
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            style={{ display: 'block', width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ddd' }}
-          >
-            <option value="open">Abierta</option>
-            <option value="closed">Cerrada</option>
-          </select>
-          <input
-            type="number"
-            name="available_positions"
-            placeholder="Cantidad de vacantes"
-            value={formData.available_positions}
-            onChange={handleChange}
-            min="1"
-            style={{ display: 'block', width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ddd' }}
-          />
+      <div className="p-8 space-y-6">
+        {/* Botón Nueva Vacante */}
+        <div className="flex justify-end">
           <button
-            type="submit"
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer'
-            }}
+            onClick={() => setShowForm(!showForm)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
           >
-            Crear Vacante
+            <FiPlus className="w-5 h-5" />
+            {showForm ? 'Cancelar' : 'Nueva Vacante'}
           </button>
-        </form>
-      )}
+        </div>
 
-      {/* Modal de Confirmación de Eliminación */}
+        {/* Formulario */}
+        {showForm && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Crear Nueva Vacante</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <input
+                type="text"
+                name="title"
+                placeholder="Título de la vacante"
+                value={formData.title}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              />
+              <textarea
+                name="description"
+                placeholder="Descripción"
+                value={formData.description}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 resize-none min-h-24"
+              />
+              <input
+                type="text"
+                name="department"
+                placeholder="Departamento"
+                value={formData.department}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              />
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+              >
+                <option value="open">Abierta</option>
+                <option value="closed">Cerrada</option>
+              </select>
+              <input
+                type="number"
+                name="available_positions"
+                placeholder="Cantidad de vacantes"
+                value={formData.available_positions}
+                onChange={handleChange}
+                min="1"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              />
+              <button
+                type="submit"
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium transition-colors"
+              >
+                Crear Vacante
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Grid de Vacantes */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {vacancies.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <FiBriefcase className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-600 font-medium">No hay vacantes registradas</p>
+            </div>
+          ) : (
+            vacancies.map(vacancy => (
+              <div
+                key={vacancy.id}
+                className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden border border-gray-100"
+              >
+                <div className="p-6 space-y-4">
+                  {/* Header */}
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">{vacancy.title}</h3>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        vacancy.status === 'open'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-red-100 text-red-700'
+                      }`}>
+                        {vacancy.status === 'open' ? 'Abierta' : 'Cerrada'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <div className="space-y-2 text-sm border-t border-b border-gray-100 py-3">
+                    <p><span className="font-semibold text-gray-900">Departamento:</span> <span className="text-gray-600">{vacancy.department}</span></p>
+                    <p><span className="font-semibold text-gray-900">Vacantes:</span> <span className="text-gray-600">{vacancy.filledPositions || 0}/{vacancy.availablePositions || 1} ocupadas</span></p>
+                  </div>
+
+                  {/* Descripción */}
+                  {vacancy.description && (
+                    <p className="text-sm text-gray-600 line-clamp-2">{vacancy.description}</p>
+                  )}
+
+                  {/* Botones */}
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        onClick={() => navigate(`/vacantes/${vacancy.id}/candidatos`)}
+                        className="bg-cyan-600 hover:bg-cyan-700 text-white py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1"
+                      >
+                        👥 Candidatos
+                      </button>
+                      <button
+                        onClick={() => navigate(`/vacantes/${vacancy.id}/assign-evaluations`)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition-colors"
+                      >
+                        Examen
+                      </button>
+                      <button
+                        onClick={() => handleToggleStatus(vacancy.id, vacancy.status)}
+                        className={`${
+                          vacancy.status === 'open'
+                            ? 'bg-red-600 hover:bg-red-700'
+                            : 'bg-green-600 hover:bg-green-700'
+                        } text-white py-2 rounded-lg text-sm font-medium transition-colors`}
+                      >
+                        {vacancy.status === 'open' ? 'Cerrar' : 'Reabrir'}
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setVacancyToDelete(vacancy);
+                        setShowDeleteConfirm(true);
+                      }}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                      Eliminar Vacante
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Modal de Confirmación */}
       {showDeleteConfirm && vacancyToDelete && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '5px',
-            padding: '20px',
-            maxWidth: '500px',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-          }}>
-            <h3 style={{ marginTop: 0 }}>Eliminar Vacante</h3>
-            <p>¿Está seguro de que desea eliminar la vacante <strong>{vacancyToDelete.title}</strong>?</p>
-            <p style={{ fontSize: '0.9em', color: '#666' }}>Esta acción no se puede deshacer y eliminará todos los datos asociados.</p>
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Eliminar Vacante</h3>
+            <p className="text-gray-600 mb-2">
+              ¿Está seguro de que desea eliminar la vacante <strong>{vacancyToDelete.title}</strong>?
+            </p>
+            <p className="text-sm text-gray-500 mb-6">Esta acción no se puede deshacer y eliminará todos los datos asociados.</p>
+            <div className="flex gap-3 justify-end">
               <button
                 onClick={() => {
                   setShowDeleteConfirm(false);
                   setVacancyToDelete(null);
                 }}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#e9ecef',
-                  color: '#333',
-                  border: 'none',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold'
-                }}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleDeleteVacancy}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#dc3545',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold'
-                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium"
               >
                 Eliminar
               </button>
@@ -226,95 +287,6 @@ export default function Vacantes() {
           </div>
         </div>
       )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-        {vacancies.length === 0 ? (
-          <p>No hay vacantes registradas</p>
-        ) : (
-          vacancies.map(vacancy => (
-            <div
-              key={vacancy.id}
-              style={{
-                border: '1px solid #ddd',
-                borderRadius: '5px',
-                padding: '15px',
-                backgroundColor: '#fff'
-              }}
-            >
-              <h3>{vacancy.title}</h3>
-              <p><strong>Departamento:</strong> {vacancy.department}</p>
-              <p><strong>Estado:</strong> <span style={{ color: vacancy.status === 'open' ? 'green' : 'red' }}>{vacancy.status === 'open' ? 'Abierta' : 'Cerrada'}</span></p>
-              <p><strong>Vacantes:</strong> {vacancy.filledPositions || 0}/{vacancy.availablePositions || 1} ocupadas</p>
-              <p>{vacancy.description}</p>
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                <button
-                  onClick={() => navigate(`/vacantes/${vacancy.id}/candidatos`)}
-                  style={{
-                    flex: 1,
-                    padding: '8px 12px',
-                    backgroundColor: '#17a2b8',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    fontSize: '0.9em'
-                  }}
-                >
-                  👥 Candidatos
-                </button>
-                <button
-                  onClick={() => navigate(`/vacantes/${vacancy.id}/assign-evaluations`)}
-                  style={{
-                    flex: 1,
-                    padding: '8px 12px',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    fontSize: '0.9em'
-                  }}
-                >
-                  Examen
-                </button>
-                <button
-                  onClick={() => handleToggleStatus(vacancy.id, vacancy.status)}
-                  style={{
-                    flex: 1,
-                    padding: '8px 12px',
-                    backgroundColor: vacancy.status === 'open' ? '#dc3545' : '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    fontSize: '0.9em'
-                  }}
-                >
-                  {vacancy.status === 'open' ? 'Cerrar' : 'Reabrir'}
-                </button>
-              </div>
-              <button
-                onClick={() => {
-                  setVacancyToDelete(vacancy);
-                  setShowDeleteConfirm(true);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  backgroundColor: '#dc3545',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                  fontSize: '0.9em'
-                }}
-              >
-                🗑️ Eliminar Vacante
-              </button>
-            </div>
-          ))
-        )}
-      </div>
     </div>
   );
 }

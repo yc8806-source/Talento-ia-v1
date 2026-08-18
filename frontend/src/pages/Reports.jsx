@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { FiDownload } from 'react-icons/fi';
+import { FiDownload, FiBarChart2 } from 'react-icons/fi';
 
 function Reports() {
   const [competencyData, setCompetencyData] = useState([]);
@@ -50,16 +50,28 @@ function Reports() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900">Reportes y Analytics</h1>
-          <p className="text-gray-600 mt-1">Análisis detallado del desempeño de candidatos</p>
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+        <div className="px-8 py-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg">
+              <FiBarChart2 className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Reportes y Analytics</h1>
+              <p className="text-sm text-gray-600">Análisis detallado del desempeño de candidatos</p>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <div className="p-8 space-y-8">
+      {/* Botón Descargar */}
+      <div className="flex justify-end">
         <button
           onClick={downloadCSV}
-          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold flex items-center gap-2"
+          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold flex items-center gap-2 transition-colors"
         >
           <FiDownload className="w-5 h-5" />
           Descargar CSV
@@ -291,6 +303,7 @@ function Reports() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

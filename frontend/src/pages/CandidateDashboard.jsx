@@ -42,15 +42,23 @@ function CandidateDashboard() {
   const roleLabel = user.role === 'admin' ? 'Administrador' : 'Candidato';
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-800 rounded-lg shadow-lg p-8 text-white">
-        <h1 className="text-4xl font-bold mb-2" style={{ color: 'white' }}>
-          Mi Perfil
-        </h1>
-        <p className="text-purple-100">Información de tu cuenta</p>
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+        <div className="px-8 py-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-3 bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg">
+              <FiUser className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Mi Perfil</h1>
+              <p className="text-sm text-gray-600">Información de tu cuenta</p>
+            </div>
+          </div>
+        </div>
       </div>
 
+      <div className="p-8 space-y-6 max-w-2xl">
       {/* Profile Card */}
       <div className="bg-white rounded-lg shadow-md p-8">
         <div className="flex items-center gap-6 mb-8 pb-8 border-b">
@@ -126,6 +134,7 @@ function CandidateDashboard() {
         </div>
       </div>
 
+      </div>
     </div>
   );
 }

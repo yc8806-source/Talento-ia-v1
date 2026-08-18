@@ -19,36 +19,39 @@ function Navbar({ onLogout }) {
   const NavLink = ({ to, icon: Icon, label }) => (
     <Link
       to={to}
-      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+      className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-all duration-300 group ${
         isActive(to)
-          ? 'font-semibold'
-          : 'text-gray-700 hover:bg-gray-100'
+          ? 'bg-white text-purple-700 shadow-md'
+          : 'text-white hover:bg-white hover:bg-opacity-10'
       }`}
-      style={
-        isActive(to)
-          ? { color: '#5B3FA0', backgroundColor: '#E8DFF5' }
-          : {}
-      }
     >
-      <Icon className="w-5 h-5" />
-      {label}
+      <Icon className={`w-5 h-5 transition-transform duration-300 ${isActive(to) ? 'scale-110' : 'group-hover:scale-110'}`} />
+      <span>{label}</span>
     </Link>
   );
 
   return (
     <>
-      <nav className="bg-white shadow-md border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+      <nav className="sticky top-0 z-40 backdrop-blur-md bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-700 shadow-lg border-b border-purple-500 border-opacity-20">
+        <div className="max-w-7xl mx-auto px-6 py-3">
           <div className="flex justify-between items-center">
             {/* Logo */}
-            <Link to="/dashboard" className="flex items-center">
-              <img src="/impulsa-talento-logo.png" alt="IMPULSA TALENTO" className="h-24 w-24" />
+            <Link
+              to="/dashboard"
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-300 group"
+            >
+              <img
+                src="/impulsa-talento-logo.png"
+                alt="IMPULSA TALENTO"
+                className="h-10 w-10 group-hover:scale-110 transition-transform duration-300"
+              />
+              <span className="font-bold text-white text-lg hidden sm:inline">IMPULSA TALENTO</span>
             </Link>
 
             {/* Desktop Menu */}
-            <div className="hidden md:flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-1">
               <NavLink to="/dashboard" icon={FiHome} label="Dashboard" />
-              <NavLink to="/mi-perfil" icon={FiUser} label="Mi Perfil" />
+              <NavLink to="/mi-perfil" icon={FiUser} label="Perfil" />
               <NavLink to="/candidatos" icon={FiUsers} label="Candidatos" />
               <NavLink to="/vacantes" icon={FiBriefcase} label="Vacantes" />
               <NavLink to="/evaluaciones" icon={FiTrendingUp} label="Evaluaciones" />
@@ -62,14 +65,14 @@ function Navbar({ onLogout }) {
             </div>
 
             {/* User Info & Logout */}
-            <div className="hidden md:flex items-center gap-4">
-              <div className="text-right">
-                <p className="font-semibold text-gray-900 text-sm">{user.firstName} {user.lastName}</p>
-                <p className="text-xs text-gray-600 capitalize">{role || 'usuario'}</p>
+            <div className="hidden md:flex items-center gap-4 ml-4">
+              <div className="text-right text-white">
+                <p className="font-semibold text-sm">{user.firstName} {user.lastName}</p>
+                <p className="text-xs text-purple-200 capitalize">{role || 'usuario'}</p>
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+                className="p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-lg transition-all duration-300 hover:scale-110"
                 title="Cerrar sesión"
               >
                 <FiLogOut className="w-5 h-5" />
@@ -79,7 +82,7 @@ function Navbar({ onLogout }) {
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+              className="md:hidden p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-lg transition-all duration-300"
             >
               {mobileMenuOpen ? (
                 <FiX className="w-6 h-6" />
@@ -91,9 +94,9 @@ function Navbar({ onLogout }) {
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="md:hidden mt-4 pt-4 border-t border-gray-200 space-y-2">
+            <div className="md:hidden mt-4 pt-4 border-t border-white border-opacity-20 space-y-2">
               <NavLink to="/dashboard" icon={FiHome} label="Dashboard" />
-              <NavLink to="/mi-perfil" icon={FiUser} label="Mi Perfil" />
+              <NavLink to="/mi-perfil" icon={FiUser} label="Perfil" />
               <NavLink to="/candidatos" icon={FiUsers} label="Candidatos" />
               <NavLink to="/vacantes" icon={FiBriefcase} label="Vacantes" />
               <NavLink to="/evaluaciones" icon={FiTrendingUp} label="Evaluaciones" />
@@ -104,13 +107,13 @@ function Navbar({ onLogout }) {
                   <NavLink to="/admin" icon={FiSettings} label="Admin" />
                 </>
               )}
-              <div className="pt-2 mt-2 border-t border-gray-200">
-                <p className="font-semibold text-gray-900 text-sm px-4 py-2">
+              <div className="pt-2 mt-2 border-t border-white border-opacity-20">
+                <p className="font-semibold text-white text-sm px-4 py-2">
                   {user.firstName} {user.lastName}
                 </p>
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors text-sm"
+                  className="w-full flex items-center gap-2 px-4 py-2 text-white hover:bg-red-500 hover:bg-opacity-30 rounded-lg transition-all duration-300 text-sm font-medium"
                 >
                   <FiLogOut className="w-5 h-5" />
                   Cerrar sesión

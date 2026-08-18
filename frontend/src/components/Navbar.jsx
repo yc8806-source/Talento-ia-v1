@@ -40,7 +40,14 @@ function Navbar({ onLogout }) {
               to="/dashboard"
               className="hover:opacity-90 transition-opacity duration-300"
             >
-              <span className="font-bold text-white text-2xl font-heading">IMPULSA TALENTO</span>
+              <span className="font-bold text-2xl font-heading" style={{
+                background: 'linear-gradient(90deg, #ffffff 0%, #00d4ff 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}>
+                IMPULSA TALENTO
+              </span>
             </Link>
 
             {/* Desktop Menu */}

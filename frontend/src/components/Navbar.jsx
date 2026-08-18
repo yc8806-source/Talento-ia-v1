@@ -38,14 +38,14 @@ function Navbar({ onLogout }) {
             {/* Logo */}
             <Link
               to="/dashboard"
-              className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-300 group"
+              className="flex items-center gap-2 hover:opacity-90 transition-opacity duration-300 group"
             >
               <img
                 src="/impulsa-talento-logo.png"
                 alt="IMPULSA TALENTO"
-                className="h-10 w-10 group-hover:scale-110 transition-transform duration-300"
+                className="h-12 w-12 group-hover:scale-105 transition-transform duration-300"
               />
-              <span className="font-bold text-white text-lg hidden sm:inline">IMPULSA TALENTO</span>
+              <span className="font-bold text-white text-2xl font-heading hidden sm:inline">IMPULSA TALENTO</span>
             </Link>
 
             {/* Desktop Menu */}

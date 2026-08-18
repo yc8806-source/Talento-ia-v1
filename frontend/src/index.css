@@ -234,3 +234,188 @@ th {
   display: flex;
   flex-direction: column;
 }
+
+/* ===== COMPONENTES COMUNES ===== */
+
+/* Cards */
+.card {
+  @apply bg-white rounded-xl border border-gray-100 shadow-card hover:shadow-hover transition-shadow duration-300;
+}
+
+.card-compact {
+  @apply bg-white rounded-lg border border-gray-100 shadow-sm;
+}
+
+.card-elevated {
+  @apply bg-white rounded-2xl shadow-lg border border-gray-100;
+}
+
+/* Botones mejorados */
+.btn {
+  @apply px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-primary {
+  @apply btn bg-purple-600 text-white hover:bg-purple-700 hover:shadow-lg active:scale-95;
+}
+
+.btn-secondary {
+  @apply btn bg-gray-100 text-gray-900 hover:bg-gray-200 active:scale-95;
+}
+
+.btn-success {
+  @apply btn bg-green-600 text-white hover:bg-green-700 hover:shadow-lg active:scale-95;
+}
+
+.btn-danger {
+  @apply btn bg-red-600 text-white hover:bg-red-700 hover:shadow-lg active:scale-95;
+}
+
+.btn-outline {
+  @apply btn border-2 border-purple-600 text-purple-600 hover:bg-purple-50 active:scale-95;
+}
+
+.btn-ghost {
+  @apply btn text-gray-700 hover:bg-gray-100 active:scale-95;
+}
+
+.btn-sm {
+  @apply px-3 py-1 text-sm;
+}
+
+.btn-lg {
+  @apply px-6 py-3 text-lg;
+}
+
+/* Inputs mejorados */
+.input {
+  @apply w-full px-4 py-2 border-2 border-gray-200 rounded-lg font-body text-base transition-all duration-300;
+}
+
+.input:focus {
+  @apply outline-none border-purple-600 ring-2 ring-purple-200;
+}
+
+.input::placeholder {
+  @apply text-gray-400;
+}
+
+.input-success {
+  @apply border-green-600 ring-green-200;
+}
+
+.input-error {
+  @apply border-red-600 ring-red-200;
+}
+
+/* Select mejorado */
+select {
+  @apply w-full px-4 py-2 border-2 border-gray-200 rounded-lg font-body text-base bg-white transition-all duration-300 cursor-pointer;
+}
+
+select:focus {
+  @apply outline-none border-purple-600 ring-2 ring-purple-200;
+}
+
+/* Textarea mejorado */
+textarea {
+  @apply w-full px-4 py-2 border-2 border-gray-200 rounded-lg font-body text-base resize-none transition-all duration-300;
+}
+
+textarea:focus {
+  @apply outline-none border-purple-600 ring-2 ring-purple-200;
+}
+
+/* Badge/Pill */
+.badge {
+  @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium;
+}
+
+.badge-primary {
+  @apply badge bg-purple-100 text-purple-700;
+}
+
+.badge-success {
+  @apply badge bg-green-100 text-green-700;
+}
+
+.badge-warning {
+  @apply badge bg-yellow-100 text-yellow-700;
+}
+
+.badge-danger {
+  @apply badge bg-red-100 text-red-700;
+}
+
+.badge-info {
+  @apply badge bg-blue-100 text-blue-700;
+}
+
+/* Tabla mejorada */
+.table-wrapper {
+  @apply w-full overflow-x-auto rounded-lg shadow-card;
+}
+
+.table {
+  @apply w-full border-collapse;
+}
+
+.table thead {
+  @apply bg-gradient-to-r from-gray-50 to-gray-100;
+}
+
+.table th {
+  @apply px-6 py-3 text-left text-sm font-semibold text-gray-900 border-b border-gray-200;
+}
+
+.table td {
+  @apply px-6 py-4 border-b border-gray-100 text-sm text-gray-700;
+}
+
+.table tbody tr {
+  @apply hover:bg-gray-50 transition-colors duration-200;
+}
+
+.table tbody tr:last-child td {
+  @apply border-b-0;
+}
+
+/* Alert/Banner */
+.alert {
+  @apply p-4 rounded-lg border-l-4 font-medium;
+}
+
+.alert-success {
+  @apply bg-green-50 border-green-600 text-green-700;
+}
+
+.alert-warning {
+  @apply bg-yellow-50 border-yellow-600 text-yellow-700;
+}
+
+.alert-danger {
+  @apply bg-red-50 border-red-600 text-red-700;
+}
+
+.alert-info {
+  @apply bg-blue-50 border-blue-600 text-blue-700;
+}
+
+/* Modal mejorado */
+.modal-backdrop {
+  @apply fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50;
+}
+
+.modal-content {
+  @apply bg-white rounded-2xl shadow-xl border border-gray-100 max-w-md w-full mx-4;
+}
+
+/* Divider */
+.divider {
+  @apply border-t border-gray-200;
+}
+
+/* Gradient text */
+.gradient-text {
+  @apply bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent;
+}

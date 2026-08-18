@@ -257,12 +257,15 @@ export default function CandidatesByVacancy() {
                       fontSize: '0.85em',
                       fontWeight: 'bold',
                       backgroundColor: candidate.status === 'apto' ? '#d4edda' :
-                        candidate.status === 'rechazado' ? '#f8d7da' : '#fff3cd',
+                        candidate.status === 'rechazado' ? '#f8d7da' :
+                        candidate.status === 'completed' ? '#e7f7e7' : '#fff3cd',
                       color: candidate.status === 'apto' ? '#155724' :
-                        candidate.status === 'rechazado' ? '#721c24' : '#856404'
+                        candidate.status === 'rechazado' ? '#721c24' :
+                        candidate.status === 'completed' ? '#0d6d0d' : '#856404'
                     }}>
                       {candidate.status === 'apto' ? '✅ Apto' :
-                       candidate.status === 'rechazado' ? '❌ Rechazado' : '⏳ Invitado'}
+                       candidate.status === 'rechazado' ? '❌ Rechazado' :
+                       candidate.status === 'completed' ? '✔️ Completado' : '⏳ Invitado'}
                     </span>
                   </td>
                   <td style={{ padding: '12px', textAlign: 'center' }}>

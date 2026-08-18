@@ -1,0 +1,489 @@
+{
+  "exam": {
+    "name": "TEST DE PERSONALIDAD LABORAL (TPL-80)",
+    "description": "Evaluación de 10 competencias laborales con escala Likert (1-5). 80 preguntas que miden: Responsabilidad, Orientación al Logro, Trabajo Bajo Presión, Adaptabilidad, Trabajo en Equipo, Orientación al Cliente, Integridad, Inteligencia Emocional, Iniciativa y Resiliencia.",
+    "timeMinutes": 60
+  },
+  "questions": [
+    {
+      "order": 1,
+      "text": "Cumplo mis compromisos aunque nadie me supervise.",
+      "competency": "Empatía",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 2,
+      "text": "Organizo mi trabajo antes de comenzar.",
+      "competency": "Empatía",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 3,
+      "text": "Me considero una persona disciplinada.",
+      "competency": "Empatía",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 4,
+      "text": "Entrego mis tareas dentro de los plazos establecidos.",
+      "competency": "Empatía",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 5,
+      "text": "Si cometo un error lo reconozco inmediatamente.",
+      "competency": "Empatía",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 6,
+      "text": "A veces dejo tareas importantes para último momento.",
+      "competency": "Empatía",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 7,
+      "text": "Me cuesta mantener una rutina de trabajo.",
+      "competency": "Empatía",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 8,
+      "text": "Soy constante incluso cuando pierdo la motivación.",
+      "competency": "Empatía",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 9,
+      "text": "Siempre intento superar mis resultados anteriores.",
+      "competency": "Gestión del Tiempo",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 10,
+      "text": "Disfruto trabajar con metas.",
+      "competency": "Gestión del Tiempo",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 11,
+      "text": "Me motiva recibir nuevos desafíos.",
+      "competency": "Gestión del Tiempo",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 12,
+      "text": "Busco aprender para mejorar mi desempeño.",
+      "competency": "Gestión del Tiempo",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 13,
+      "text": "Me esfuerzo por ser uno de los mejores.",
+      "competency": "Gestión del Tiempo",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 14,
+      "text": "Cuando alcanzo el mínimo requerido dejo de esforzarme.",
+      "competency": "Gestión del Tiempo",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 15,
+      "text": "No me interesa competir conmigo mismo.",
+      "competency": "Gestión del Tiempo",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 16,
+      "text": "Me siento satisfecho únicamente cuando doy mi máximo esfuerzo.",
+      "competency": "Gestión del Tiempo",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 17,
+      "text": "Mantengo la calma en momentos difíciles.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 18,
+      "text": "Puedo trabajar con varias tareas simultáneamente.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 19,
+      "text": "El estrés no afecta fácilmente mis decisiones.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 20,
+      "text": "Me adapto a cambios repentinos.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 21,
+      "text": "En situaciones críticas logro mantener el control.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 22,
+      "text": "Cuando hay mucha presión pierdo la concentración.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 23,
+      "text": "Los problemas inesperados me bloquean.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 24,
+      "text": "Puedo priorizar tareas cuando el tiempo es limitado.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 25,
+      "text": "Me adapto rápidamente a nuevas formas de trabajar.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 26,
+      "text": "Disfruto aprender nuevas herramientas.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 27,
+      "text": "Los cambios representan oportunidades.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 28,
+      "text": "Acepto con facilidad nuevas responsabilidades.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 29,
+      "text": "Aprendo rápido nuevos procedimientos.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 30,
+      "text": "Prefiero hacer siempre las cosas igual.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 31,
+      "text": "Me incomodan los cambios frecuentes.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 32,
+      "text": "Me ajusto fácilmente a distintos equipos.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 33,
+      "text": "Disfruto colaborar con otras personas.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 34,
+      "text": "Escucho las opiniones de los demás.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 35,
+      "text": "Me gusta compartir conocimientos.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 36,
+      "text": "Ayudo a mis compañeros cuando lo necesitan.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 37,
+      "text": "Valoro el éxito colectivo.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 38,
+      "text": "Prefiero trabajar solo.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 39,
+      "text": "Me molestan las opiniones diferentes.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 40,
+      "text": "Respeto las decisiones del equipo.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 41,
+      "text": "Intento comprender las necesidades del cliente.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 42,
+      "text": "Mantengo la cortesía aun cuando el cliente está molesto.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 43,
+      "text": "Escucho antes de responder.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 44,
+      "text": "Busco solucionar los problemas del cliente.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 45,
+      "text": "Me esfuerzo por generar una buena experiencia.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 46,
+      "text": "Pierdo la paciencia fácilmente con clientes difíciles.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 47,
+      "text": "Considero que algunos clientes no merecen esfuerzo adicional.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 48,
+      "text": "Me gusta ayudar a las personas.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 49,
+      "text": "Siempre digo la verdad en mi trabajo.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 50,
+      "text": "Respeto las políticas de la empresa.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 51,
+      "text": "Actúo correctamente aunque nadie me vea.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 52,
+      "text": "Cumplo las normas establecidas.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 53,
+      "text": "Soy transparente cuando cometo errores.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 54,
+      "text": "Romper una regla es aceptable si nadie lo descubre.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 55,
+      "text": "A veces oculto información para evitar problemas.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 56,
+      "text": "Considero que la honestidad es indispensable.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 57,
+      "text": "Identifico fácilmente mis emociones.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 58,
+      "text": "Controlo mis impulsos.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 59,
+      "text": "Escucho sin reaccionar impulsivamente.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 60,
+      "text": "Manejo adecuadamente los conflictos.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 61,
+      "text": "Sé separar los problemas personales del trabajo.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 62,
+      "text": "Me enojo con facilidad.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 63,
+      "text": "Suelo responder impulsivamente cuando me contradicen.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 64,
+      "text": "Mantengo una actitud positiva ante las dificultades.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 65,
+      "text": "Propongo nuevas ideas para mejorar procesos.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 66,
+      "text": "Me gusta aprender más de lo que me solicitan.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 67,
+      "text": "Busco soluciones antes de pedir ayuda.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 68,
+      "text": "Tomo acción cuando identifico un problema.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 69,
+      "text": "Me gusta asumir nuevos retos.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 70,
+      "text": "Espero que otros resuelvan los problemas.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 71,
+      "text": "Evito asumir responsabilidades adicionales.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 72,
+      "text": "Me considero una persona proactiva.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 73,
+      "text": "Me recupero rápidamente después de un fracaso.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 74,
+      "text": "Aprendo de mis errores.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 75,
+      "text": "Las críticas me ayudan a mejorar.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 76,
+      "text": "Mantengo la motivación después de una mala experiencia.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 77,
+      "text": "Persevero hasta alcanzar mis objetivos.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 78,
+      "text": "Me desanimo fácilmente cuando algo sale mal.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 79,
+      "text": "Si fracaso prefiero abandonar.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    },
+    {
+      "order": 80,
+      "text": "Considero los errores como oportunidades de aprendizaje.",
+      "competency": "No asignada",
+      "scale": "Likert 1-5 (Totalmente en desacuerdo, En desacuerdo, Ni de acuerdo ni en desacuerdo, De acuerdo, Totalmente de acuerdo)"
+    }
+  ]
+}

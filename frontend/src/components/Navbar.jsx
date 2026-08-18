@@ -22,7 +22,7 @@ function Navbar({ onLogout }) {
       className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-all duration-300 group ${
         isActive(to)
           ? 'bg-white text-purple-700 shadow-md'
-          : 'text-white hover:bg-white hover:bg-opacity-10'
+          : 'text-purple-700 hover:bg-white hover:bg-opacity-20'
       }`}
     >
       <Icon className={`w-5 h-5 transition-transform duration-300 ${isActive(to) ? 'scale-110' : 'group-hover:scale-110'}`} />
@@ -32,7 +32,7 @@ function Navbar({ onLogout }) {
 
   return (
     <>
-      <nav className="sticky top-0 z-40 backdrop-blur-md bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-700 shadow-lg border-b border-purple-500 border-opacity-20">
+      <nav className="sticky top-0 z-40 backdrop-blur-md bg-gradient-to-r from-purple-300 via-purple-200 to-cyan-200 shadow-lg border-b border-purple-300 border-opacity-30">
         <div className="max-w-7xl mx-auto px-6 py-3">
           <div className="flex justify-between items-center">
             {/* Logo */}
@@ -68,13 +68,13 @@ function Navbar({ onLogout }) {
 
             {/* User Info & Logout */}
             <div className="hidden md:flex items-center gap-4 ml-4">
-              <div className="text-right text-white">
+              <div className="text-right text-purple-800">
                 <p className="font-semibold text-sm">{user.firstName} {user.lastName}</p>
-                <p className="text-xs text-purple-200 capitalize">{role || 'usuario'}</p>
+                <p className="text-xs text-purple-600 capitalize">{role || 'usuario'}</p>
               </div>
               <button
                 onClick={handleLogout}
-                className="p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-lg transition-all duration-300 hover:scale-110"
+                className="p-2 text-purple-700 hover:bg-white hover:bg-opacity-30 rounded-lg transition-all duration-300 hover:scale-110"
                 title="Cerrar sesión"
               >
                 <FiLogOut className="w-5 h-5" />
@@ -84,7 +84,7 @@ function Navbar({ onLogout }) {
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-lg transition-all duration-300"
+              className="md:hidden p-2 text-purple-700 hover:bg-white hover:bg-opacity-30 rounded-lg transition-all duration-300"
             >
               {mobileMenuOpen ? (
                 <FiX className="w-6 h-6" />
@@ -96,7 +96,7 @@ function Navbar({ onLogout }) {
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="md:hidden mt-4 pt-4 border-t border-white border-opacity-20 space-y-2">
+            <div className="md:hidden mt-4 pt-4 border-t border-purple-300 border-opacity-50 space-y-2">
               <NavLink to="/dashboard" icon={FiHome} label="Dashboard" />
               <NavLink to="/mi-perfil" icon={FiUser} label="Perfil" />
               <NavLink to="/candidatos" icon={FiUsers} label="Candidatos" />

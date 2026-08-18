@@ -22,6 +22,19 @@ function Evaluations() {
     try {
       const res = await vacancyAPI.getAll();
       setVacancies(res.data.vacancies);
+
+      // Automáticamente seleccionar la primera vacante y cargar sus candidatos
+      if (res.data.vacancies && res.data.vacancies.length > 0) {
+        const firstVacancy = res.data.vacancies[0];
+        setSelectedVacancy(firstVacancy);
+
+        try {
+          const candidatesRes = await candidateAPI.getByVacancy(firstVacancy.id);
+          setCandidates(candidatesRes.data.candidates);
+        } catch (error) {
+          console.error('Error cargando candidatos de la primera vacante:', error);
+        }
+      }
     } catch (error) {
       console.error('Error cargando vacantes:', error);
     } finally {

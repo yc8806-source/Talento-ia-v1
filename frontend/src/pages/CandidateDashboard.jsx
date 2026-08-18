@@ -45,7 +45,7 @@ function CandidateDashboard() {
     <div className="space-y-6 max-w-2xl">
       {/* Header */}
       <div className="bg-gradient-to-r from-purple-600 to-purple-800 rounded-lg shadow-lg p-8 text-white">
-        <h1 className="text-4xl font-bold mb-2">
+        <h1 className="text-4xl font-bold mb-2 text-white">
           Mi Perfil
         </h1>
         <p className="text-purple-100">Información de tu cuenta</p>

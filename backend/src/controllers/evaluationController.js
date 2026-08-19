@@ -105,9 +105,12 @@ exports.submitEvaluation = async (req, res) => {
   try {
     const { evaluationId } = req.params;
 
-    // Obtener evaluación
+    // Obtener evaluación con información del examen
     const evalResult = await pool.query(
-      'SELECT * FROM evaluations WHERE id = $1',
+      `SELECT e.*, ex.type as exam_type
+       FROM evaluations e
+       INNER JOIN exams ex ON e.exam_id = ex.id
+       WHERE e.id = $1`,
       [evaluationId]
     );
 
@@ -125,60 +128,13 @@ exports.submitEvaluation = async (req, res) => {
       ['completed', evaluationId]
     );
 
-    // Obtener respuestas del examen desde exam_answers
-    const answersResult = await pool.query(
-      `SELECT CAST(qo.score AS FLOAT) as score, q.competency_id
-       FROM exam_answers ea
-       INNER JOIN questions q ON ea.question_id = q.id
-       INNER JOIN question_options qo ON ea.answer_value = qo.id
-       WHERE ea.candidate_id = (SELECT candidate_id FROM candidate_vacancies WHERE id = $1)
-         AND ea.exam_id = $2`,
-      [evaluation.candidate_vacancy_id, evaluation.exam_id]
-    );
-
-    // Agrupar puntuaciones por competencia
-    const competencyScores = {};
-    const competencyMaxScores = {};
-
-    // Obtener todas las preguntas del examen
-    const questionsResult = await pool.query(
-      `SELECT q.competency_id, MAX(qo.score) as max_score
-       FROM exam_questions eq
-       INNER JOIN questions q ON eq.question_id = q.id
-       INNER JOIN question_options qo ON q.id = qo.question_id
-       WHERE eq.exam_id = $1
-       GROUP BY q.competency_id`,
-      [evaluation.exam_id]
-    );
-
-    // Inicializar scores máximos
-    questionsResult.rows.forEach(row => {
-      competencyMaxScores[row.competency_id] = row.max_score;
-    });
-
-    // Sumar respuestas por competencia
-    answersResult.rows.forEach(answer => {
-      const competencyId = answer.competency_id;
-      if (!competencyScores[competencyId]) {
-        competencyScores[competencyId] = 0;
-      }
-      competencyScores[competencyId] += answer.score;
-    });
-
-    // Guardar resultados por competencia
-    for (const [competencyId, totalScore] of Object.entries(competencyScores)) {
-      const maxScore = competencyMaxScores[competencyId] || totalScore;
-
-      await pool.query(
-        `INSERT INTO evaluation_results (candidate_vacancy_id, competency_id, total_score, max_possible_score, calculated_at)
-         VALUES ($1, $2, $3, $4, NOW())
-         ON CONFLICT (candidate_vacancy_id, competency_id) DO UPDATE SET total_score = $3`,
-        [evaluation.candidate_vacancy_id, competencyId, totalScore, maxScore]
-      );
+    // Usar scoring diferente según el tipo de examen
+    if (evaluation.exam_type === 'soft_skills') {
+      await calculateSoftSkillsResults(evaluation.id, evaluation.exam_id, evaluation.candidate_vacancy_id);
+    } else {
+      // Para otros tipos de examen, usar el método antiguo
+      await calculateAndSaveRecommendations(evaluation.candidate_vacancy_id);
     }
-
-    // Calcular recomendaciones por operación
-    await calculateAndSaveRecommendations(evaluation.candidate_vacancy_id);
 
     // Enviar email de confirmación
     const candidateQuery = await pool.query(
@@ -1411,3 +1367,70 @@ exports.createSingleLinkForAllExams = async (req, res) => {
     });
   }
 };
+
+// CALCULAR RESULTADOS TEST DE SOFT SKILLS (0-160 escala: 80 preguntas × 2 puntos máximo)
+async function calculateSoftSkillsResults(evaluationId, examId, candidateVacancyId) {
+  try {
+    // Obtener todas las respuestas de la evaluación
+    const answersResult = await pool.query(
+      `SELECT
+        ea.id,
+        q.id as question_id,
+        q.description as competency_name,
+        qo.score,
+        eq.question_order
+       FROM evaluation_answers ea
+       INNER JOIN questions q ON ea.question_id = q.id
+       INNER JOIN question_options qo ON ea.question_option_id = qo.id
+       INNER JOIN exam_questions eq ON q.id = eq.question_id AND eq.exam_id = $2
+       WHERE ea.evaluation_id = $1
+       ORDER BY eq.question_order`,
+      [evaluationId, examId]
+    );
+
+    if (answersResult.rows.length === 0) {
+      console.log('No answers found for soft skills evaluation');
+      return;
+    }
+
+    // Agrupar puntuaciones por competencia
+    const competencyScores = {};
+    let totalScore = 0;
+
+    answersResult.rows.forEach(answer => {
+      const competencyName = answer.competency_name || 'Sin Competencia';
+      const score = parseInt(answer.score) || 0;
+
+      if (!competencyScores[competencyName]) {
+        competencyScores[competencyName] = {
+          totalScore: 0,
+          questionCount: 0,
+          questions: []
+        };
+      }
+
+      competencyScores[competencyName].totalScore += score;
+      competencyScores[competencyName].questionCount += 1;
+      competencyScores[competencyName].questions.push(answer.question_id);
+      totalScore += score;
+    });
+
+    // Guardar resultados generales (score total 0-160)
+    // Usar competency_id = 1 como ID genérico para TEST DE SOFT SKILLS
+    const maxPossibleScore = answersResult.rows.length * 2; // 80 preguntas × 2 puntos
+    const percentage = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0;
+
+    await pool.query(
+      `INSERT INTO evaluation_results (candidate_vacancy_id, competency_id, total_score, max_possible_score, calculated_at)
+       VALUES ($1, $2, $3, $4, NOW())
+       ON CONFLICT (candidate_vacancy_id, competency_id) DO UPDATE SET total_score = $3`,
+      [candidateVacancyId, 1, Math.round(totalScore), maxPossibleScore]
+    );
+
+    console.log(`✅ Soft Skills Results: ${totalScore}/${maxPossibleScore} (${Math.round(percentage)}%)`);
+
+  } catch (error) {
+    console.error('Error calculating soft skills results:', error);
+    throw error;
+  }
+}
